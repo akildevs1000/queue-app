@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Token Announcement Test</title>
+    </head>
+    <body>
+        <h2>Token Announcer</h2>
+        <input type="text" id="tokenInput" value="LQ0018" placeholder="Enter token number (e.g. LQ0018)" />
+        <button onclick="announceTheToken()">Announce</button>
+
+        <script>
+            function formatTokenForSpeech(token) {
+                // Split letters and digits
+                const match = token.match(/^([A-Za-z]+)(\d+)$/);
+                if (!match) return token; // fallback if pattern not matched
+
+                const letters = match[1].toUpperCase().split('').join(' ');
+                const digits = match[2]
+                    .split('')
+                    .map((d) => {
+                        if (d === '0') return 'zero';
+                        return d;
+                    })
+                    .join(' ');
+
+                return `${letters} ${digits}`;
+            }
+
+            const announceTheToken = () => {
+                const rawToken = document.getElementById('tokenInput').value.trim();
+
+                if (rawToken) {
+                    const spokenToken = formatTokenForSpeech(rawToken);
+                    const message = `Token ${spokenToken}, please proceed to the counter.`;
+                    console.log(message);
+
+                    const utterance = new SpeechSynthesisUtterance(message);
+                    utterance.lang = 'en-US';
+                    speechSynthesis.speak(utterance);
+                } else {
+                    console.warn('Please enter a token number.');
+                }
+            };
+        </script>
+    </body>
+</html>
