@@ -24,6 +24,16 @@ class TokenController extends Controller
             ->whereDate('created_at', Carbon::today())->where('status', request("status", Token::SERVING))->paginate(request("per_page", 10));
     }
 
+    public function servingList()
+    {
+        if (request("per_page") > 100) {
+            return [];
+        }
+        return  Token::latest()
+            ->with("counter")
+            ->whereDate('created_at', Carbon::today())->where('status', request("status", Token::SERVING))->paginate(request("per_page", 100));
+    }
+
     public function TokenCounts()
     {
         $counts = Token::select('status', DB::raw('count(*) as total'))
@@ -64,10 +74,17 @@ class TokenController extends Controller
     {
         if (!$id) return;
 
-        $updated = Token::find($id)
-            ->update(["start_serving" => now(), 'status' => TOKEN::SERVING]);
+        $token = Token::find($id);
+        if (!$token) {
+            return response()->json(['error' => 'Token not found'], 404);
+        }
 
-        return response()->json($updated);
+       
+        $token->status = Token::SERVING;
+        $token->counter_id = Auth::user()->counter_id;
+        $token->save();
+
+        return response()->json($token);
     }
 
     public function endServing(Request $request, $id)

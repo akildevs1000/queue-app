@@ -65,6 +65,7 @@ Route::get("contacts/chat/{id}", [ContactController::class, 'show'])->middleware
 
 Route::post("messages", [MessageController::class, "store"])->middleware("auth");
 
-require __DIR__ . '/token.php';
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
+
+require __DIR__ . '/token.php';
