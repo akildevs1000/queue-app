@@ -288,7 +288,7 @@ export default function Welcome() {
             />
           </View>
         ) : (
-          <Text style={styles.noData}>No customers found.</Text>
+          <Text style={styles.noData}>No tickets found.</Text>
         )}
 
         {/* <TouchableOpacity

@@ -59,10 +59,12 @@ class TokenController extends Controller
 
     public function nextToken()
     {
-        $nextToken = Token::latest()
-            ->where('service_id', Auth::user()->service_id ?? 0)
+        $nextToken = Token::where('service_id', Auth::user()->service_id ?? 0)
             ->whereDate('created_at', Carbon::today())
-            ->where('status', TOKEN::PENDING)
+            ->where(function ($q) {
+                $q->whereNull('end_serving');
+                $q->orWhere('status', TOKEN::PENDING);
+            })
             ->first(['id', 'token_number_display']);
 
         return response()->json($nextToken);
@@ -76,7 +78,7 @@ class TokenController extends Controller
         if (!$token) {
             return response()->json(['error' => 'Token not found'], 404);
         }
-        $token->start_serving = Carbon::today();
+        $token->start_serving = now();
         $token->status = Token::SERVING;
         $token->counter_id = Auth::user()->counter_id;
         $token->user_id = Auth::user()->id;

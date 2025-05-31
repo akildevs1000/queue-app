@@ -44,18 +44,6 @@ const TokenDisplay = () => {
         }
     };
 
-    const getLastserving = async () => {
-        try {
-            const res = await fetch('/get-last-serving');
-            const json = await res.json();
-            if (json) {
-                setTokenInfo(json);
-            }
-        } catch (err) {
-            console.error('Failed to fetch services', err);
-        }
-    };
-
     const feedbackByCounter = async () => {
         try {
             const res = await fetch('/feedback-by-counter');
@@ -97,9 +85,6 @@ const TokenDisplay = () => {
         return () => clearTimeout(timer);
     };
 
-    // Start serving: begin timer
-
-    // Pause serving: add elapsed time since last start, stop timer
     const pauseServing = () => {
         if (isServing && startTime !== null) {
             const now = Date.now();
@@ -127,14 +112,6 @@ const TokenDisplay = () => {
         }
     };
 
-    const notFoundToken = () => {
-        if (!tokenCounts?.pending) {
-            console.log('Not found new token');
-            return true;
-        }
-
-        return false;
-    };
 
     const endServing = async () => {
         if (!tokenInfo?.token_number_display) return;
@@ -154,7 +131,8 @@ const TokenDisplay = () => {
             setIsServing(false);
             setDisplayTime(0);
 
-            getLastserving();
+            setTokenInfo(null);
+
         } catch (err) {
             console.error('Failed to fetch services', err);
         }
@@ -180,14 +158,12 @@ const TokenDisplay = () => {
     };
 
     const nextToken = async () => {
-        if (!tokenInfo?.token_number_display) return;
 
         setCalling(true);
 
         setNextLabel(`Calling Next`);
 
         try {
-            console.log('🚀 ~ noShowServing ~ tokenInfo:', tokenInfo);
 
             let ticketInfo = null;
 
@@ -248,7 +224,6 @@ const TokenDisplay = () => {
     }, [isServing, startTime, totalElapsed]);
 
     useEffect(() => {
-        getLastserving();
         fetchTokenCounts();
 
         const interval = setInterval(() => {
