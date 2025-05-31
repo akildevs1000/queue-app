@@ -44,6 +44,18 @@ const TokenDisplay = () => {
         }
     };
 
+    const getLastserving = async () => {
+        try {
+            const res = await fetch('/get-last-serving');
+            const json = await res.json();
+            if (json) {
+                setTokenInfo(json);
+            }
+        } catch (err) {
+            console.error('Failed to fetch services', err);
+        }
+    };
+
     const feedbackByCounter = async () => {
         try {
             const res = await fetch('/feedback-by-counter');
@@ -53,17 +65,6 @@ const TokenDisplay = () => {
             console.error('Failed to fetch services', err);
         }
     };
-
-    useEffect(() => {
-        const interval = setInterval(
-            () => {
-                feedbackByCounter();
-            },
-            5 * 1 * 1000,
-        ); // 5 minutes in milliseconds
-
-        return () => clearInterval(interval); // cleanup when component unmounts
-    }, []);
 
     const announceTheToken = (ticketInfo: any) => {
         const token = ticketInfo?.token_number_display;
@@ -135,8 +136,8 @@ const TokenDisplay = () => {
         return false;
     };
 
-    const endPreviousServing = async () => {
-        if (notFoundToken()) return;
+    const endServing = async () => {
+        if (!tokenInfo?.token_number_display) return;
 
         let finalElapsed = totalElapsed;
         if (isServing && startTime !== null) {
@@ -152,13 +153,14 @@ const TokenDisplay = () => {
             setStartTime(null);
             setIsServing(false);
             setDisplayTime(0);
+
+            getLastserving();
         } catch (err) {
             console.error('Failed to fetch services', err);
         }
     };
 
     const noShowServing = async () => {
-
         let finalElapsed = totalElapsed;
         if (isServing && startTime !== null) {
             const now = Date.now();
@@ -178,15 +180,23 @@ const TokenDisplay = () => {
     };
 
     const nextToken = async () => {
-        if (notFoundToken()) return;
+        if (!tokenInfo?.token_number_display) return;
 
         setCalling(true);
 
         setNextLabel(`Calling Next`);
 
         try {
-            const res = await fetch('/next-token');
-            const ticketInfo = await res.json();
+            console.log('🚀 ~ noShowServing ~ tokenInfo:', tokenInfo);
+
+            let ticketInfo = null;
+
+            if (tokenInfo) {
+                ticketInfo = tokenInfo;
+            } else {
+                const res = await fetch('/next-token');
+                ticketInfo = await res.json();
+            }
 
             if (ticketInfo?.id) {
                 setTokenInfo(ticketInfo);
@@ -213,16 +223,12 @@ const TokenDisplay = () => {
         }
     };
 
-    useEffect(() => {
-        const interval = setInterval(
-            () => {
-                fetchTokenCounts(); // your function to refresh the token counts
-            },
-            5 * 2 * 1000,
-        ); // 5 minutes in milliseconds
-
-        return () => clearInterval(interval); // cleanup when component unmounts
-    }, []);
+    const formatTime = (totalSeconds: number): string => {
+        const hrs = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+        const mins = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+        const secs = String(totalSeconds % 60).padStart(2, '0');
+        return `${hrs}:${mins}:${secs}`;
+    };
 
     useEffect(() => {
         let interval: NodeJS.Timeout;
@@ -241,28 +247,18 @@ const TokenDisplay = () => {
         return () => clearInterval(interval);
     }, [isServing, startTime, totalElapsed]);
 
-    const formatTime = (totalSeconds: number): string => {
-        const hrs = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
-        const mins = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
-        const secs = String(totalSeconds % 60).padStart(2, '0');
-        return `${hrs}:${mins}:${secs}`;
-    };
-
-    const isPreviousTokenExist = async () => {
-        try {
-            const res = await fetch(`/is-previous-token`);
-            const isTokenExist = await res.json(); // This will be `true` or `false`
-            console.log('isPreviousTokenExist:', isTokenExist);
-            setIsPreviousToken(isTokenExist); // Store the boolean directly
-        } catch (err) {
-            console.error('Failed to check previous token:', err);
-            setIsPreviousToken(false); // Optional: default to false on error
-        }
-    };
-
     useEffect(() => {
+        getLastserving();
         fetchTokenCounts();
-        isPreviousTokenExist();
+
+        const interval = setInterval(() => {
+            feedbackByCounter();
+            fetchTokenCounts();
+        }, 5000);
+
+        return () => clearInterval(interval); // cleanup when component unmounts
+
+        // isPreviousTokenExist();
     }, []);
 
     return (
@@ -345,7 +341,7 @@ const TokenDisplay = () => {
                         {nextLabel}
                     </Button>
                     <Button
-                        onClick={endPreviousServing}
+                        onClick={endServing}
                         className="w-1/2 rounded-lg bg-indigo-500 p-6 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
                     >
                         End
