@@ -82,7 +82,7 @@ class TokenController extends Controller
     {
         if (!$id) return;
 
-        $token = Token::with("counter:id,name")->find($id);
+        $token = Token::with("counter")->find($id);
 
         if (!$token) {
             return response()->json(['error' => 'Token not found'], 404);

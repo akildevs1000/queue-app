@@ -126,7 +126,7 @@ export default function Welcome() {
         console.log('📩 Received from server:', data.data);
         // setTokens(prevTokens => [...prevTokens, data.data]);
 
-       announceTheToken(data.token, data.counter);
+       announceTheToken(data.data.token, data.data.counter);
 
       } catch (e) {
         console.error('Failed to parse message:', e.message || e);
