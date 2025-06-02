@@ -5,6 +5,9 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
+use WebSocket\Client;
 
 class Token extends Model
 {
@@ -61,5 +64,57 @@ class Token extends Model
             'average_seconds' => $avg,
             'raw_values' => $totalTimes,
         ]);
+    }
+
+    // protected static function booted()
+    // {
+    //     static::saved(function ($token) {
+    //         if ($token->status === self::SERVING) {
+    //             $token->sendTrigger(); // ✅ Corrected
+    //         }
+    //     });
+    // }
+
+    public function sendTrigger()
+    {
+        $this->loadMissing('counter:id,name');
+
+        try {
+            $client = new Client("wss://192.168.2.6:8080", [
+                'context' => stream_context_create([
+                    'ssl' => [
+                        'verify_peer' => false,
+                        'verify_peer_name' => false,
+                        'allow_self_signed' => true,
+                    ]
+                ])
+            ]);
+
+            $client->send(json_encode([
+                'event' => 'token-serving',
+                'data' => [
+                    "token" => $this->token_number_display . "-----",
+                    "counter" => $this->counter->name ?? ""
+                ]
+            ]));
+
+            $client->close();
+        } catch (\Exception $e) {
+            Log::error('WebSocket error: ' . $e->getMessage());
+        }
+    }
+
+    public function writeLatestEvent()
+    {
+        $this->loadMissing('counter:id,name');
+
+        $data = [
+            "token" => $this->token_number_display,
+            "counter" => $this->counter->name ?? ""
+        ];
+
+        $path = public_path('latest-event.json');
+
+        File::put($path, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
     }
 }

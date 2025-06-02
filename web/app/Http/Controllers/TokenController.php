@@ -29,9 +29,17 @@ class TokenController extends Controller
         if (request("per_page") > 100) {
             return [];
         }
-        return  Token::latest()
-            ->with("counter")
-            ->whereDate('created_at', Carbon::today())->where('status', request("status", Token::SERVING))->paginate(request("per_page", 100));
+
+        return  Token::orderBy("token", "desc")
+            ->with("counter:id,name")
+            ->whereDate('created_at', Carbon::today())->where('status', request("status", Token::SERVING))
+            ->get(["id", "counter_id", "token_number_display"])
+            ->map(function ($token) {
+                return [
+                    'token' => $token->token_number_display,
+                    'counter' => optional($token->counter)->name,
+                ];
+            });
     }
 
     public function getLastserving()
@@ -74,15 +82,18 @@ class TokenController extends Controller
     {
         if (!$id) return;
 
-        $token = Token::find($id);
+        $token = Token::with("counter:id,name")->find($id);
+
         if (!$token) {
             return response()->json(['error' => 'Token not found'], 404);
         }
+
         $token->start_serving = now();
         $token->status = Token::SERVING;
         $token->counter_id = Auth::user()->counter_id;
         $token->user_id = Auth::user()->id;
         $token->save();
+
 
         return response()->json($token);
     }

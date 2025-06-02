@@ -112,7 +112,6 @@ const TokenDisplay = () => {
         }
     };
 
-
     const endServing = async () => {
         if (!tokenInfo?.token_number_display) return;
 
@@ -132,7 +131,6 @@ const TokenDisplay = () => {
             setDisplayTime(0);
 
             setTokenInfo(null);
-
         } catch (err) {
             console.error('Failed to fetch services', err);
         }
@@ -158,13 +156,11 @@ const TokenDisplay = () => {
     };
 
     const nextToken = async () => {
-
         setCalling(true);
 
         setNextLabel(`Calling Next`);
 
         try {
-
             let ticketInfo = null;
 
             if (tokenInfo) {
@@ -183,6 +179,26 @@ const TokenDisplay = () => {
                 const res = await fetch(`/start-serving/${ticketInfo.id}`);
                 const json = await res.json();
                 console.log('Started serving:', json);
+
+                const socket = new WebSocket('ws://192.168.2.6:8080');
+
+                // Wait until the connection is open
+                socket.addEventListener('open', () => {
+                    
+                    console.log('Connected to WS server');
+
+                    const message = {
+                        event: 'token-serving',
+                        data: {
+                            token: json.token_number_display,
+                            counter: json?.counter?.name,
+                        },
+                    };
+                    console.log("🚀 ~ socket.addEventListener ~ message:", message)
+
+                    socket.send(JSON.stringify(message));
+                });
+
                 announceTheToken(ticketInfo);
             } else {
                 console.warn('No next token received.');
