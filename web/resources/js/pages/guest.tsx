@@ -1,6 +1,6 @@
 import { CardContent } from '@/components/ui/card';
 import { Head, useForm, usePage } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import TicketPrint, { type TicketPrintProps } from '@/components/TicketPrint';
 
@@ -21,6 +21,7 @@ export default function Welcome() {
 
     const [step, setStep] = useState<'language' | 'service' | 'thankyou'>('language');
     const [services, setServices] = useState<Service[]>([]);
+    const socketRef = useRef<WebSocket | null>(null);
 
     const { data, setData, post } = useForm({
         language: '',
@@ -58,10 +59,39 @@ export default function Welcome() {
     };
 
     useEffect(() => {
+        const socket = new WebSocket('ws://192.168.2.6:8080');
+        socketRef.current = socket;
+
+        socket.addEventListener('open', () => {
+            console.log('Connected to WS server');
+        });
+
+        socket.addEventListener('error', (error) => {
+            console.error('WebSocket error:', error);
+        });
+
+        return () => {
+            socket.close();
+        };
+    }, []);
+
+    useEffect(() => {
         if (data.service_id) {
             post('/tokens', {
                 onSuccess: () => {
                     setStep('thankyou');
+
+                    const socket = socketRef.current;
+                    if (socket && socket.readyState === WebSocket.OPEN) {
+                        
+                        const endServingSocket = {
+                            event: 'new-ticket',
+                        };
+
+                        socket.send(JSON.stringify(endServingSocket));
+                    } else {
+                        console.warn('WebSocket is not open.');
+                    }
                 },
                 onFinish: () => {},
                 onError: (errors) => {

@@ -5,7 +5,6 @@ import { Button } from '../ui/button';
 
 import CounterByUser from '../User/CounterByUser';
 import ServiceByUser from '../User/ServiceByUser';
-import ManualCall from './ManualCall';
 
 interface TokenInfo {
     id: number;
@@ -57,6 +56,7 @@ const TokenDisplay = () => {
     const feedbackByCounter = async () => {
         try {
             const res = await fetch('/feedback-by-counter');
+            console.log('🚀 ~ feedbackByCounter ~ res:', res);
             const json = await res.json();
             setPerformance(json);
         } catch (err) {
@@ -243,11 +243,28 @@ const TokenDisplay = () => {
     };
 
     useEffect(() => {
+
+        fetchTokenCounts();
+        
         const socket = new WebSocket('ws://192.168.2.6:8080');
         socketRef.current = socket;
 
         socket.addEventListener('open', () => {
             console.log('Connected to WS server');
+        });
+
+        socket.addEventListener('message', (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                if (data.event === 'new-ticket') {
+                    console.log('Received new-ticket event:', data);
+                    fetchTokenCounts();
+                } else {
+                    console.log('Received other event:', data);
+                }
+            } catch (err) {
+                console.error('Failed to parse message:', event.data);
+            }
         });
 
         socket.addEventListener('error', (error) => {
@@ -275,17 +292,6 @@ const TokenDisplay = () => {
 
         return () => clearInterval(interval);
     }, [isServing, startTime, totalElapsed]);
-
-    useEffect(() => {
-        fetchTokenCounts();
-
-        const interval = setInterval(() => {
-            feedbackByCounter();
-            fetchTokenCounts();
-        }, 5000);
-
-        return () => clearInterval(interval); // cleanup when component unmounts
-    }, []);
 
     return (
         <div className="flex h-full w-full px-15 text-gray-800 dark:bg-gray-900 dark:text-gray-900">
