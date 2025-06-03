@@ -44,10 +44,7 @@ class FeedBackController extends Controller
         $ratings = Feedback::where("user_id", $user->id)->where("counter_id", $user->counter_id)->pluck('rating')->toArray();
 
         if (empty($ratings)) {
-            return Inertia::render('feedback', [
-                'success' => session('success'),
-                'performance' => 'No ratings yet',
-            ]);
+            return  response()->json("No Rating"); // Output: "Poor"
         }
 
         $categorizeRating = function (int $rating): string {
