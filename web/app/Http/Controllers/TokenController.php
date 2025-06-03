@@ -26,10 +26,6 @@ class TokenController extends Controller
 
     public function servingList()
     {
-        if (request("per_page") > 100) {
-            return [];
-        }
-
         return  Token::orderBy("token", "desc")
             ->with("counter:id,name")
             ->whereDate('created_at', Carbon::today())->where('status', request("status", Token::SERVING))
@@ -53,12 +49,19 @@ class TokenController extends Controller
     {
         $counts = Token::select('status', DB::raw('count(*) as total'))
             ->where('service_id', Auth::user()->service_id)
+            ->where('counter_id', Auth::user()->counter_id)
             ->whereDate('created_at', Carbon::today())
             ->groupBy('status')
             ->pluck('total', 'status');
 
+
+        $pendingCount = Token::where('service_id', Auth::user()->service_id)
+            ->where('status', TOKEN::PENDING)
+            ->whereDate('created_at', Carbon::today())
+            ->count();
+
         return response()->json([
-            'pending'      => $counts[TOKEN::PENDING] ?? 0,
+            'pending'      => $pendingCount,
             'served'       => $counts[TOKEN::SERVED] ?? 0,
             'serving'      => $counts[TOKEN::SERVING] ?? 0,
             'notAnswered'  => $counts[TOKEN::NOT_SHOW] ?? 0,
@@ -69,10 +72,11 @@ class TokenController extends Controller
     {
         $nextToken = Token::where('service_id', Auth::user()->service_id ?? 0)
             ->whereDate('created_at', Carbon::today())
-            ->where(function ($q) {
-                $q->whereNull('end_serving');
-                $q->orWhere('status', TOKEN::PENDING);
-            })
+            ->where('status', TOKEN::PENDING)
+            // ->where(function ($q) {
+            //     $q->whereNull('end_serving');
+                
+            // })
             ->first(['id', 'token_number_display']);
 
         return response()->json($nextToken);
@@ -82,7 +86,7 @@ class TokenController extends Controller
     {
         if (!$id) return;
 
-        $token = Token::with("counter")->find($id);
+        $token = Token::find($id);
 
         if (!$token) {
             return response()->json(['error' => 'Token not found'], 404);
@@ -94,8 +98,12 @@ class TokenController extends Controller
         $token->user_id = Auth::user()->id;
         $token->save();
 
+        $token->load('counter');
 
-        return response()->json($token);
+        return response()->json([
+            "token" => $token->token_number_display,
+            "counter" => $token->counter->name,
+        ]);
     }
 
     public function endServing(Request $request, $id)
@@ -180,7 +188,7 @@ class TokenController extends Controller
         $validatedData = $request->validated();
 
         // Count how many tokens are already waiting for this service
-        $waitingCount = Token::where('service_id', $validatedData['service_id'])->count();
+        $waitingCount = Token::where('service_id', $validatedData['service_id'])->where("status",Token::PENDING)->count();
 
         // Get the latest token number globally and increment it
         $lastTokenNumber = Token::latest('token_number')->value('token_number') ?? 0;

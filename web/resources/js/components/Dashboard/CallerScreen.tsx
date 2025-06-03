@@ -1,6 +1,6 @@
 import { SharedData, TokenCounts } from '@/types';
 import { usePage } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '../ui/button';
 
 import CounterByUser from '../User/CounterByUser';
@@ -12,6 +12,16 @@ interface TokenInfo {
     token_number_display: string;
 }
 
+interface TokenData {
+    token: string;
+    counter?: number;
+    [key: string]: any; // Optional: allows additional fields
+}
+
+interface AnnouncerPayload {
+    data: TokenData;
+}
+
 const TokenDisplay = () => {
     const { auth } = usePage<SharedData>().props;
 
@@ -20,13 +30,13 @@ const TokenDisplay = () => {
     const [calling, setCalling] = useState(false);
     const [nextLabel, setNextLabel] = useState('Next');
     const [recallLabel, setRecallLabel] = useState('Recall');
-
     const [startTime, setStartTime] = useState<number | null>(null);
     const [performance, setPerformance] = useState(null);
     const [isServing, setIsServing] = useState<boolean>(false);
-    const [isPreviousToken, setIsPreviousToken] = useState<boolean>(false);
     const [totalElapsed, setTotalElapsed] = useState<number>(0);
     const [displayTime, setDisplayTime] = useState<number>(0);
+    const [announcerPayload, setAnnouncerPayload] = useState<AnnouncerPayload | null>(null);
+    const socketRef = useRef<WebSocket | null>(null);
 
     // Assuming you have `auth.user` available like:
     const user = auth.user || {
@@ -50,23 +60,7 @@ const TokenDisplay = () => {
             const json = await res.json();
             setPerformance(json);
         } catch (err) {
-            console.error('Failed to fetch services', err);
-        }
-    };
-
-    const announceTheToken = (ticketInfo: any) => {
-        const token = ticketInfo?.token_number_display;
-
-        if (token) {
-            const message = `Token ${token}, please proceed to the counter.`;
-            console.log(message);
-
-            // Voice announcement
-            const utterance = new SpeechSynthesisUtterance(message);
-            utterance.lang = 'en-US'; // Optional: set the language/accent
-            speechSynthesis.speak(utterance);
-        } else {
-            console.warn('No token information available to announce.');
+            console.error('Failed to fetch feedback-by-counter', err);
         }
     };
 
@@ -74,9 +68,18 @@ const TokenDisplay = () => {
         if (!tokenInfo?.token_number_display) {
             return;
         }
+
         setRecallLabel(`Recalling ${tokenInfo?.token_number_display}`);
-        announceTheToken(tokenInfo);
         setCalling(true);
+
+        const socket = socketRef.current;
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            console.log('🚀 ~ reCall ~ announcerPayload:', announcerPayload);
+            socket.send(JSON.stringify(announcerPayload));
+        } else {
+            console.warn('WebSocket is not open.');
+        }
+
         let timer: ReturnType<typeof setTimeout>;
         timer = setTimeout(() => {
             setCalling(false);
@@ -131,6 +134,21 @@ const TokenDisplay = () => {
             setDisplayTime(0);
 
             setTokenInfo(null);
+
+            if (!announcerPayload?.data) return;
+
+            const socket = socketRef.current;
+            if (socket?.readyState === WebSocket.OPEN) {
+                const endServingSocket = {
+                    event: 'token-serving-end',
+                    data: announcerPayload.data,
+                };
+
+                console.log('🚀 Sending token-serving-end event:', endServingSocket);
+                socket.send(JSON.stringify(endServingSocket));
+            } else {
+                console.warn('⚠️ WebSocket is not open.');
+            }
         } catch (err) {
             console.error('Failed to fetch services', err);
         }
@@ -143,6 +161,21 @@ const TokenDisplay = () => {
             finalElapsed += Math.floor((now - startTime) / 1000);
         }
 
+        if (!announcerPayload?.data) return;
+
+        const socket = socketRef.current;
+        if (socket?.readyState === WebSocket.OPEN) {
+            const endServingSocket = {
+                event: 'token-serving-end',
+                data: announcerPayload.data,
+            };
+
+            console.log('🚀 Sending token-serving-end event:', endServingSocket);
+            socket.send(JSON.stringify(endServingSocket));
+        } else {
+            console.warn('⚠️ WebSocket is not open.');
+        }
+
         try {
             await fetch(`/no-show-serving/${tokenInfo?.id}`);
 
@@ -150,58 +183,45 @@ const TokenDisplay = () => {
             setStartTime(null);
             setIsServing(false);
             setDisplayTime(0);
+            setTokenInfo(null);
         } catch (err) {
             console.error('Failed to fetch services', err);
         }
     };
 
     const nextToken = async () => {
+        if (tokenInfo?.token_number_display) return;
+
         setCalling(true);
 
         setNextLabel(`Calling Next`);
 
         try {
-            let ticketInfo = null;
+            const nextToken = await fetch('/next-token');
 
-            if (tokenInfo) {
-                ticketInfo = tokenInfo;
-            } else {
-                const res = await fetch('/next-token');
-                ticketInfo = await res.json();
-            }
+            let ticketInfo = await nextToken.json();
 
-            if (ticketInfo?.id) {
-                setTokenInfo(ticketInfo);
+            if (!ticketInfo?.id) return;
 
-                setStartTime(Date.now()); // timer doest not start sometime
-                setIsServing(true);
+            setTokenInfo(ticketInfo);
+            setStartTime(Date.now()); // timer doest not start sometime
+            setIsServing(true);
 
-                const res = await fetch(`/start-serving/${ticketInfo.id}`);
-                const json = await res.json();
-                console.log('Started serving:', json);
-
-                const socket = new WebSocket('ws://192.168.2.6:8080');
-
-                // Wait until the connection is open
-                socket.addEventListener('open', () => {
-                    
-                    console.log('Connected to WS server');
-
-                    const message = {
+            const res = await fetch(`/start-serving/${ticketInfo.id}`);
+            const json = await res.json();
+            if (json && json.counter) {
+                const socket = socketRef.current;
+                if (socket && socket.readyState === WebSocket.OPEN) {
+                    const socketPacket: any = {
                         event: 'token-serving',
-                        data: {
-                            token: json.token_number_display,
-                            counter: json?.counter?.name,
-                        },
+                        data: json,
                     };
-                    console.log("🚀 ~ socket.addEventListener ~ message:", message)
-
-                    socket.send(JSON.stringify(message));
-                });
-
-                announceTheToken(ticketInfo);
-            } else {
-                console.warn('No next token received.');
+                    console.log('🚀 ~ nextToken ~ socketPacket:', socketPacket);
+                    setAnnouncerPayload(socketPacket);
+                    socket.send(JSON.stringify(socketPacket));
+                } else {
+                    console.warn('WebSocket is not open.');
+                }
             }
         } catch (err) {
             console.error('Failed to fetch services', err);
@@ -221,6 +241,23 @@ const TokenDisplay = () => {
         const secs = String(totalSeconds % 60).padStart(2, '0');
         return `${hrs}:${mins}:${secs}`;
     };
+
+    useEffect(() => {
+        const socket = new WebSocket('ws://192.168.2.6:8080');
+        socketRef.current = socket;
+
+        socket.addEventListener('open', () => {
+            console.log('Connected to WS server');
+        });
+
+        socket.addEventListener('error', (error) => {
+            console.error('WebSocket error:', error);
+        });
+
+        return () => {
+            socket.close();
+        };
+    }, []);
 
     useEffect(() => {
         let interval: NodeJS.Timeout;
@@ -248,8 +285,6 @@ const TokenDisplay = () => {
         }, 5000);
 
         return () => clearInterval(interval); // cleanup when component unmounts
-
-        // isPreviousTokenExist();
     }, []);
 
     return (
@@ -351,7 +386,7 @@ const TokenDisplay = () => {
                     </Button>
                     {/* Call for previous token */}
 
-                    <ManualCall title="Call Manual" endpoint="call_manual" />
+                    {/* <ManualCall title="Call Manual" endpoint="call_manual" /> */}
 
                     <Button
                         onClick={toggleServing}

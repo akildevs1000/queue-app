@@ -19,6 +19,7 @@ import {
 import YoutubePlayer from 'react-native-youtube-iframe';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/Ionicons';
+import FlickerRow from './compoments/FlickerRow';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -32,8 +33,10 @@ export default function Welcome() {
   const [tokens, setTokens] = useState([]);
   const [youtubeVideoIds, setYoutubeVideoIds] = useState(["LnD70Vk__h0"]);
   const [showModal, setShowModal] = useState(true);
-  const [resetIpAndPort, setResetIpAndPort] = useState(false);
+  const [highlightedToken, setHighlightedToken] = useState(null);
   const timeoutRef = useRef(null);
+  const ws = useRef(null);
+
 
   const handleTap = () => {
     const newCount = tapCount + 1;
@@ -92,7 +95,7 @@ export default function Welcome() {
     }
   };
 
-  const announceTheToken = async (token = 'LQ005', counter = 'Counter 1') => {
+  const announceTheToken = async (token = null, counter = null) => {
 
     const message = `Token ${token}, please proceed to the ${counter}.`;
     try {
@@ -111,34 +114,68 @@ export default function Welcome() {
   };
 
   useEffect(() => {
-    const ws = new WebSocket('ws://192.168.2.6:8080');
 
-    ws.onopen = () => {
+    let isMounted = true;
+
+    ws.current = new WebSocket('ws://192.168.2.6:8080');
+
+    ws.current.onopen = () => {
+      if (!isMounted) return;
       console.log('✅ Connected to WS server');
     };
 
-    ws.onmessage = async (event) => {
-      console.log("🚀 ~ useEffect ~ event:", event);
+    ws.current.onmessage = (event) => {
+      if (!isMounted) return;
 
       try {
-        const text = await event.data;
-        const data = JSON.parse(text);
-        console.log('📩 Received from server:', data.data);
-        // setTokens(prevTokens => [...prevTokens, data.data]);
+        const parsed = JSON.parse(event.data);
+        console.log('📩 Parsed Data:', parsed);
 
-       announceTheToken(data.data.token, data.data.counter);
+        const { event: eventType, data: tokenData } = parsed;
+
+        if (tokenData?.token && tokenData?.counter !== undefined && eventType === 'token-serving') {
+          setTokens(prevTokens => {
+            const isDuplicate = prevTokens.some(item => item.token === tokenData.token);
+            if (isDuplicate) return prevTokens;
+            return [...prevTokens, tokenData];
+          });
+
+          setHighlightedToken(tokenData.token); // Highlight it
+          announceTheToken(tokenData.token, tokenData.counter);
+
+          // Remove highlight after 1 second
+          setTimeout(() => setHighlightedToken(null), 1000);
+        }
+
+
+        else if (tokenData?.token && eventType === 'token-serving-end') {
+          setTokens(prevTokens => {
+            const updatedTokens = prevTokens.filter(item => item.token !== tokenData.token);
+            console.log('🗑️ Token Removed:', tokenData.token);
+            return updatedTokens;
+          });
+        }
 
       } catch (e) {
-        console.error('Failed to parse message:', e.message || e);
+        console.error('❌ Failed to parse message:', e.message || e);
       }
     };
 
-    ws.onerror = (error) => {
+    ws.current.onerror = (error) => {
       console.error('❌ WebSocket error:', error.message || error);
     };
 
-    ws.onclose = () => {
+
+    ws.current.onclose = () => {
       console.log('🔌 WebSocket disconnected');
+    };
+
+    return () => {
+      isMounted = false;
+      if (ws.current) {
+        ws.current.close();
+        console.log('🔁 WebSocket closed on unmount');
+      }
     };
 
   }, []);
@@ -149,21 +186,13 @@ export default function Welcome() {
 
     loadIpPort();
 
-    setTimeout(() => {
-      fetchServingItems();
-    }, 5000);
-
-
-    const interval = setInterval(() => {
-      fetchServingItems();
-    }, 10000);
+    fetchServingItems();
 
 
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
-      clearInterval(interval);
     }
 
   }, []);
@@ -190,20 +219,17 @@ export default function Welcome() {
             </View>
             <FlatList
               data={tokens}
-              keyExtractor={(_, index) => index.toString()}
+              keyExtractor={(item, index) => index.toString()}
               renderItem={({ item, index }) => (
-                <TouchableOpacity
-                  onPress={() => { announceTheToken(item.token, item.counter) }}
-                  style={[
-                    styles.tableRow,
-                    { backgroundColor: index % 2 === 0 ? '#eaf4fc' : '#fff' },
-                  ]}
-                >
-                  <Text style={styles.tableCell}>{item.token}</Text>
-                  <Text style={styles.tableCell}>{item.counter}</Text>
-                </TouchableOpacity>
+                <FlickerRow
+                  token={item.token}
+                  counter={item.counter}
+                  isHighlighted={item.token === highlightedToken}
+                  backgroundColor={index % 2 === 0 ? '#eaf4fc' : '#fff'}
+                />
               )}
             />
+
           </View>
         ) : (
           <Text style={styles.noData}>No tickets found.</Text>
@@ -295,21 +321,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 42,
   },
-  tableRow: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderColor: '#ddd',
-    paddingVertical: 20,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    marginBottom: 8,
-  },
-  tableCell: {
-    flex: 1,
-    fontSize: 40,
-    color: '#222',
-    textAlign: 'center',
-  },
+ 
   noData: {
     marginTop: 20,
     textAlign: 'center',
@@ -318,8 +330,8 @@ const styles = StyleSheet.create({
   },
   settingsIcon: {
     position: 'absolute',
-    bottom: 30,
-    right: 30,
+    bottom: 60,
+    right: 60,
     zIndex: 10,
     backgroundColor: '#fff',
     borderRadius: 20,
@@ -333,7 +345,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalBox: {
-    width: '80%',
+    width: '50%',
     backgroundColor: '#fff',
     borderRadius: 16,
     padding: 20,
