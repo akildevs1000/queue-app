@@ -5,11 +5,11 @@ import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-    // server: {
-    //     host: '192.168.3.46',
-    //     port: 5173,
-    //     cors: true,
-    // },
+    server: {
+        host: '192.168.3.46',
+        port: 5173,
+        cors: true,
+    },
     plugins: [
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.tsx'],
