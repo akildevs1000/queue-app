@@ -97,14 +97,23 @@ export default function Welcome() {
 
   const announceTheToken = async (token = null, counter = null) => {
 
+    // const availableVoices = await Speech.getAvailableVoicesAsync();
+    // Log all available voices
+    // console.log(availableVoices);
+
     const message = `Token ${token}, please proceed to the ${counter}.`;
+
     try {
       const { sound } = await Audio.Sound.createAsync(require('./assets/1.wav'));
       await sound.playAsync();
       sound.setOnPlaybackStatusUpdate((status) => {
         if (status.didJustFinish) {
           sound.unloadAsync();
-          Speech.speak(message, { language: 'en-US' });
+
+          Speech.speak(message, {
+            language: 'en-US',
+            voice: "en-us-x-sfg-network"
+          });
         }
       });
     } catch (error) {
