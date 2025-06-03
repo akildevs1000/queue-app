@@ -26,9 +26,9 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 export default function Welcome() {
   const [tapCount, setTapCount] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
-  const [baseUrl, setBaseUrl] = useState("http://192.168.2.6:8000");
-  const [ip, setIp] = useState(null);
-  const [port, setPort] = useState(null);
+  const [baseUrl, setBaseUrl] = useState("http://192.168.3.46:8000");
+  const [ip, setIp] = useState("192.168.3.46");
+  const [port, setPort] = useState("8000");
   const [loading, setLoading] = useState(false);
   const [tokens, setTokens] = useState([]);
   const [youtubeVideoIds, setYoutubeVideoIds] = useState(["LnD70Vk__h0"]);
@@ -117,7 +117,7 @@ export default function Welcome() {
 
     let isMounted = true;
 
-    ws.current = new WebSocket('ws://192.168.2.6:8080');
+    ws.current = new WebSocket('ws://192.168.3.46:8080');
 
     ws.current.onopen = () => {
       if (!isMounted) return;
