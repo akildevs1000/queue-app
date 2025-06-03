@@ -1,7 +1,7 @@
 const WebSocket = require('ws');
 
 // Replace with your actual secure WebSocket server URL
-const ws = new WebSocket('ws://192.168.2.6:8080', {
+const ws = new WebSocket('ws://192.168.3.46:8080', {
   rejectUnauthorized: false // ⚠️ Only use in development/self-signed certs
 });
 

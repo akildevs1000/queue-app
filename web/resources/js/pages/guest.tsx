@@ -59,7 +59,7 @@ export default function Welcome() {
     };
 
     useEffect(() => {
-        const socket = new WebSocket('ws://192.168.2.6:8080');
+        const socket = new WebSocket('ws://192.168.3.46:8080');
         socketRef.current = socket;
 
         socket.addEventListener('open', () => {
