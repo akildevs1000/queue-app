@@ -222,6 +222,7 @@ export default function Welcome() {
               keyExtractor={(item, index) => index.toString()}
               renderItem={({ item, index }) => (
                 <FlickerRow
+                  onPress={() => announceTheToken(item.token, item.counter)}
                   token={item.token}
                   counter={item.counter}
                   isHighlighted={item.token === highlightedToken}
@@ -321,7 +322,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 42,
   },
- 
+
   noData: {
     marginTop: 20,
     textAlign: 'center',
