@@ -1,0 +1,1 @@
+import{j as e}from"./app-DfDeLNTQ.js";import{B as m}from"./button-y4IZQcFT.js";import{c as n}from"./utils-jAU0Cazi.js";function p({children:t,className:r,...o}){return e.jsx(m,{className:n("bg-gradient-to-r from-blue-500 to-purple-600 text-white",r),...o,children:t})}export{p as G};
