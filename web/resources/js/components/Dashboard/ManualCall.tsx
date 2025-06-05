@@ -11,17 +11,22 @@ type CreateInterFace = {
     token_number_display: string;
 };
 
-export default function ManualCall({ title, endpoint }: { title: any; endpoint: any }) {
+export default function ManualCall({
+    title,
+    onSubmitData,
+}: {
+    title: any;
+    onSubmitData: (value: string) => void; // 👈 Add this type
+}) {
     const [open, setOpen] = useState(false);
 
-    const { data, setData, post, processing, reset, errors } = useForm<CreateInterFace>({
+    const { data, setData, processing } = useForm<CreateInterFace>({
         token_number_display: '',
     });
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-
-        console.log('🚀 ~ handleSubmit ~ token_number_display:', data.token_number_display);
+        onSubmitData(data.token_number_display);
 
         // post(endpoint, {
         //     onSuccess: () => {
@@ -49,7 +54,6 @@ export default function ManualCall({ title, endpoint }: { title: any; endpoint: 
                             value={data.token_number_display}
                             onChange={(e) => setData('token_number_display', e.target.value)}
                         />
-                        {errors.token_number_display && <p className="pt-1 pl-1 text-sm text-red-400">{errors.token_number_display}</p>}
                     </div>
 
                     <Button className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white" type="submit" disabled={processing}>

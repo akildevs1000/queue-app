@@ -6,8 +6,8 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
     server: {
-        host: '192.168.3.46',
-        port: 5173,
+        // host: '0.0.0.0',
+        // port: 5173,
         cors: true,
     },
     plugins: [

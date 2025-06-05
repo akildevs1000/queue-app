@@ -5,6 +5,7 @@ import { Button } from '../ui/button';
 
 import CounterByUser from '../User/CounterByUser';
 import ServiceByUser from '../User/ServiceByUser';
+import ManualCall from './ManualCall';
 
 interface TokenInfo {
     id: number;
@@ -51,6 +52,10 @@ const TokenDisplay = () => {
         } catch (err) {
             console.error('Failed to fetch services', err);
         }
+    };
+
+    const handleDataFromManualCall = async (value: string) => {
+        console.log('Received from child:', value);
     };
 
     const feedbackByCounter = async () => {
@@ -243,9 +248,8 @@ const TokenDisplay = () => {
     };
 
     useEffect(() => {
-
         fetchTokenCounts();
-        
+
         const socket = new WebSocket('ws://192.168.3.46:8080');
         socketRef.current = socket;
 
@@ -392,7 +396,7 @@ const TokenDisplay = () => {
                     </Button>
                     {/* Call for previous token */}
 
-                    {/* <ManualCall title="Call Manual" endpoint="call_manual" /> */}
+                    <ManualCall title="Manual Call" onSubmitData={handleDataFromManualCall} />
 
                     <Button
                         onClick={toggleServing}
