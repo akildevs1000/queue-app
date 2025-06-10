@@ -95,7 +95,7 @@ export default function Welcome() {
     }
   };
 
-  const announceTheToken = async (token = null, counter = null) => {
+  const announceTheToken = async (token = null, counter = null,language = "ar") => {
 
     // const availableVoices = await Speech.getAvailableVoicesAsync();
     // Log all available voices
@@ -105,22 +105,40 @@ export default function Welcome() {
 
     try {
       const { sound } = await Audio.Sound.createAsync(require('./assets/1.wav'));
-      await sound.playAsync();
-      sound.setOnPlaybackStatusUpdate((status) => {
-        if (status.didJustFinish) {
-          sound.unloadAsync();
 
-          Speech.speak(message, {
-            language: 'en-US',
-            voice: "en-us-x-sfg-network"
-          });
+      await sound.playAsync();
+
+      sound.setOnPlaybackStatusUpdate(async (status) => {
+        if (status.didJustFinish) {
+          await sound.unloadAsync();
+
+          let voiceOptions = { language: "en-US", voice: "en-us-x-sfg-network" };
+
+          if (language === "ar") {
+            const voices = await Speech.getAvailableVoicesAsync();
+            const arabicVoice = voices.find(v => v.language.startsWith('ar'));
+
+            if (arabicVoice) {
+              voiceOptions = {
+                language: "ar",
+                voice: arabicVoice.identifier,
+                pitch: 1.2,     // Slightly higher pitch may help
+                rate: 1.1       // Slower rate may improve clarity
+              };
+            }
+          }
+
+          Speech.speak(message, voiceOptions);
         }
       });
+
     } catch (error) {
       console.error('Error playing sound or speaking:', error);
-      Speech.speak(message, { language: 'en-US' });
+      // Fallback to speech directly
+      Speech.speak(message, { language: language === "ar" ? "ar" : "en-US" });
     }
   };
+
 
   useEffect(() => {
 
@@ -150,7 +168,7 @@ export default function Welcome() {
           });
 
           setHighlightedToken(tokenData.token); // Highlight it
-          announceTheToken(tokenData.token, tokenData.counter);
+          announceTheToken(tokenData.token, tokenData.counter, tokenData.language);
 
           // Remove highlight after 1 second
           setTimeout(() => setHighlightedToken(null), 1000);
@@ -231,7 +249,7 @@ export default function Welcome() {
               keyExtractor={(item, index) => index.toString()}
               renderItem={({ item, index }) => (
                 <FlickerRow
-                  onPress={() => announceTheToken(item.token, item.counter)}
+                  onPress={() => announceTheToken(item.token, item.counter, item.language)}
                   token={item.token}
                   counter={item.counter}
                   isHighlighted={item.token === highlightedToken}
