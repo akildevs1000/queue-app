@@ -103,6 +103,7 @@ class TokenController extends Controller
         return response()->json([
             "token" => $token->token_number_display,
             "counter" => $token->counter->name,
+            "language" => $token->language,
         ]);
     }
 
