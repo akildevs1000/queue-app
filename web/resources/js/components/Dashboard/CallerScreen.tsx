@@ -151,6 +151,7 @@ const TokenDisplay = () => {
 
                 console.log('🚀 Sending token-serving-end event:', endServingSocket);
                 socket.send(JSON.stringify(endServingSocket));
+                fetchTokenCounts();
             } else {
                 console.warn('⚠️ WebSocket is not open.');
             }
