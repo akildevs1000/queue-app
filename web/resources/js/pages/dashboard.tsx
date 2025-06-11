@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { SharedData, type BreadcrumbItem } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
-import { Activity, Clock, UserCheck, Users } from 'lucide-react';
+import { Activity, Check, Clock, UserCheck, Users } from 'lucide-react';
 
 import CallerScreen from '@/components/Dashboard/CallerScreen';
 import LoginLogs from '@/components/LoginLog/Index';
@@ -14,28 +14,39 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Dashboard() {
+export default function Dashboard({items} : any) {
+    console.log("🚀 ~ Dashboard ~ items:", items)
     const { auth } = usePage<SharedData>().props;
 
     const stats = [
         {
             title: 'Total Visits Today',
-            value: '320',
+            value: items.total_visits,
             icon: <Users className="h-8 w-8 text-blue-500" />,
         },
         {
+            title: 'Total in Served',
+            value: items.served,
+            icon: <Check className="h-8 w-8 text-green-500" />,
+        },
+         {
+            title: 'Total in Serving',
+            value: items.serving,
+            icon: <Clock className="h-8 w-8 text-blue-500" />,
+        },
+        {
             title: 'Total in Queue',
-            value: '22',
+            value: items.pending,
             icon: <Clock className="h-8 w-8 text-yellow-500" />,
         },
-        {
-            title: 'VIP Customers',
-            value: '8',
-            icon: <UserCheck className="h-8 w-8 text-purple-500" />,
-        },
+        // {
+        //     title: 'VIP Customers',
+        //     value: '8',
+        //     icon: <UserCheck className="h-8 w-8 text-purple-500" />,
+        // },
         {
             title: 'Avg. Wait Time',
-            value: '5 min',
+            value: `${items.avgTimeInMinutes} Min`,
             icon: <Activity className="h-8 w-8 text-green-500" />,
         },
     ];
@@ -75,7 +86,7 @@ export default function Dashboard() {
             {auth?.user?.type === 'master' && (
                 <div className="flex h-full flex-1 flex-col gap-6 p-4">
                     {/* Cards Section */}
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
                         {stats.map((item, index) => (
                             <div key={index} className="flex items-center justify-between rounded-xl border p-4 shadow-sm dark:border-gray-700">
                                 <div>

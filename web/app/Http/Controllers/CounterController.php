@@ -13,9 +13,21 @@ class CounterController extends Controller
         return response()->json(Counter::get(["id", "name"]));
     }
 
-    public function counterListByServiceId($id)
+    public function counterListByServiceId($serviceId)
     {
-        return response()->json(Counter::where("service_id", $id)->get(["id", "name"]));
+
+        $counters = Counter::where("service_id", $serviceId)
+            ->select('id', 'name')
+            ->get()->toArray();
+
+        if (!count($counters)) return [];
+
+        $defaultArr = [
+            "id" => -1,
+            "name" => "All Counters"
+        ];
+
+        return response()->json(array_merge([$defaultArr, ...$counters]));
     }
 
     public function index()

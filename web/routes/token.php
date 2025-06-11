@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\FeedBackController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\TokenController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,4 +23,6 @@ Route::middleware('auth')->group(function () {
     Route::get("feedback",  [FeedBackController::class, 'feedback'])->name("feedback.index");
     Route::post("feedback",  [FeedBackController::class, 'store']);
     Route::get("feedback-by-counter",  [FeedBackController::class, 'feedbackByCounter']);
-});
+
+    Route::get("get-report-data",  [ReportController::class, 'getReportData']);
+}); 

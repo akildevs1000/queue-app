@@ -2,8 +2,10 @@
 
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\CounterController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LoginLogController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\UserController;
 use App\Models\Token;
@@ -27,15 +29,12 @@ Route::get('/serving_list', function () {
 Route::get('/welcome', function () {})->name('home')->middleware("auth");
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', function () {
-        return Inertia::render('dashboard');
-    })->name('dashboard');
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 });
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('/', function () {
-        return Inertia::render('dashboard');
-    })->name('dashboard');
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/report', [ReportController::class, 'index'])->name('report.index');
 });
 
 
@@ -59,7 +58,6 @@ Route::get("counter-list-by-service-id/{id}", [CounterController::class, 'counte
 
 
 
-
 Route::get("contacts/chat/{id}", [ContactController::class, 'show'])->middleware("auth");
 
 Route::post("messages", [MessageController::class, "store"])->middleware("auth");
@@ -71,7 +69,7 @@ require __DIR__ . '/token.php';
 
 Route::get('/fire-serving-token-event', function () {
     $data = [
-        "token" => "LQ" . rand(1000,9999),
+        "token" => "LQ" . rand(1000, 9999),
         "counter" => "Counter 1"
     ];
 

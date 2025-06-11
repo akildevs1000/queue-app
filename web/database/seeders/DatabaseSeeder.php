@@ -15,7 +15,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        Message::factory(10)->create();
+        $this->call([
+            TokenSeeder::class,
+        ]);
 
         // Contact::factory(10)->create();s
 

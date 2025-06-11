@@ -26,12 +26,16 @@ class Token extends Model
 
     public function counter()
     {
-        return $this->belongsTo(Counter::class);
+        return $this->belongsTo(Counter::class)->withDefault([
+            "name" => "---"
+        ]);
     }
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withDefault([
+            "name" => "---"
+        ]);
     }
 
 
@@ -116,5 +120,34 @@ class Token extends Model
         $path = public_path('latest-event.json');
 
         File::put($path, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+    }
+
+    public function scopeFilter($query, array $filters)
+    {
+        if (!empty($filters['service_id']) && $filters['service_id'] != -1) {
+            $query->where('service_id', $filters['service_id']);
+        }
+
+        if (!empty($filters['counter_id']) && $filters['counter_id'] != -1) {
+            $query->where('counter_id', $filters['counter_id']);
+        }
+
+        if (isset($filters['status']) && $filters['status'] != -1) {
+            $query->where('status', $filters['status']);
+        }
+
+        if (isset($filters['language']) && $filters['language'] != -1) {
+            $query->where('language', $filters['language']);
+        }
+
+        return $query;
+    }
+
+    public static function getFilteredTokens(array $filters = [], int $perPage = 15)
+    {
+        return self::with(['service', 'counter', 'user'])
+            ->latest()
+            ->filter($filters)
+            ->paginate($perPage);
     }
 }

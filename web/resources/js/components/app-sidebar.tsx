@@ -27,6 +27,11 @@ const mainNavItems: NavItem[] = [
         href: '/counters',
         icon: Monitor,
     },
+    {
+        title: 'report',
+        href: '/report',
+        icon: Monitor,
+    },
 ];
 
 export function AppSidebar() {

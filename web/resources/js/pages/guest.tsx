@@ -102,23 +102,23 @@ export default function Welcome() {
     }, [data]);
 
     // Reset after 5 seconds on thankyou step
-    useEffect(() => {
-        let timer: ReturnType<typeof setTimeout>;
-        if (step === 'thankyou') {
-            timer = setTimeout(() => {
-                // Reset step to language and clear form & services
-                setStep('language');
-                setData({
-                    language: '',
-                    service_id: 0,
-                    service_name: '',
-                    code: '',
-                });
-                setServices([]);
-            }, 5000);
-        }
-        return () => clearTimeout(timer);
-    }, [step, setData]);
+    // useEffect(() => {
+    //     let timer: ReturnType<typeof setTimeout>;
+    //     if (step === 'thankyou') {
+    //         timer = setTimeout(() => {
+    //             // Reset step to language and clear form & services
+    //             setStep('language');
+    //             setData({
+    //                 language: '',
+    //                 service_id: 0,
+    //                 service_name: '',
+    //                 code: '',
+    //             });
+    //             setServices([]);
+    //         }, 5000);
+    //     }
+    //     return () => clearTimeout(timer);
+    // }, [step, setData]);
 
     return (
         <div className="flex min-h-screen flex-col items-center justify-center bg-[#f5f5f5] px-4 text-center">
