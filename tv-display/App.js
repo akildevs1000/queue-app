@@ -23,10 +23,15 @@ import FlickerRow from './compoments/FlickerRow';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
+const videoHeight = screenHeight;
+const videoWidth = screenWidth;
+
 export default function Welcome() {
+
+  const playerRef = useRef(null);
+
   const [tapCount, setTapCount] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
-  const [baseUrl, setBaseUrl] = useState("http://192.168.3.46:8000");
   const [ip, setIp] = useState("192.168.3.46");
   const [port, setPort] = useState("8000");
   const [loading, setLoading] = useState(false);
@@ -36,6 +41,10 @@ export default function Welcome() {
   const [highlightedToken, setHighlightedToken] = useState(null);
   const timeoutRef = useRef(null);
   const ws = useRef(null);
+
+  const [wsErrorModal, setWsErrorModal] = useState(false);
+  const [wsErrorMessage, setWsErrorMessage] = useState('');
+
 
 
   const handleTap = () => {
@@ -65,27 +74,37 @@ export default function Welcome() {
     }
   };
 
+
   const saveIpPort = async () => {
     if (!ip || !port) return;
     setLoading(true);
+
+
     try {
+
+      await getSocketConnection(ip, port);
+
       await AsyncStorage.setItem('ip', ip);
       await AsyncStorage.setItem('port', port);
+
       setIp(ip);
       setPort(port);
       setShowModal(false);
+      setWsErrorModal(false);
+      setWsErrorMessage('');
     } catch (e) {
-      console.error('Error saving IP and port', e);
+      // console.error('Error saving IP and port', e);
+      setWsErrorMessage(e.message || 'Failed to connect to server.');
+      setWsErrorModal(true);
     } finally {
       setLoading(false);
     }
   };
 
   const fetchServingItems = async () => {
-
     try {
-      // let url = `http://${ip}:${port}/api/serving_list`;
-      const res = await fetch(`${baseUrl}/api/serving_list`);
+      let url = `http://${ip}:${port}/api/serving_list`;
+      const res = await fetch(url);
       const json = await res.json();
       setTokens(json);
     } catch (e) {
@@ -95,7 +114,21 @@ export default function Welcome() {
     }
   };
 
-  const announceTheToken = async (token = null, counter = null,language = "ar") => {
+  const fetchMedia = async () => {
+    try {
+      let url = `http://${ip}:${port}/api/fetch_media`;
+      const res = await fetch(url);
+      const json = await res.json();
+      console.log("🚀 ~ fetchMedia ~ json:", json)
+      setYoutubeVideoIds(json);
+    } catch (e) {
+      // console.error('Error saving IP and port', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const announceTheToken = async (token = null, counter = null, language = "ar") => {
 
     // const availableVoices = await Speech.getAvailableVoicesAsync();
     // Log all available voices
@@ -139,62 +172,34 @@ export default function Welcome() {
     }
   };
 
-
-  useEffect(() => {
-
+  const getSocketConnection = async (ip, port) => {
     let isMounted = true;
 
-    ws.current = new WebSocket('ws://192.168.3.46:8080');
+    ws.current = new WebSocket(`ws://${ip}:${port}`);
 
     ws.current.onopen = () => {
       if (!isMounted) return;
       console.log('✅ Connected to WS server');
+      // Hide modal on successful connection
+      setWsErrorModal(false);
+      setWsErrorMessage('');
     };
 
     ws.current.onmessage = (event) => {
       if (!isMounted) return;
-
-      try {
-        const parsed = JSON.parse(event.data);
-        console.log('📩 Parsed Data:', parsed);
-
-        const { event: eventType, data: tokenData } = parsed;
-
-        if (tokenData?.token && tokenData?.counter !== undefined && eventType === 'token-serving') {
-          setTokens(prevTokens => {
-            const isDuplicate = prevTokens.some(item => item.token === tokenData.token);
-            if (isDuplicate) return prevTokens;
-            return [...prevTokens, tokenData];
-          });
-
-          setHighlightedToken(tokenData.token); // Highlight it
-          announceTheToken(tokenData.token, tokenData.counter, tokenData.language);
-
-          // Remove highlight after 1 second
-          setTimeout(() => setHighlightedToken(null), 1000);
-        }
-
-
-        else if (tokenData?.token && eventType === 'token-serving-end') {
-          setTokens(prevTokens => {
-            const updatedTokens = prevTokens.filter(item => item.token !== tokenData.token);
-            console.log('🗑️ Token Removed:', tokenData.token);
-            return updatedTokens;
-          });
-        }
-
-      } catch (e) {
-        console.error('❌ Failed to parse message:', e.message || e);
-      }
+      // your existing message logic...
     };
 
     ws.current.onerror = (error) => {
-      console.error('❌ WebSocket error:', error.message || error);
+      // console.error('❌ WebSocket error:', error.message || error);
+      setWsErrorMessage('Failed to connect to server. Please check IP and port.');
+      setWsErrorModal(true);
     };
-
 
     ws.current.onclose = () => {
       console.log('🔌 WebSocket disconnected');
+      setWsErrorMessage('WebSocket connection was closed unexpectedly.');
+      setWsErrorModal(true);
     };
 
     return () => {
@@ -204,7 +209,9 @@ export default function Welcome() {
         console.log('🔁 WebSocket closed on unmount');
       }
     };
-
+  }
+  useEffect(() => {
+    getSocketConnection(ip, port);
   }, []);
 
   useEffect(() => {
@@ -215,6 +222,7 @@ export default function Welcome() {
 
     fetchServingItems();
 
+    fetchMedia();
 
     return () => {
       if (timeoutRef.current) {
@@ -229,7 +237,28 @@ export default function Welcome() {
 
       <View style={styles.leftSection}>
         {youtubeVideoIds.length > 0 ? (
-          <></>
+          <YoutubePlayer
+            ref={playerRef}
+            height={videoHeight}
+            width={videoWidth}
+            videoId={youtubeVideoIds[0]}
+            play={true}
+            onChangeState={(state) => {
+              if (state === 'ended') {
+                playerRef.current?.seekTo(0, true);
+              }
+            }}
+            initialPlayerParams={{
+              controls: true,
+              mute: true,
+              autoplay: true,
+              loop: true,
+              playlist: youtubeVideoIds,
+              modestbranding: true,
+              rel: false,
+              fs: false,
+            }}
+          />
         ) : (
           <Text style={styles.noData}>No video found.</Text>
         )}
@@ -313,7 +342,30 @@ export default function Welcome() {
         </TouchableOpacity>
       )}
 
+      <Modal
+        visible={wsErrorModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setWsErrorModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Connection Error</Text>
+            <Text style={{ textAlign: 'center', marginBottom: 20 }}>
+              Could not connect to the socket server. Please check your connection.
+            </Text>
 
+            <View style={styles.modalButtonContainer}>
+              <Pressable
+                style={[styles.button, styles.buttonClose]}
+                onPress={() => setWsErrorModal(false)}
+              >
+                <Text style={styles.textStyle}>Dismiss</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
