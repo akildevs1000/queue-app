@@ -1,5 +1,5 @@
 {
-  "name": "serving-list-mobile-app",
+  "name": "tv-display",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -11,19 +11,17 @@
   "dependencies": {
     "@expo/metro-runtime": "~5.0.4",
     "@react-native-async-storage/async-storage": "^2.1.2",
-    "expo": "~53.0.9",
-    "expo-av": "~15.1.4",
-    "expo-screen-orientation": "^8.1.6",
+    "expo": "53.0.11",
+    "expo-av": "15.1.6",
+    "expo-screen-orientation": "8.1.7",
     "expo-speech": "~13.1.7",
     "expo-status-bar": "~2.2.3",
-    "expo-video": "~2.1.9",
+    "expo-video": "~2.2.1",
     "react": "19.0.0",
     "react-dom": "19.0.0",
-    "react-native": "0.79.2",
+    "react-native": "0.79.3",
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "^0.20.0",
-    "react-native-web-webview": "^1.0.2",
-    "react-native-websocket": "^1.0.2",
     "react-native-webview": "13.13.5",
     "react-native-youtube-iframe": "^2.3.0"
   },
