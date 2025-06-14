@@ -28,6 +28,7 @@ const FeedbackScreen: React.FC = () => {
     const { success } = usePage<PageProps>().props;
 
     const [showSuccess, setShowSuccess] = useState(false);
+    const [cooldown, setCooldown] = useState(false);
 
     const { data, setData, reset, post, processing, errors } = useForm<{ rating: number | null }>({
         rating: null,
@@ -39,15 +40,21 @@ const FeedbackScreen: React.FC = () => {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-
-        if (data.rating === null) return;
+        if (data.rating === null || cooldown) return;
 
         post('/feedback', {
             onSuccess: () => {
-                reset('rating'); // reset only the rating field after success
+                reset('rating');
                 setShowSuccess(true);
-                const timer = setTimeout(() => setShowSuccess(false), 5000);
-                return () => clearTimeout(timer);
+                setCooldown(true);
+
+                const successTimer = setTimeout(() => setShowSuccess(false), 5000);
+                const cooldownTimer = setTimeout(() => setCooldown(false), 60000); // 1 minute cooldown
+
+                return () => {
+                    clearTimeout(successTimer);
+                    clearTimeout(cooldownTimer);
+                };
             },
         });
     };
@@ -80,16 +87,22 @@ const FeedbackScreen: React.FC = () => {
 
                 {errors.rating && <p className="mt-1 text-xs text-red-500">{errors.rating}</p>}
 
-                {showSuccess && <p className="mt-1 text-xs text-green-500">{success}</p>}
-
                 <button
                     type="submit"
-                    disabled={processing || data.rating === null}
+                    disabled={processing || data.rating === null || cooldown}
                     className="mt-4 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
                 >
-                    {processing ? 'Submitting...' : 'Submit'}
+                    {processing ? 'Submitting...' : cooldown ? 'Submit' : 'Submit'}
                 </button>
             </form>
+            {showSuccess && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center">
+                    <div className="animate-pop rounded-xl border border-green-300 bg-white px-10 py-6 text-center shadow-2xl">
+                        <p className="mb-2 text-3xl font-bold text-green-600">🎉 Success!</p>
+                        <p className="text-lg text-gray-800">{success || 'Thank you for your feedback!'}</p>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -57,7 +57,7 @@ export default function ManualCall({
                     </div>
 
                     <Button className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white" type="submit" disabled={processing}>
-                        {processing ? 'Submitting...' : 'Submit'}
+                        Call
                     </Button>
                 </form>
             </DialogContent>

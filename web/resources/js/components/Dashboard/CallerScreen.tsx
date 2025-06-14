@@ -3,7 +3,6 @@ import { usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '../ui/button';
 
-import CounterByUser from '../User/CounterByUser';
 import ServiceByUser from '../User/ServiceByUser';
 import ManualCall from './ManualCall';
 
@@ -32,6 +31,7 @@ const TokenDisplay = () => {
     const [recallLabel, setRecallLabel] = useState('Recall');
     const [startTime, setStartTime] = useState<number | null>(null);
     const [performance, setPerformance] = useState(null);
+    const [counter, setCounter] = useState(null);
     const [isServing, setIsServing] = useState<boolean>(false);
     const [totalElapsed, setTotalElapsed] = useState<number>(0);
     const [displayTime, setDisplayTime] = useState<number>(0);
@@ -54,8 +54,39 @@ const TokenDisplay = () => {
         }
     };
 
-    const handleDataFromManualCall = async (value: string) => {
-        console.log('Received from child:', value);
+    const handleDataFromManualCall = async (token_number_display: string) => {
+        try {
+            const nextToken = await fetch(`/manual-call/${token_number_display}`);
+
+            let ticketInfo = await nextToken.json();
+
+            if (!ticketInfo?.id) return;
+
+            setTokenInfo(ticketInfo);
+
+            setStartTime(Date.now()); // timer doest not start sometime
+            setIsServing(true);
+
+            const res = await fetch(`/start-serving/${ticketInfo.id}`);
+            const json = await res.json();
+            if (json && json.counter) {
+                const socket = socketRef.current;
+                if (socket && socket.readyState === WebSocket.OPEN) {
+                    const socketPacket: any = {
+                        event: 'token-serving',
+                        data: json,
+                    };
+                    console.log('🚀 ~ nextToken ~ socketPacket:', socketPacket);
+                    setAnnouncerPayload(socketPacket);
+                    socket.send(JSON.stringify(socketPacket));
+                } else {
+                    console.warn('WebSocket is not open.');
+                }
+            }
+       
+        } catch (err) {
+            console.error('Failed to fetch services', err);
+        }
     };
 
     const feedbackByCounter = async () => {
@@ -249,6 +280,18 @@ const TokenDisplay = () => {
     };
 
     useEffect(() => {
+        const getCounter = async () => {
+            try {
+                const res = await fetch(`/counter-by-user`);
+                const json = await res.json();
+                setCounter(json.name);
+            } catch (err) {
+                console.error('Failed to fetch last login', err);
+            }
+        };
+
+        getCounter();
+
         fetchTokenCounts();
 
         const socket = new WebSocket('ws://192.168.3.245:7777');
@@ -265,7 +308,7 @@ const TokenDisplay = () => {
                     console.log('Received new-ticket event:', data);
                     fetchTokenCounts();
                 } else {
-                    console.log('Received other event:', data);
+                    // console.log('Received other event:', data);
                 }
             } catch (err) {
                 console.error('Failed to parse message:', event.data);
@@ -353,7 +396,7 @@ const TokenDisplay = () => {
                             </div>
                             <div className="flex items-center gap-1">
                                 <span className="font-medium text-gray-500 dark:text-gray-400">Counter:</span>
-                                <CounterByUser />
+                                {counter}
                             </div>
                         </div>
                     </div>

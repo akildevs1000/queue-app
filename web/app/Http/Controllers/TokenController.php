@@ -75,7 +75,7 @@ class TokenController extends Controller
             ->where('status', TOKEN::PENDING)
             // ->where(function ($q) {
             //     $q->whereNull('end_serving');
-                
+
             // })
             ->first(['id', 'token_number_display']);
 
@@ -189,7 +189,7 @@ class TokenController extends Controller
         $validatedData = $request->validated();
 
         // Count how many tokens are already waiting for this service
-        $waitingCount = Token::where('service_id', $validatedData['service_id'])->where("status",Token::PENDING)->count();
+        $waitingCount = Token::where('service_id', $validatedData['service_id'])->where("status", Token::PENDING)->count();
 
         // Get the latest token number globally and increment it
         $lastTokenNumber = Token::latest('token_number')->value('token_number') ?? 0;
@@ -243,5 +243,13 @@ class TokenController extends Controller
         $Token->delete();
 
         return redirect()->route("tokens.index");
+    }
+
+    public function manualCall($token_number_display)
+    {
+        $nextToken = Token::whereDate('created_at', Carbon::today())
+            ->where('token_number_display', $token_number_display)
+            ->first(['id', 'token_number_display',"language"]);
+        return response()->json($nextToken);
     }
 }

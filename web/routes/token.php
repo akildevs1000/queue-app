@@ -16,6 +16,7 @@ Route::middleware('auth')->group(function () {
     Route::get("next-token",  [TokenController::class, 'nextToken']);
     Route::get("start-serving/{id}",  [TokenController::class, 'startServing']);
     Route::get("end-serving/{id}",  [TokenController::class, 'endServing']);
+    Route::get("manual-call/{token_number_display}",  [TokenController::class, 'manualCall']);
     Route::get("no-show-serving/{id}",  [TokenController::class, 'noShowServing']);
 
 
