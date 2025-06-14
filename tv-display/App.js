@@ -227,8 +227,7 @@ export default function Welcome() {
 
         // in onmessage()
         if (eventType === 'trigger-settings') {
-          setShowSettings(true);
-          setTimeout(() => setShowSettings(false), 20000);
+          setShowModal(true);
         }
 
         if (tokenData?.token && tokenData?.counter !== undefined && eventType === 'token-serving') {
