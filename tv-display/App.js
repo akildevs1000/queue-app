@@ -32,8 +32,8 @@ export default function Welcome() {
 
   const [tapCount, setTapCount] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
-  const [ip, setIp] = useState("192.168.3.46");
-  const [port, setPort] = useState("8000");
+  const [ip, setIp] = useState("192.168.3.245");
+  const [port, setPort] = useState("7777");
   const [loading, setLoading] = useState(false);
   const [tokens, setTokens] = useState([]);
   const [youtubeVideoIds, setYoutubeVideoIds] = useState(["LnD70Vk__h0"]);
@@ -116,7 +116,7 @@ export default function Welcome() {
 
   const fetchMedia = async () => {
     try {
-      let url = `http://${ip}:${port}/api/fetch_media`;
+      let url = `http://${ip}:8000/api/fetch_media`;
       const res = await fetch(url);
       const json = await res.json();
       console.log("🚀 ~ fetchMedia ~ json:", json)
