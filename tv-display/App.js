@@ -103,7 +103,7 @@ export default function Welcome() {
 
   const fetchServingItems = async () => {
     try {
-      let url = `http://${ip}:${port}/api/serving_list`;
+      let url = `http://${ip}:8000/api/serving_list`;
       const res = await fetch(url);
       const json = await res.json();
       setTokens(json);
@@ -187,7 +187,39 @@ export default function Welcome() {
 
     ws.current.onmessage = (event) => {
       if (!isMounted) return;
-      // your existing message logic...
+
+      try {
+        const parsed = JSON.parse(event.data);
+        console.log('📩 Parsed Data:', parsed);
+
+        const { event: eventType, data: tokenData } = parsed;
+
+        if (tokenData?.token && tokenData?.counter !== undefined && eventType === 'token-serving') {
+          setTokens(prevTokens => {
+            const isDuplicate = prevTokens.some(item => item.token === tokenData.token);
+            if (isDuplicate) return prevTokens;
+            return [...prevTokens, tokenData];
+          });
+
+          setHighlightedToken(tokenData.token); // Highlight it
+          announceTheToken(tokenData.token, tokenData.counter, tokenData.language);
+
+          // Remove highlight after 1 second
+          setTimeout(() => setHighlightedToken(null), 1000);
+        }
+
+
+        else if (tokenData?.token && eventType === 'token-serving-end') {
+          setTokens(prevTokens => {
+            const updatedTokens = prevTokens.filter(item => item.token !== tokenData.token);
+            console.log('🗑️ Token Removed:', tokenData.token);
+            return updatedTokens;
+          });
+        }
+
+      } catch (e) {
+        console.error('❌ Failed to parse message:', e.message || e);
+      }
     };
 
     ws.current.onerror = (error) => {

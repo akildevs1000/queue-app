@@ -12,9 +12,6 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "ios": {
-      "supportsTablet": true
-    },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -26,12 +23,24 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [],
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "allowCleartextTraffic": true
+          }
+        }
+      ]
+    ],
     "extra": {
       "eas": {
         "projectId": "c14f90f1-8a35-4784-9b79-a253efc7c396"
       }
     },
-    "owner": "francisgill"
+    "owner": "francisgill",
+    "ios": {
+      "bundleIdentifier": "com.francisgill.tvdisplay"
+    }
   }
 }
