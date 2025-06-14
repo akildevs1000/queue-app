@@ -1,7 +1,7 @@
 // Welcome.js
 import { useEffect, useState, useRef } from 'react';
 import * as Speech from 'expo-speech';
-import { Audio } from 'expo-av';
+import { Audio, Video } from 'expo-av';
 import * as ScreenOrientation from 'expo-screen-orientation';
 
 import {
@@ -14,12 +14,10 @@ import {
   TextInput,
   Modal,
   Pressable,
-  TouchableOpacity,
-  BackHandler
+  Image
 } from 'react-native';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Icon from 'react-native-vector-icons/Ionicons';
 import FlickerRow from './compoments/FlickerRow';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -31,13 +29,22 @@ export default function Welcome() {
 
   const playerRef = useRef(null);
 
-  const [tapCount, setTapCount] = useState(0);
-  const [showSettings, setShowSettings] = useState(false);
+  const webViewRef = useRef(null);
+  const [isWebViewReady, setWebViewReady] = useState(false);
+
+  useEffect(() => {
+    if (isWebViewReady) {
+      webViewRef.current.postMessage(JSON.stringify({ type: 'setVolume', volume: 0 }));
+    }
+  }, [isWebViewReady]);
+
   const [ip, setIp] = useState("192.168.3.245");
   const [port, setPort] = useState("7777");
   const [loading, setLoading] = useState(false);
   const [tokens, setTokens] = useState([]);
   const [youtubeVideoIds, setYoutubeVideoIds] = useState(["LnD70Vk__h0"]);
+  const [media, setMedia] = useState(null);
+
   const [showModal, setShowModal] = useState(true);
   const [highlightedToken, setHighlightedToken] = useState(null);
   const timeoutRef = useRef(null);
@@ -45,53 +52,6 @@ export default function Welcome() {
 
   const [wsErrorModal, setWsErrorModal] = useState(false);
   const [wsErrorMessage, setWsErrorMessage] = useState('');
-
-  useEffect(() => {
-    let count = 0;
-    let timeout;
-
-    const onBackPress = () => {
-      count++;
-      if (count === 3) {
-        setShowSettings(true);
-        count = 0;
-
-        timeout = setTimeout(() => {
-          setShowSettings(false);
-        }, 20000); // Hide after 20 sec
-      }
-
-      setTimeout(() => {
-        count = 0;
-      }, 1000); // Reset if no rapid presses
-
-      return true; // prevent default back
-    };
-
-    BackHandler.addEventListener('hardwareBackPress', onBackPress);
-
-    return () => {
-      BackHandler.removeEventListener('hardwareBackPress', onBackPress);
-      if (timeout) clearTimeout(timeout);
-    };
-  }, []);
-
-
-
-  const handleTap = () => {
-    const newCount = tapCount + 1;
-    setTapCount(newCount);
-
-    if (newCount === 3) {
-      setShowSettings(true);
-
-      // Hide after 1 minute
-      timeoutRef.current = setTimeout(() => {
-        setShowSettings(false);
-        setTapCount(0); // Reset count if needed
-      }, 20000); // 60 seconds
-    }
-  };
 
   const loadIpPort = async () => {
     const ip = await AsyncStorage.getItem('ip');
@@ -105,16 +65,13 @@ export default function Welcome() {
     }
   };
 
-
   const saveIpPort = async () => {
     if (!ip || !port) return;
     setLoading(true);
 
-
     try {
 
       await getSocketConnection(ip, port);
-
       await AsyncStorage.setItem('ip', ip);
       await AsyncStorage.setItem('port', port);
 
@@ -150,8 +107,7 @@ export default function Welcome() {
       let url = `http://${ip}:8000/api/fetch_media`;
       const res = await fetch(url);
       const json = await res.json();
-      console.log("🚀 ~ fetchMedia ~ json:", json)
-      setYoutubeVideoIds(json);
+      setMedia(json)
     } catch (e) {
       // console.error('Error saving IP and port', e);
     } finally {
@@ -165,7 +121,9 @@ export default function Welcome() {
     // Log all available voices
     // console.log(availableVoices);
 
-    const message = `Token ${token}, please proceed to the ${counter}.`;
+    const message = language === "ar"
+      ? `الرقم ${token}، يرجى التوجه إلى ${counter}.`
+      : `Token ${token}, please proceed to the ${counter}.`;
 
     try {
       const { sound } = await Audio.Sound.createAsync(require('./assets/1.wav'));
@@ -186,8 +144,6 @@ export default function Welcome() {
               voiceOptions = {
                 language: "ar",
                 voice: arabicVoice.identifier,
-                pitch: 1.2,     // Slightly higher pitch may help
-                rate: 1.1       // Slower rate may improve clarity
               };
             }
           }
@@ -301,38 +257,54 @@ export default function Welcome() {
   }, []);
 
   return (
-    <View style={styles.container} onTouchStart={handleTap}>
+    <View style={styles.container}>
 
       <View style={styles.leftSection}>
-        {youtubeVideoIds.length > 0 ? (
-          <YoutubePlayer
-            onReady={() => {
-              playerRef.current?.getInternalPlayer()?.mute();
-            }}
-            ref={playerRef}
-            height={videoHeight}
-            width={videoWidth}
-            videoId={youtubeVideoIds[0]}
-            play={true}
-            onChangeState={(state) => {
-              if (state === 'ended') {
-                playerRef.current?.seekTo(0, true);
-              }
-            }}
-            initialPlayerParams={{
-              controls: true,
-              mute: true,
-              autoplay: true,
-              loop: true,
-              playlist: youtubeVideoIds,
-              modestbranding: true,
-              rel: false,
-              fs: false,
-            }}
-          />
-        ) : (
-          <Text style={styles.noData}>No video found.</Text>
-        )}
+        <>
+          {media?.type === 'youtube' ? (
+            <YoutubePlayer
+              onReady={() => {
+                playerRef.current?.getInternalPlayer()?.mute();
+              }}
+              ref={playerRef}
+              height={videoHeight}
+              width={videoWidth}
+              videoId={youtubeVideoIds[0]}
+              play={true}
+              onChangeState={(state) => {
+                if (state === 'ended') {
+                  playerRef.current?.seekTo(0, true);
+                }
+              }}
+              initialPlayerParams={{
+                controls: true,
+                mute: true,
+                autoplay: true,
+                loop: true,
+                playlist: youtubeVideoIds,
+                modestbranding: true,
+                rel: false,
+                fs: false,
+              }}
+            />
+          ) : media?.type === 'image' ? (
+            <Image
+              source={{ uri: media?.image }}
+              style={{ width: '100%', height: "100%" }}
+            />
+          ) : media?.type === 'video' ? (
+            <Video
+              source={{ uri: media?.url }}
+              style={{ width: videoWidth, height: videoHeight }}
+              resizeMode="contain"
+              shouldPlay
+              isLooping
+              isMuted
+              useNativeControls={false}
+            />
+          ) : null}
+        </>
+
       </View>
 
       <View style={styles.rightSection}>
@@ -407,16 +379,6 @@ export default function Welcome() {
         </View>
       </Modal>
 
-      {showSettings && (
-        <Pressable
-          onPress={() => setShowModal(true)}
-          accessible
-          style={styles.settingsIcon}
-        >
-          <Icon name="settings-outline" size={28} color="#333" />
-        </Pressable>
-      )}
-
       <Modal
         visible={wsErrorModal}
         transparent
@@ -450,11 +412,13 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     backgroundColor: '#f4f4f4',
+    paddingTop: 10,
   },
   leftSection: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 0, marginHorizontal: 0, width: '100%'
   },
   rightSection: {
     flex: 1,
@@ -462,19 +426,18 @@ const styles = StyleSheet.create({
   },
   tableContainer: {
     paddingHorizontal: 1,
-    paddingTop: 28,
+    
   },
   tableHeader: {
     flexDirection: 'row',
     backgroundColor: '#4287f5',
-    paddingVertical: 16,
-    marginBottom: 10,
+    paddingVertical: 3,
   },
   headerCell: {
     flex: 1,
     textAlign: 'center',
     color: 'white',
-    fontSize: 42,
+    fontSize: 30,
   },
 
   noData: {
@@ -482,16 +445,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#999',
     fontSize: 24,
-  },
-  settingsIcon: {
-    position: 'absolute',
-    bottom: 60,
-    right: 60,
-    zIndex: 10,
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 8,
-    elevation: 5,
   },
   modalOverlay: {
     flex: 1,

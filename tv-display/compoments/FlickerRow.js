@@ -44,16 +44,12 @@ const styles = StyleSheet.create({
   },
   tableRow: {
     flexDirection: 'row',
-    borderBottomWidth: 1,
     borderColor: '#ddd',
-    paddingVertical: 20,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    marginBottom: 8,
+    paddingVertical: 7,
   },
   tableCell: {
     flex: 1,
-    fontSize: 40,
+    fontSize: 30,
     color: '#222',
     textAlign: 'center',
   },
