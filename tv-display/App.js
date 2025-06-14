@@ -15,6 +15,7 @@ import {
   Modal,
   Pressable,
   TouchableOpacity,
+  BackHandler
 } from 'react-native';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -44,6 +45,36 @@ export default function Welcome() {
 
   const [wsErrorModal, setWsErrorModal] = useState(false);
   const [wsErrorMessage, setWsErrorMessage] = useState('');
+
+  useEffect(() => {
+    let count = 0;
+    let timeout;
+
+    const onBackPress = () => {
+      count++;
+      if (count === 3) {
+        setShowSettings(true);
+        count = 0;
+
+        timeout = setTimeout(() => {
+          setShowSettings(false);
+        }, 20000); // Hide after 20 sec
+      }
+
+      setTimeout(() => {
+        count = 0;
+      }, 1000); // Reset if no rapid presses
+
+      return true; // prevent default back
+    };
+
+    BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+    return () => {
+      BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+      if (timeout) clearTimeout(timeout);
+    };
+  }, []);
 
 
 
@@ -193,6 +224,12 @@ export default function Welcome() {
         console.log('📩 Parsed Data:', parsed);
 
         const { event: eventType, data: tokenData } = parsed;
+
+        // in onmessage()
+        if (eventType === 'trigger-settings') {
+          setShowSettings(true);
+          setTimeout(() => setShowSettings(false), 20000);
+        }
 
         if (tokenData?.token && tokenData?.counter !== undefined && eventType === 'token-serving') {
           setTokens(prevTokens => {
@@ -369,9 +406,13 @@ export default function Welcome() {
       </Modal>
 
       {showSettings && (
-        <TouchableOpacity style={styles.settingsIcon} onPress={() => setShowModal(true)}>
+        <Pressable
+          onPress={() => setShowModal(true)}
+          accessible
+          style={styles.settingsIcon}
+        >
           <Icon name="settings-outline" size={28} color="#333" />
-        </TouchableOpacity>
+        </Pressable>
       )}
 
       <Modal
