@@ -27,6 +27,8 @@ export default function ManualCall({
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         onSubmitData(data.token_number_display);
+        setOpen(false);
+        setData('token_number_display', '');
 
         // post(endpoint, {
         //     onSuccess: () => {
