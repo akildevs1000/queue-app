@@ -1,6 +1,7 @@
+import { SharedData } from '@/types';
 import { PageProps as InertiaPageProps } from '@inertiajs/core';
 import { useForm, usePage } from '@inertiajs/react';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 type Rating = {
     value: number;
@@ -26,6 +27,43 @@ const ratings: Rating[] = [
 
 const FeedbackScreen: React.FC = () => {
     const { success } = usePage<PageProps>().props;
+    const { auth } = usePage<SharedData>().props;
+
+    const socketRef = useRef<WebSocket | null>(null);
+    const [counter, setCounter] = useState(null);
+
+    useEffect(() => {
+        const getCounter = async () => {
+            try {
+                const res = await fetch(`/counter-by-user`);
+                const json = await res.json();
+                setCounter(json);
+                console.log('🚀 ~ auth:', auth.user.counter_id, json.id);
+            } catch (err) {
+                console.error('Failed to fetch last login', err);
+            }
+        };
+
+        getCounter();
+
+        const socket = new WebSocket('ws://192.168.3.245:7777');
+        socketRef.current = socket;
+
+        socket.addEventListener('open', () => {
+            console.log('Connected to WS server');
+        });
+
+        socket.addEventListener('message', (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                if (data.event === 'feedback') {
+                    console.log('Received token-serving event:', data);
+                }
+            } catch (err) {
+                console.error('Failed to parse message:', event.data);
+            }
+        });
+    }, []);
 
     const [showSuccess, setShowSuccess] = useState(false);
     const [cooldown, setCooldown] = useState(false);

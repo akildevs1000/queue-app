@@ -76,14 +76,19 @@ const TokenDisplay = () => {
                         event: 'token-serving',
                         data: json,
                     };
-                    console.log('🚀 ~ nextToken ~ socketPacket:', socketPacket);
                     setAnnouncerPayload(socketPacket);
                     socket.send(JSON.stringify(socketPacket));
+
+                    socket.send(
+                        JSON.stringify({
+                            event: 'feedback',
+                            data: { counterPayload: counter, ...json },
+                        }),
+                    );
                 } else {
                     console.warn('WebSocket is not open.');
                 }
             }
-       
         } catch (err) {
             console.error('Failed to fetch services', err);
         }
@@ -284,7 +289,7 @@ const TokenDisplay = () => {
             try {
                 const res = await fetch(`/counter-by-user`);
                 const json = await res.json();
-                setCounter(json.name);
+                setCounter(json);
             } catch (err) {
                 console.error('Failed to fetch last login', err);
             }
@@ -396,7 +401,7 @@ const TokenDisplay = () => {
                             </div>
                             <div className="flex items-center gap-1">
                                 <span className="font-medium text-gray-500 dark:text-gray-400">Counter:</span>
-                                {counter}
+                                {counter && counter?.name}
                             </div>
                         </div>
                     </div>
