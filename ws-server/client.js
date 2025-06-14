@@ -9,17 +9,32 @@ const ws = new WebSocket(`ws://${IP}:${PORT}`, {
 });
 
 ws.on('open', function open() {
-  console.log(`✅ Connected to WebSocket server at ws://${IP}:${PORT}`);
 
-  const message = {
-    event: 'token-serving',
-    data: {
-      token: 'LQ0005',
-      counter: 'Counter 1'
+  let currentTokenNumber = 1;
+
+  setInterval(() => {
+    console.log(`✅ Connected to WebSocket server at ws://${IP}:${PORT}`);
+
+    function getNextToken() {
+      // Pad the number to 4 digits (e.g., 1 -> 0001)
+      const paddedNumber = String(currentTokenNumber).padStart(4, '0');
+      const token = `LQ${paddedNumber}`;
+      currentTokenNumber++;
+      return token;
     }
-  };
 
-  ws.send(JSON.stringify(message));
+    // Example usage
+    const message = {
+      event: 'token-serving',
+      data: {
+        token: getNextToken(),
+        counter: 'Counter 1'
+      }
+    };
+
+    ws.send(JSON.stringify(message));
+  }, 5000);
+  console.log('🔌 Connected to server');
 });
 
 ws.on('message', function incoming(data) {

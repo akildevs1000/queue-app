@@ -21,6 +21,10 @@ Route::get('/guest', function () {
     ]);
 })->name('guest');
 
+Route::get('/tv-settings', function () {
+    return Inertia::render('tv-settings');
+})->name('tv-settings');
+
 
 Route::get('/serving_list', function () {
     return Inertia::render('serving_list');
