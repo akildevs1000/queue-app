@@ -306,6 +306,9 @@ export default function Welcome() {
       <View style={styles.leftSection}>
         {youtubeVideoIds.length > 0 ? (
           <YoutubePlayer
+            onReady={() => {
+              playerRef.current?.getInternalPlayer()?.mute();
+            }}
             ref={playerRef}
             height={videoHeight}
             width={videoWidth}
