@@ -1,17 +1,20 @@
 const WebSocket = require('ws');
 
-// Replace with your actual secure WebSocket server URL
-const ws = new WebSocket('ws://192.168.3.46:8080', {
-  rejectUnauthorized: false // ⚠️ Only use in development/self-signed certs
+// Get IP and port from command-line args or use defaults
+const IP = process.argv[2] || '192.168.3.245';
+const PORT = process.argv[3] || 7777;
+
+const ws = new WebSocket(`ws://${IP}:${PORT}`, {
+  rejectUnauthorized: false // ⚠️ Only for development
 });
 
 ws.on('open', function open() {
-  console.log('✅ Connected to WSS server');
+  console.log(`✅ Connected to WebSocket server at ws://${IP}:${PORT}`);
 
   const message = {
     event: 'token-serving',
     data: {
-      token: 'LQ0004',
+      token: 'LQ0005',
       counter: 'Counter 1'
     }
   };
