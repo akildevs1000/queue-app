@@ -10,6 +10,7 @@ type Rating = {
 
 interface PageProps extends InertiaPageProps {
     success?: string;
+    error?: string;
 }
 
 const ratings: Rating[] = [
@@ -26,26 +27,12 @@ const ratings: Rating[] = [
 ];
 
 const FeedbackScreen: React.FC = () => {
-    const { success } = usePage<PageProps>().props;
+    const { success, error } = usePage<PageProps>().props;
     const { auth } = usePage<SharedData>().props;
 
     const socketRef = useRef<WebSocket | null>(null);
-    const [counter, setCounter] = useState(null);
 
     useEffect(() => {
-        const getCounter = async () => {
-            try {
-                const res = await fetch(`/counter-by-user`);
-                const json = await res.json();
-                setCounter(json);
-                console.log('🚀 ~ auth:', auth.user.counter_id, json.id);
-            } catch (err) {
-                console.error('Failed to fetch last login', err);
-            }
-        };
-
-        getCounter();
-
         const socket = new WebSocket('ws://192.168.3.245:7777');
         socketRef.current = socket;
 
@@ -53,40 +40,55 @@ const FeedbackScreen: React.FC = () => {
             console.log('Connected to WS server');
         });
 
-        socket.addEventListener('message', (event) => {
+        socket.addEventListener('message', (e) => {
             try {
-                const data = JSON.parse(event.data);
-                if (data.event === 'feedback') {
-                    console.log('Received token-serving event:', data);
+                const { event, data } = JSON.parse(e.data);
+
+                if (event === 'feedback' && auth.user.counter_id == data.counter_id) {
+                    setData('token_id', data.token_id);
                 }
             } catch (err) {
-                console.error('Failed to parse message:', event.data);
+                console.error('Failed to parse message:', e.data);
             }
         });
     }, []);
 
-    const [showSuccess, setShowSuccess] = useState(false);
+    const [showAlert, setShowAlert] = useState(false);
     const [cooldown, setCooldown] = useState(false);
 
-    const { data, setData, reset, post, processing, errors } = useForm<{ rating: number | null }>({
+    const { data, setData, reset, post, processing, errors } = useForm<{ rating: number | null; token_id: number | null }>({
         rating: null,
+        token_id: null,
     });
 
     const handleRating = (value: number) => {
         setData('rating', value);
     };
 
+    useEffect(() => {
+        if (success || error) {
+            setShowAlert(true);
+
+            const successTimer = setTimeout(() => {
+                setShowAlert(false);
+            }, 5000);
+
+            return () => clearTimeout(successTimer);
+        }
+    }, [success, error]);
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (data.rating === null || cooldown) return;
+
+        if (data.rating === null || data.token_id === null || cooldown) return;
 
         post('/feedback', {
             onSuccess: () => {
-                reset('rating');
-                setShowSuccess(true);
+                reset();
+                setShowAlert(true);
                 setCooldown(true);
 
-                const successTimer = setTimeout(() => setShowSuccess(false), 5000);
+                const successTimer = setTimeout(() => setShowAlert(false), 5000);
                 const cooldownTimer = setTimeout(() => setCooldown(false), 60000); // 1 minute cooldown
 
                 return () => {
@@ -133,11 +135,15 @@ const FeedbackScreen: React.FC = () => {
                     {processing ? 'Submitting...' : cooldown ? 'Submit' : 'Submit'}
                 </button>
             </form>
-            {showSuccess && (
+            {showAlert && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center">
-                    <div className="animate-pop rounded-xl border border-green-300 bg-white px-10 py-6 text-center shadow-2xl">
-                        <p className="mb-2 text-3xl font-bold text-green-600">🎉 Success!</p>
-                        <p className="text-lg text-gray-800">{success || 'Thank you for your feedback!'}</p>
+                    <div
+                        className={`animate-pop rounded-xl border px-10 py-6 text-center shadow-2xl ${
+                            success ? 'border-green-300 bg-white' : 'border-red-300 bg-white'
+                        }`}
+                    >
+                        <p className={`mb-2 text-3xl font-bold ${success ? 'text-green-600' : 'text-red-600'}`}>{success ? 'Success!' : 'Error!'}</p>
+                        <p className="text-lg text-gray-800">{success || error}</p>
                     </div>
                 </div>
             )}

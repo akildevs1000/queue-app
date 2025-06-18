@@ -115,7 +115,7 @@ export default function Welcome() {
                     code: '',
                 });
                 setServices([]);
-            }, 5000);
+            }, 1000);
         }
         return () => clearTimeout(timer);
     }, [step, setData]);

@@ -11,7 +11,6 @@ export default function LastLogin() {
             setLoading(true);
             const res = await fetch(`/last-login`);
             const json = await res.json();
-            console.log("🚀 ~ fetchLastLogin ~ json:", json)
             setLog(json);
         } catch (err) {
             console.error('Failed to fetch last login', err);

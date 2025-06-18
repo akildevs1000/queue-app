@@ -82,7 +82,7 @@ const TokenDisplay = () => {
                     socket.send(
                         JSON.stringify({
                             event: 'feedback',
-                            data: { counterPayload: counter, ...json },
+                            data: { counter_id: counter?.id || 0, token_id: ticketInfo.id, ...json },
                         }),
                     );
                 } else {
@@ -97,7 +97,6 @@ const TokenDisplay = () => {
     const feedbackByCounter = async () => {
         try {
             const res = await fetch('/feedback-by-counter');
-            console.log('🚀 ~ feedbackByCounter ~ res:', res);
             const json = await res.json();
             setPerformance(json);
         } catch (err) {
@@ -261,6 +260,13 @@ const TokenDisplay = () => {
                     console.log('🚀 ~ nextToken ~ socketPacket:', socketPacket);
                     setAnnouncerPayload(socketPacket);
                     socket.send(JSON.stringify(socketPacket));
+
+                    socket.send(
+                        JSON.stringify({
+                            event: 'feedback',
+                            data: { counter_id: counter?.id || 0, token_id: ticketInfo.id, ...json },
+                        }),
+                    );
                 } else {
                     console.warn('WebSocket is not open.');
                 }
@@ -294,6 +300,8 @@ const TokenDisplay = () => {
                 console.error('Failed to fetch last login', err);
             }
         };
+
+        feedbackByCounter();
 
         getCounter();
 

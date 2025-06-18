@@ -39,6 +39,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/report', [ReportController::class, 'index'])->name('report.index');
+    Route::get('/report/download', [ReportController::class, 'download'])->name('report.download');
+    Route::get('/peak-hour-report', [ReportController::class, 'peakHourReport'])->name('report.peak_hour_report');
+    Route::get('/peak-day-report', [ReportController::class, 'peakDayReport'])->name('report.peak_day_report');
 });
 
 

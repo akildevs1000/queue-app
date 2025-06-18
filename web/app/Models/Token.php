@@ -19,6 +19,14 @@ class Token extends Model
 
     protected $guarded = [];
 
+    protected $appends = ["created_at_formatted"];
+
+    public function getCreatedAtFormattedAttribute()
+    {
+        return $this->created_at->format('d M Y, h:i A');
+    }
+
+
     public function service()
     {
         return $this->belongsTo(Service::class);
@@ -140,6 +148,13 @@ class Token extends Model
             $query->where('language', $filters['language']);
         }
 
+        if (!empty($filters['start_date']) && !empty($filters['end_date'])) {
+            $query->whereBetween('created_at', [
+                $filters['start_date'] . ' 00:00:00',
+                $filters['end_date'] . ' 23:59:59',
+            ]);
+        }
+
         return $query;
     }
 
@@ -149,5 +164,40 @@ class Token extends Model
             ->latest()
             ->filter($filters)
             ->paginate($perPage);
+    }
+
+    public static function getAvgTime(array $timeStrings): string
+    {
+        $totalSeconds = 0;
+        $validCount = 0;
+
+        foreach ($timeStrings as $time) {
+            // Skip invalid or empty time values
+            if (!$time || $time === '00:00:00') {
+                continue;
+            }
+
+            // Convert time string to seconds
+            [$hours, $minutes, $seconds] = explode(':', $time);
+            $secondsTotal = ((int)$hours * 3600) + ((int)$minutes * 60) + (int)$seconds;
+
+            if ($secondsTotal > 0) {
+                $totalSeconds += $secondsTotal;
+                $validCount++;
+            }
+        }
+
+        if ($validCount === 0) {
+            return '00:00:00';
+        }
+
+        $avgSeconds = (int) round($totalSeconds / $validCount);
+
+        // Convert average seconds back to HH:MM:SS
+        $hours = floor($avgSeconds / 3600);
+        $minutes = floor(($avgSeconds % 3600) / 60);
+        $seconds = $avgSeconds % 60;
+
+        return sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
     }
 }

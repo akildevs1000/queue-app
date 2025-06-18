@@ -1,11 +1,15 @@
 import AppLayout from '@/layouts/app-layout';
 import { SharedData, type BreadcrumbItem } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
-import { Activity, Check, Clock, UserCheck, Users } from 'lucide-react';
+import { Activity, Check, Clock, Users } from 'lucide-react';
 
 import CallerScreen from '@/components/Dashboard/CallerScreen';
 import LoginLogs from '@/components/LoginLog/Index';
 import { useEffect, useState } from 'react';
+
+import PeakDay from '@/components/Dashboard/PeakDay';
+import PeakHour from '@/components/Dashboard/PeakHour';
+import Tickets from '@/components/Dashboard/Tickets';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -14,8 +18,8 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function Dashboard({items} : any) {
-    console.log("🚀 ~ Dashboard ~ items:", items)
+export default function Dashboard({ items }: any) {
+    console.log('🚀 ~ Dashboard ~ items:', items);
     const { auth } = usePage<SharedData>().props;
 
     const stats = [
@@ -29,7 +33,7 @@ export default function Dashboard({items} : any) {
             value: items.served,
             icon: <Check className="h-8 w-8 text-green-500" />,
         },
-         {
+        {
             title: 'Total in Serving',
             value: items.serving,
             icon: <Clock className="h-8 w-8 text-blue-500" />,
@@ -67,7 +71,6 @@ export default function Dashboard({items} : any) {
         fetchTokenCounts();
     }, []);
 
-
     const vipCustomers = [
         { ticket: 'V001', name: 'Mr. Khan', counter: '1', status: 'Serving' },
         { ticket: 'V002', name: 'Dr. Ayesha', counter: 'VIP Lounge', status: 'Waiting' },
@@ -100,143 +103,19 @@ export default function Dashboard({items} : any) {
 
                     {/* Tables Section */}
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        {/* Regular Customers */}
-                        <div className="h-80 overflow-auto rounded-xl border border-gray-200 bg-[var(--background)] p-4 text-[var(--foreground)] dark:border-gray-700">
-                            <h3 className="mb-4 text-lg font-semibold text-gray-800 dark:text-white">Regular Customers</h3>
-                            <table className="min-w-full text-sm">
-                                <thead>
-                                    <tr className="border-b border-gray-200 text-left dark:border-gray-700">
-                                        <th className="p-2 font-medium">Ticket No.</th>
-                                        <th className="p-2 font-medium">Counter</th>
-                                        {/* <th className="p-2 font-medium">Status</th> */}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {tokens.map((customer, index) => (
-                                        <tr key={index} className="border-t border-gray-200 dark:border-gray-700">
-                                            <td className="p-2 font-mono">{customer?.token_number_display}</td>
-                                            <td className="p-2">Counter {customer?.counter?.name}</td>
-                                            {/* <td className="p-2">
-                                                <span
-                                                    className={`inline-block rounded px-2 py-1 text-xs font-semibold ${
-                                                        customer.status === 2
-                                                            ? 'bg-green-100 text-green-800 dark:bg-green-800/30 dark:text-green-300'
-                                                            : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800/30 dark:text-yellow-300'
-                                                    }`}
-                                                >
-                                                    {customer.status}
-                                                </span>
-                                            </td> */}
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                        <div className="rounded-xl border border-gray-200 bg-[var(--background)] p-4 text-[var(--foreground)] dark:border-gray-700">
+                            <PeakDay />
                         </div>
 
-                        {/* VIP Customers */}
-                        <div className="h-80 overflow-auto rounded-xl border border-gray-200 bg-[var(--background)] p-4 text-[var(--foreground)] dark:border-gray-700">
-                            <h3 className="mb-4 text-lg font-semibold text-gray-800 dark:text-white">VIP Customers</h3>
-                            <table className="min-w-full text-sm">
-                                <thead>
-                                    <tr className="border-b border-gray-200 text-left dark:border-gray-700">
-                                        <th className="p-2 font-medium">Ticket No.</th>
-                                        <th className="p-2 font-medium">Name</th>
-                                        <th className="p-2 font-medium">Counter</th>
-                                        <th className="p-2 font-medium">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {vipCustomers.map((customer, index) => (
-                                        <tr key={index} className="border-t border-gray-200 dark:border-gray-700">
-                                            <td className="p-2 font-mono">{customer.ticket}</td>
-                                            <td className="p-2">{customer.name}</td>
-                                            <td className="p-2">{customer.counter}</td>
-                                            <td className="p-2">
-                                                <span
-                                                    className={`inline-block rounded px-2 py-1 text-xs font-semibold ${
-                                                        customer.status === 'Serving'
-                                                            ? 'bg-green-100 text-green-800 dark:bg-green-800/30 dark:text-green-300'
-                                                            : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800/30 dark:text-yellow-300'
-                                                    }`}
-                                                >
-                                                    {customer.status}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                        <div className="rounded-xl border border-gray-200 bg-[var(--background)] p-4 text-[var(--foreground)] dark:border-gray-700">
+                            <PeakHour />
                         </div>
-
-                        <div className="h-80 overflow-auto rounded-xl border border-gray-200 bg-[var(--background)] p-4 text-[var(--foreground)] dark:border-gray-700">
-                            <h3 className="mb-4 text-lg font-semibold text-gray-800 dark:text-white">Counters</h3>
-
-                            <table className="min-w-full text-sm">
-                                <thead>
-                                    <tr className="border-b border-gray-200 text-left dark:border-gray-700">
-                                        <th className="p-2 font-medium">Counter</th>
-                                        <th className="p-2 font-medium">Ticket No.</th>
-                                        <th className="p-2 font-medium">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {counters.map((counter, index) => (
-                                        <tr key={index} className="border-t border-gray-200 dark:border-gray-700">
-                                            <td className="p-2">{counter.name}</td>
-                                            <td className="p-2 font-mono">{counter.ticket}</td>
-                                            <td className="p-2">
-                                                <span
-                                                    className={`inline-block rounded px-2 py-1 text-xs font-semibold ${
-                                                        counter.status === 'Serving'
-                                                            ? 'bg-green-100 text-green-800 dark:bg-green-800/30 dark:text-green-300'
-                                                            : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800/30 dark:text-yellow-300'
-                                                    }`}
-                                                >
-                                                    {counter.status}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div className="h-80 overflow-auto rounded-xl border border-gray-200 bg-[var(--background)] p-4 text-[var(--foreground)] dark:border-gray-700">
-                            <h3 className="mb-4 text-lg font-semibold text-gray-800 dark:text-white">Counters</h3>
-
-                            <table className="min-w-full text-sm">
-                                <thead>
-                                    <tr className="border-b border-gray-200 text-left dark:border-gray-700">
-                                        <th className="p-2 font-medium">Counter</th>
-                                        <th className="p-2 font-medium">Ticket No.</th>
-                                        <th className="p-2 font-medium">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {counters.map((counter, index) => (
-                                        <tr key={index} className="border-t border-gray-200 dark:border-gray-700">
-                                            <td className="p-2">{counter.name}</td>
-                                            <td className="p-2 font-mono">{counter.ticket}</td>
-                                            <td className="p-2">
-                                                <span
-                                                    className={`inline-block rounded px-2 py-1 text-xs font-semibold ${
-                                                        counter.status === 'Serving'
-                                                            ? 'bg-green-100 text-green-800 dark:bg-green-800/30 dark:text-green-300'
-                                                            : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800/30 dark:text-yellow-300'
-                                                    }`}
-                                                >
-                                                    {counter.status}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div className="w-full rounded-lg border border-gray-100 bg-[var(--background)] p-4 p-6 text-[var(--foreground)] shadow dark:border-gray-700 dark:bg-gray-900">
-                            <LoginLogs />
-                        </div>
+                    </div>
+                    <div className="rounded-xl border border-gray-200 bg-[var(--background)] p-4 text-[var(--foreground)] dark:border-gray-700">
+                        <Tickets />
+                    </div>
+                    <div className="w-full rounded-lg border border-gray-100 bg-[var(--background)] p-4 p-6 text-[var(--foreground)] shadow dark:border-gray-700 dark:bg-gray-900">
+                        <LoginLogs />
                     </div>
                 </div>
             )}

@@ -11,7 +11,6 @@ export default function CounterByUser() {
             setLoading(true);
             const res = await fetch(`/counter-by-user`);
             const json = await res.json();
-            console.log('🚀 ~ fetchLastLogin ~ json:', json);
             setItem(json);
         } catch (err) {
             console.error('Failed to fetch last login', err);

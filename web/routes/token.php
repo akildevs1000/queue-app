@@ -26,4 +26,5 @@ Route::middleware('auth')->group(function () {
     Route::get("feedback-by-counter",  [FeedBackController::class, 'feedbackByCounter']);
 
     Route::get("get-report-data",  [ReportController::class, 'getReportData']);
+    Route::get("get-summary-report-data",  [ReportController::class, 'getSummaryReportData']);
 }); 

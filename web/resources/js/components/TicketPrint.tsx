@@ -23,7 +23,7 @@ const TicketPrint = ({
 }: TicketPrintProps) => {
     useEffect(() => {
         // Automatically open the print dialog
-        window.print();
+        // window.print();
     }, []);
 
     return (

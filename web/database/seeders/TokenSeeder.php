@@ -15,16 +15,16 @@ class TokenSeeder extends Seeder
     public function run(): void
     {
         DB::transaction(function () {
-            // $this->pendingTokenSeeder(100);
-            $this->markSomeAsServing(50); // 30: 20 for endServing, 10 for noShow
-            $this->markSomeAsServed(10);  // simulate endServing
-            $this->markSomeAsNoShow(10);  // simulate noShow
+            $this->pendingTokenSeeder(20);
+            // $this->markSomeAsServing(5); // 30: 20 for endServing, 10 for noShow
+            // $this->markSomeAsServed(10);  // simulate endServing
+            // $this->markSomeAsNoShow(10);  // simulate noShow
         });
     }
 
     protected function pendingTokenSeeder(int $count): void
     {
-        $services = Service::all();
+        $services = Service::get();
 
         if ($services->isEmpty()) {
             $this->command->warn('No services found. Please run the ServiceSeeder first.');
@@ -33,20 +33,21 @@ class TokenSeeder extends Seeder
 
         $lastTokenNumber = Token::max('token_number') ?? 0;
 
-        foreach (range(1, $count) as $i) {
-            $service = $services->random();
-            $newTokenNumber = ++$lastTokenNumber;
+        foreach ($services as $service) {
+            foreach (range(1, $count) as $i) {
+                $lastTokenNumber++; // Increment for each token
 
-            Token::create([
-                'language' => fake()->randomElement(['en', 'ar']),
-                'service_id' => $service->id,
-                'token_number' => $newTokenNumber,
-                'status' => Token::PENDING,
-                'token_number_display' => $service->code . str_pad($newTokenNumber, 4, '0', STR_PAD_LEFT),
-            ]);
+                Token::create([
+                    'language' => fake()->randomElement(['en', 'ar']),
+                    'service_id' => $service->id,
+                    'token_number' => $lastTokenNumber,
+                    'status' => Token::PENDING,
+                    'token_number_display' => $service->code . str_pad($lastTokenNumber, 4, '0', STR_PAD_LEFT),
+                ]);
+
+                $this->command->info("Seeding service {$service->name} with token number $lastTokenNumber.");
+            }
         }
-
-        $this->command->info("Seeded $count PENDING tokens.");
     }
 
     protected function markSomeAsServing(int $count): void
@@ -82,7 +83,7 @@ class TokenSeeder extends Seeder
                 'start_serving' => now()->subMinutes(rand(5, 15)),
                 'status' => Token::SERVING,
                 'user_id' => $user->id,
-                'counter_id' => $user->counter_id,
+                'counter_id' => 18,
             ]);
         }
 
