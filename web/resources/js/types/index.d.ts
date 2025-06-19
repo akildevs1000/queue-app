@@ -43,6 +43,11 @@ export interface User {
     id: number;
     name: string;
     email: string;
+    ip: string;
+    port: string;
+    media_url: string;
+    media_height: string;
+    media_width: string;
     avatar?: string;
     email_verified_at: string | null;
     created_at: string;

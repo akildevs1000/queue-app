@@ -24,6 +24,44 @@ class ProfileController extends Controller
         ]);
     }
 
+    public function tvSettings(): Response
+    {
+        return Inertia::render('settings/tv-settings');
+    }
+
+    public function tvSettingsUpdate(Request $request)
+    {
+        $validated = $request->validate([
+            'ip' => ['required', 'ip'],
+            'port' => ['required', 'integer'],
+            'media_url' => ['required', function ($attribute, $value, $fail) {
+                // Check if it's a PNG
+                if (str_ends_with($value, '.png')) {
+                    return;
+                }
+
+                // Check if it's an MP4
+                if (str_ends_with($value, '.mp4')) {
+                    return;
+                }
+
+                // Check if it's a valid YouTube video ID (11-character alphanumeric)
+                if (preg_match('/^[\w-]{11}$/', $value)) {
+                    return;
+                }
+
+                // Otherwise, fail validation
+                $fail('The media_url must be a .png, .mp4, or a valid YouTube video ID.');
+            }],
+            'media_height' => ['required'],
+            'media_width' => ['required'],
+        ]);
+
+        $request->user()->update($validated);
+
+        return back();
+    }
+
     /**
      * Update the user's profile settings.
      */

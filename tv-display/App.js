@@ -39,10 +39,9 @@ export default function Welcome() {
   }, [isWebViewReady]);
 
   const [ip, setIp] = useState("192.168.3.245");
-  const [port, setPort] = useState("7777");
+  const [port, setPort] = useState("8000");
   const [loading, setLoading] = useState(false);
   const [tokens, setTokens] = useState([]);
-  const [youtubeVideoIds, setYoutubeVideoIds] = useState(["LnD70Vk__h0"]);
   const [media, setMedia] = useState(null);
 
   const [showModal, setShowModal] = useState(true);
@@ -50,19 +49,15 @@ export default function Welcome() {
   const timeoutRef = useRef(null);
   const ws = useRef(null);
 
-  const [wsErrorModal, setWsErrorModal] = useState(false);
-  const [wsErrorMessage, setWsErrorMessage] = useState('');
+  const [wsModal, setWsModal] = useState(false);
+  const [wsMessage, setWsMessage] = useState('');
 
   const loadIpPort = async () => {
     const ip = await AsyncStorage.getItem('ip');
     const port = await AsyncStorage.getItem('port');
-    if (ip && port) {
-      setIp(ip);
-      setPort(port);
-      setShowModal(false);
-    } else {
-      setShowModal(true);
-    }
+    setIp(ip);
+    setPort(port);
+    setShowModal(true);
   };
 
   const saveIpPort = async () => {
@@ -70,28 +65,24 @@ export default function Welcome() {
     setLoading(true);
 
     try {
-
-      await getSocketConnection(ip, port);
       await AsyncStorage.setItem('ip', ip);
       await AsyncStorage.setItem('port', port);
 
       setIp(ip);
       setPort(port);
       setShowModal(false);
-      setWsErrorModal(false);
-      setWsErrorMessage('');
+      fetchTvSettings(ip, port);
+      fetchServingItems(ip, port);
     } catch (e) {
-      // console.error('Error saving IP and port', e);
-      setWsErrorMessage(e.message || 'Failed to connect to server.');
-      setWsErrorModal(true);
+      console.error('Error saving IP and port', e);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchServingItems = async () => {
+  const fetchServingItems = async (ip, port) => {
     try {
-      let url = `http://${ip}:8000/api/serving_list`;
+      let url = `http://${ip}:${port}/api/serving_list`;
       const res = await fetch(url);
       const json = await res.json();
       setTokens(json);
@@ -101,13 +92,37 @@ export default function Welcome() {
       setLoading(false);
     }
   };
+  const getMediaType = (mediaUrl) => {
+    if (!mediaUrl) return null;
 
-  const fetchMedia = async () => {
+    if (mediaUrl.endsWith('.png')) return 'image';
+    if (mediaUrl.endsWith('.mp4')) return 'video';
+    if (/^[\w-]{11}$/.test(mediaUrl)) return 'youtube';
+
+    return null;
+  };
+
+  const fetchTvSettings = async (ip, port) => {
     try {
-      let url = `http://${ip}:8000/api/fetch_media`;
+      let url = `http://${ip}:${port}/api/fetch_tv_settings`;
       const res = await fetch(url);
       const json = await res.json();
-      setMedia(json)
+      console.log("🚀 ~ fetchTvSettings ~ json:", json)
+
+      const mediaUrl = json?.media_url;
+
+      const mediaType = getMediaType(mediaUrl);
+
+      setMedia({
+        mediaType: mediaType,
+        url: mediaUrl,
+        height: json?.media_height || videoHeight,
+        width: json?.media_width || videoWidth,
+      });
+
+
+      getSocketConnection(json);
+
     } catch (e) {
       // console.error('Error saving IP and port', e);
     } finally {
@@ -159,21 +174,18 @@ export default function Welcome() {
     }
   };
 
-  const getSocketConnection = async (ip, port) => {
-    let isMounted = true;
+  const getSocketConnection = async ({ ip, port }) => {
 
-    ws.current = new WebSocket(`ws://${ip}:${port}`);
+    let url = `ws://${ip}:${port}`
+
+    ws.current = new WebSocket(url);
 
     ws.current.onopen = () => {
-      if (!isMounted) return;
-      console.log('✅ Connected to WS server');
-      // Hide modal on successful connection
-      setWsErrorModal(false);
-      setWsErrorMessage('');
+      setWsModal(true);
+      setWsMessage('Connected to WS server');
     };
 
     ws.current.onmessage = (event) => {
-      if (!isMounted) return;
 
       try {
         const parsed = JSON.parse(event.data);
@@ -181,10 +193,23 @@ export default function Welcome() {
 
         const { event: eventType, data: tokenData } = parsed;
 
-        // in onmessage()
         if (eventType === 'trigger-settings') {
-          setShowModal(true);
+          const mediaUrl = tokenData?.media_url;
+          const mediaType = getMediaType(mediaUrl);
+
+          const newMedia = {
+            mediaType: mediaType,
+            url: mediaUrl,
+            height: tokenData?.media_height || videoHeight,
+            width: tokenData?.media_width || videoWidth,
+          };
+
+          setMedia(prev => {
+            const hasChanged = JSON.stringify(prev) !== JSON.stringify(newMedia);
+            return hasChanged ? newMedia : prev;
+          });
         }
+
 
         if (tokenData?.token && tokenData?.counter !== undefined && eventType === 'token-serving') {
           setTokens(prevTokens => {
@@ -216,37 +241,33 @@ export default function Welcome() {
 
     ws.current.onerror = (error) => {
       // console.error('❌ WebSocket error:', error.message || error);
-      setWsErrorMessage('Failed to connect to server. Please check IP and port.');
-      setWsErrorModal(true);
+      setWsMessage('Failed to connect to server. Please check IP and port.');
+      setWsModal(true);
     };
 
     ws.current.onclose = () => {
       console.log('🔌 WebSocket disconnected');
-      setWsErrorMessage('WebSocket connection was closed unexpectedly.');
-      setWsErrorModal(true);
+      setWsMessage('WebSocket connection was closed unexpectedly.');
+      setWsModal(true);
     };
 
     return () => {
-      isMounted = false;
       if (ws.current) {
         ws.current.close();
         console.log('🔁 WebSocket closed on unmount');
       }
     };
   }
+
   useEffect(() => {
-    getSocketConnection(ip, port);
-  }, []);
+    console.log('📺 Media updated:', media);
+  }, [media]);
 
   useEffect(() => {
 
     ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
 
     loadIpPort();
-
-    fetchServingItems();
-
-    fetchMedia();
 
     return () => {
       if (timeoutRef.current) {
@@ -261,16 +282,16 @@ export default function Welcome() {
 
       <View style={styles.leftSection}>
         <>
-          {media?.type === 'youtube' ? (
+          {media?.mediaType === 'youtube' ? (
             <YoutubePlayer
+              ref={playerRef}
+              videoId={media.url}
+              height={media.height}
+              width={media.width}
+              play={true}
               onReady={() => {
                 playerRef.current?.getInternalPlayer()?.mute();
               }}
-              ref={playerRef}
-              height={videoHeight}
-              width={videoWidth}
-              videoId={youtubeVideoIds[0]}
-              play={true}
               onChangeState={(state) => {
                 if (state === 'ended') {
                   playerRef.current?.seekTo(0, true);
@@ -281,22 +302,22 @@ export default function Welcome() {
                 mute: true,
                 autoplay: true,
                 loop: true,
-                playlist: youtubeVideoIds,
+                playlist: [media.url],
                 modestbranding: true,
                 rel: false,
                 fs: false,
               }}
             />
-          ) : media?.type === 'image' ? (
+          ) : media?.mediaType === 'image' ? (
             <Image
-              source={{ uri: media?.image }}
-              style={{ width: '100%', height: "100%" }}
+              source={{ uri: media.url }}
+              style={{ width: media.width, height: media.height }}
             />
-          ) : media?.type === 'video' ? (
+          ) : media?.mediaType === 'video' ? (
             <Video
-              source={{ uri: media?.url }}
-              style={{ width: videoWidth, height: videoHeight }}
-              resizeMode="contain"
+              source={{ uri: media.url }}
+              style={{ width: media.width, height: media.height }}
+              resizeMode="cover" // or 'contain' if you want full video visible
               shouldPlay
               isLooping
               isMuted
@@ -304,6 +325,7 @@ export default function Welcome() {
             />
           ) : null}
         </>
+
 
       </View>
 
@@ -380,22 +402,22 @@ export default function Welcome() {
       </Modal>
 
       <Modal
-        visible={wsErrorModal}
+        visible={wsModal}
         transparent
         animationType="fade"
-        onRequestClose={() => setWsErrorModal(false)}
+        onRequestClose={() => setWsModal(false)}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>Connection Error</Text>
+            <Text style={styles.modalTitle}>Connection Status</Text>
             <Text style={{ textAlign: 'center', marginBottom: 20 }}>
-              Could not connect to the socket server. Please check your connection.
+              {wsMessage}
             </Text>
 
             <View style={styles.modalButtonContainer}>
               <Pressable
                 style={[styles.button, styles.buttonClose]}
-                onPress={() => setWsErrorModal(false)}
+                onPress={() => setWsModal(false)}
               >
                 <Text style={styles.textStyle}>Dismiss</Text>
               </Pressable>
@@ -418,7 +440,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 0, marginHorizontal: 0, width: '100%'
+    paddingHorizontal: 0, marginHorizontal: 0, width: '50%'
   },
   rightSection: {
     flex: 1,
@@ -426,7 +448,7 @@ const styles = StyleSheet.create({
   },
   tableContainer: {
     paddingHorizontal: 1,
-    
+
   },
   tableHeader: {
     flexDirection: 'row',

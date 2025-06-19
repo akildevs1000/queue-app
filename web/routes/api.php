@@ -12,4 +12,4 @@ Route::get('/user', function (Request $request) {
 
 Route::get('/serving_list', [TokenController::class, "servingList"]);
 
-require __DIR__ . '/youtube.php';
+require __DIR__ . '/tv.php';

@@ -25,6 +25,12 @@ class User extends Authenticatable
         'type',
         'service_id',
         'counter_id',
+
+        'ip',
+        'port',
+        'media_url',
+        'media_height',
+        'media_width',
     ];
 
     /**
