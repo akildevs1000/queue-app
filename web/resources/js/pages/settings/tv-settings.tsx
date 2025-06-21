@@ -44,40 +44,57 @@ export default function Profile() {
             preserveScroll: true,
 
             onSuccess: () => {
-                const socket = socketRef.current;
-                if (socket && socket.readyState === WebSocket.OPEN) {
-                    let payload = {
-                        event: 'trigger-settings',
-                        data: data,
-                    };
-                    socket.send(JSON.stringify(payload));
-                } else {
-                    console.warn('WebSocket is not open.');
-                }
+                handleSocketConnect();
             },
         });
     };
 
     const socketRef = useRef<WebSocket | null>(null);
 
-    useEffect(() => {
-        let url = `ws://${data.ip}:${data.port}`;
+    const handleSocketConnect = () => {
+        if (!data?.ip || !data?.port) {
+            console.warn('Missing IP or port');
+            return;
+        }
+
+        const url = `ws://${data.ip}:${data.port}`;
         const socket = new WebSocket(url);
         socketRef.current = socket;
 
         socket.addEventListener('open', () => {
             console.log('Connected to WS server');
+
+            const payload = {
+                event: 'trigger-settings',
+                data: data,
+            };
+            socket.send(JSON.stringify(payload));
         });
 
         socket.addEventListener('error', (error) => {
             console.error('WebSocket error:', error);
         });
 
+        socket.addEventListener('close', () => {
+            console.log('WebSocket connection closed');
+        });
+    };
+
+    const handleSocketDisconnect = () => {
+        if (socketRef.current) {
+            socketRef.current.close();
+            socketRef.current = null;
+        }
+    };
+
+    // Call on mount
+    useEffect(() => {
+        handleSocketConnect();
+
         return () => {
-            socket.close();
+            handleSocketDisconnect();
         };
     }, []);
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="TV settings" />
@@ -161,7 +178,7 @@ export default function Profile() {
 
                             <InputError className="mt-2" message={errors.media_width} />
                         </div>
-                        
+
                         <div className="flex items-center gap-4">
                             <Button disabled={processing}>Save & Connect</Button>
 

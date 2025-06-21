@@ -3,7 +3,6 @@ import { usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '../ui/button';
 
-import ServiceByUser from '../User/ServiceByUser';
 import ManualCall from './ManualCall';
 
 interface TokenInfo {
@@ -31,6 +30,7 @@ const TokenDisplay = () => {
     const [recallLabel, setRecallLabel] = useState('Recall');
     const [startTime, setStartTime] = useState<number | null>(null);
     const [performance, setPerformance] = useState(null);
+    const [socketAlert, setSocketAlert] = useState(null);
     const [counter, setCounter] = useState(null);
     const [isServing, setIsServing] = useState<boolean>(false);
     const [totalElapsed, setTotalElapsed] = useState<number>(0);
@@ -290,22 +290,12 @@ const TokenDisplay = () => {
         return `${hrs}:${mins}:${secs}`;
     };
 
-    useEffect(() => {
-        const getCounter = async () => {
-            try {
-                const res = await fetch(`/counter-by-user`);
-                const json = await res.json();
-                setCounter(json);
-            } catch (err) {
-                console.error('Failed to fetch last login', err);
-            }
-        };
-
-        feedbackByCounter();
-
-        getCounter();
-
-        fetchTokenCounts();
+    const handleSocketConnect = async () => {
+        if (!auth?.user?.ip || !auth?.user?.ip) {
+            setSocketAlert('Socket not connected');
+            return;
+        }
+        setSocketAlert(null);
 
         let url = `ws://${auth?.user?.ip}:${auth?.user?.port}`;
         const socket = new WebSocket(url);
@@ -337,6 +327,26 @@ const TokenDisplay = () => {
         return () => {
             socket.close();
         };
+    };
+
+    useEffect(() => {
+        handleSocketConnect();
+
+        const getCounter = async () => {
+            try {
+                const res = await fetch(`/counter-by-user`);
+                const json = await res.json();
+                setCounter(json);
+            } catch (err) {
+                console.error('Failed to fetch last login', err);
+            }
+        };
+
+        feedbackByCounter();
+
+        getCounter();
+
+        fetchTokenCounts();
     }, []);
 
     useEffect(() => {
@@ -359,12 +369,12 @@ const TokenDisplay = () => {
     return (
         <div className="flex h-full w-full px-15 text-gray-800 dark:bg-gray-900 dark:text-gray-900">
             {/* Left Section - Token Display */}
-            <div className="flex w-1/2 flex-col justify-center">
+            <div className="mt-15  flex w-1/2 flex-col">
                 <div>
                     <div className="flex flex-col items-center">
                         <h2 className="mb-2 text-lg font-medium text-orange-600 dark:text-orange-400">Current Serving</h2>
-                        <h1 className="mb-4 text-2xl font-bold text-blue-900 dark:text-blue-300">Token Number</h1>
-                        <div className="w-fit rounded-xl border-2 border-orange-500 px-12 py-6 text-[64px] font-bold text-orange-600 dark:border-orange-400 dark:text-orange-400">
+                        <h1 className="mb-2 text-2xl font-bold text-blue-900 dark:text-blue-300">Token Number</h1>
+                        <div className="w-fit rounded-xl border-2 border-orange-500 px-12 text-[64px] font-bold text-orange-600 dark:border-orange-400 dark:text-orange-400">
                             {tokenInfo?.token_number_display ?? '---'}
                         </div>
                         <div className="mt-6 text-center">
@@ -390,11 +400,24 @@ const TokenDisplay = () => {
             {/* this right section make it nice and show profole info also like name email last login i have user info in auth.user */}
 
             {/* Right Section - User Info & Buttons */}
-            <div className="flex h-full w-1/2 flex-col justify-center px-15">
-                {/* Top: User Info */}
-                <div className="mb-10 flex flex-wrap gap-6 lg:flex-nowrap">
-                    {/* Profile Info - wider section */}
-                    <div className="w-full rounded-xl p-6 lg:w-3/2">
+            <div className="flex  h-full w-1/2 flex-col justify-center px-15">
+                {socketAlert && (
+                    <div className="mb-4 flex w-full justify-center">
+                        <Button
+                            onClick={handleSocketConnect}
+                            className="rounded-lg bg-orange-500 p-6 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
+                        >
+                            {socketAlert} Reconnect
+                        </Button>
+                    </div>
+                )}
+
+                {!socketAlert && (
+                    <>
+                        {/* Top: User Info */}
+                        <div className="mb-0 flex flex-wrap gap-6 lg:flex-nowrap">
+                            {/* Profile Info - wider section */}
+                            {/* <div className="w-full rounded-xl p-6 lg:w-3/2">
                         <h2 className="mb-4 text-xl font-semibold text-blue-900 dark:text-blue-300">Profile Info</h2>
                         <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
                             <p>
@@ -414,56 +437,61 @@ const TokenDisplay = () => {
                                 {counter && counter?.name}
                             </div>
                         </div>
-                    </div>
+                    </div> */}
 
-                    {/* Performance Status - narrower section */}
-                    <div className="w-full rounded-xl p-6 lg:w-1/3">
+                            {/* Performance Status - narrower section */}
+                            {/* <div className="w-full rounded-xl p-6 lg:w-1/3">
                         <h2 className="mb-4 text-xl font-semibold text-blue-900 dark:text-blue-300">Performance</h2>
                         <div className="text-sm text-gray-700 dark:text-gray-300">
                             <span className="font-medium text-orange-600 dark:text-orange-400">
                                 <b>{performance}</b>
                             </span>
                         </div>
-                    </div>
-                </div>
+                    </div> */}
+                        </div>
 
-                {/* Bottom: Buttons */}
-                <div className="flex flex-col items-center space-y-2">
-                    <Button
-                        onClick={nextToken}
-                        className="w-1/2 rounded-lg bg-indigo-500 p-6 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
-                    >
-                        {nextLabel}
-                    </Button>
-                    <Button
-                        onClick={endServing}
-                        className="w-1/2 rounded-lg bg-indigo-500 p-6 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
-                    >
-                        End
-                    </Button>
-                    <Button
-                        onClick={noShowServing}
-                        className="w-1/2 rounded-lg bg-indigo-500 p-6 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
-                    >
-                        No Show
-                    </Button>
-                    <Button
-                        onClick={reCall}
-                        className="w-1/2 rounded-lg bg-indigo-500 p-6 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
-                    >
-                        {recallLabel}
-                    </Button>
-                    {/* Call for previous token */}
+                        {/* Bottom: Buttons */}
+                        {/* Socket Alert */}
 
-                    <ManualCall title="Manual Call" onSubmitData={handleDataFromManualCall} />
+                        <div className="flex flex-col items-center space-y-4">
+                            {/* Buttons Grid */}
+                            <div className="grid w-full max-w-xl grid-cols-2 gap-4">
+                                <Button
+                                    onClick={nextToken}
+                                    className="rounded-lg bg-indigo-500 p-6 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
+                                >
+                                    {nextLabel}
+                                </Button>
+                                <Button
+                                    onClick={endServing}
+                                    className="rounded-lg bg-indigo-500 p-6 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
+                                >
+                                    End
+                                </Button>
+                                <Button
+                                    onClick={noShowServing}
+                                    className="rounded-lg bg-indigo-500 p-6 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
+                                >
+                                    No Show
+                                </Button>
+                                <Button
+                                    onClick={reCall}
+                                    className="rounded-lg bg-indigo-500 p-6 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
+                                >
+                                    {recallLabel}
+                                </Button>
+                                <Button
+                                    onClick={toggleServing}
+                                    className="rounded-lg bg-indigo-500 p-6 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
+                                >
+                                    {!isServing ? 'Pause' : 'Resume'}
+                                </Button>
 
-                    <Button
-                        onClick={toggleServing}
-                        className="w-1/2 rounded-lg bg-indigo-500 p-6 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
-                    >
-                        {!isServing ? 'Pause' : 'Resume'}
-                    </Button>
-                </div>
+                                <ManualCall title="Manual Call" onSubmitData={handleDataFromManualCall} />
+                            </div>
+                        </div>
+                    </>
+                )}
             </div>
         </div>
     );

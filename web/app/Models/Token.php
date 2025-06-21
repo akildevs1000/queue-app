@@ -23,6 +23,7 @@ class Token extends Model
 
     public function getCreatedAtFormattedAttribute()
     {
+        return $this->created_at;
         return $this->created_at->format('d M Y, h:i A');
     }
 
