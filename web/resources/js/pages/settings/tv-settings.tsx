@@ -61,7 +61,8 @@ export default function Profile() {
     const socketRef = useRef<WebSocket | null>(null);
 
     useEffect(() => {
-        const socket = new WebSocket('ws://192.168.3.245:7777');
+        let url = `ws://${data.ip}:${data.port}`;
+        const socket = new WebSocket(url);
         socketRef.current = socket;
 
         socket.addEventListener('open', () => {
