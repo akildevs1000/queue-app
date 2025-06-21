@@ -87,4 +87,8 @@ class UserController extends Controller
     {
         return Counter::where('id', Auth::user()->counter_id)->first();
     }
+
+    function socketIpAndPort() {
+         return User::whereNotNull(["ip","port"])->where("type","master")->first();
+    }
 }

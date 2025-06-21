@@ -47,7 +47,7 @@ Route::middleware(['auth'])->group(function () {
 
 Route::resource("services", ServiceController::class)->middleware("auth");
 Route::get("service-list", [ServiceController::class, 'dropDown']);
-
+Route::get("socket-ip-and-port", [UserController::class, 'socketIpAndPort']);
 Route::resource("users", UserController::class)->middleware("auth");
 Route::get("users-list", [UserController::class, 'dropDown'])->middleware("auth");
 Route::put("update-password/{id}", [UserController::class, 'updatePassword'])->middleware("auth");

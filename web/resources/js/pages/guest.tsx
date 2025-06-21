@@ -59,20 +59,27 @@ export default function Welcome() {
     };
 
     useEffect(() => {
-        const socket = new WebSocket('ws://192.168.3.245:7777');
-        socketRef.current = socket;
+        const fetchSocketIpAndPort = async () => {
+            try {
+                const res = await fetch(`/socket-ip-and-port`);
+                const json = await res.json();
+                const socket = new WebSocket(`ws://${json.ip}:${json.port}`);
+                socketRef.current = socket;
 
-        socket.addEventListener('open', () => {
-            console.log('Connected to WS server');
-        });
+                socket.addEventListener('open', () => {
+                    console.log('Connected to WS server');
+                });
 
-        socket.addEventListener('error', (error) => {
-            console.error('WebSocket error:', error);
-        });
-
-        return () => {
-            socket.close();
+                socket.addEventListener('error', (error) => {
+                    console.error('WebSocket error:', error);
+                });
+            } catch (err) {
+                console.error('Failed to fetch services', err);
+            }
         };
+
+        fetchSocketIpAndPort();
+        
     }, []);
 
     useEffect(() => {
@@ -83,7 +90,6 @@ export default function Welcome() {
 
                     const socket = socketRef.current;
                     if (socket && socket.readyState === WebSocket.OPEN) {
-                        
                         const endServingSocket = {
                             event: 'new-ticket',
                         };

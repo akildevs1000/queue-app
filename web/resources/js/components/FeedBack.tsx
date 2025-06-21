@@ -33,7 +33,9 @@ const FeedbackScreen: React.FC = () => {
     const socketRef = useRef<WebSocket | null>(null);
 
     useEffect(() => {
-        const socket = new WebSocket('ws://192.168.3.245:7777');
+
+        let url = `ws://${auth?.user?.ip}:${auth?.user?.port}`;
+        const socket = new WebSocket(url);
         socketRef.current = socket;
 
         socket.addEventListener('open', () => {
