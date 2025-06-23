@@ -291,14 +291,16 @@ const TokenDisplay = () => {
     };
 
     const handleSocketConnect = async () => {
-        if (!auth?.user?.ip || !auth?.user?.ip) {
-            console.log("🚀 ~ handleSocketConnect ~ auth?.user:", auth?.user)
-            setSocketAlert('Socket not connected');
-            return;
-        }
+        // if (!auth?.user?.ip || !auth?.user?.ip) {
+        //     console.log("🚀 ~ handleSocketConnect ~ auth?.user:", auth?.user)
+        //     setSocketAlert('Socket not connected');
+        //     return;
+        // }
         setSocketAlert(null);
 
-        let url = `ws://${auth?.user?.ip}:${auth?.user?.port}`;
+        // let url = `ws://${auth?.user?.ip}:${auth?.user?.port}`;
+
+        let url = `ws://192.168.3.244:7777`;
         const socket = new WebSocket(url);
 
         socketRef.current = socket;
