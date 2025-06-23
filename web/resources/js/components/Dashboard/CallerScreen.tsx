@@ -292,6 +292,7 @@ const TokenDisplay = () => {
 
     const handleSocketConnect = async () => {
         if (!auth?.user?.ip || !auth?.user?.ip) {
+            console.log("🚀 ~ handleSocketConnect ~ auth?.user:", auth?.user)
             setSocketAlert('Socket not connected');
             return;
         }
@@ -404,7 +405,7 @@ const TokenDisplay = () => {
                 {socketAlert && (
                     <div className="mb-4 flex w-full justify-center">
                         <Button
-                            onClick={handleSocketConnect}
+                            onClick={() => {handleSocketConnect()}}
                             className="rounded-lg bg-orange-500 p-6 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
                         >
                             {socketAlert} Reconnect
