@@ -66,16 +66,28 @@ export default function Profile() {
         socketRef.current = socket;
 
         socket.addEventListener('open', () => {
-            console.log('Connected to WS server');
+            console.log('✅ Connected to WS server');
+
+            const sanitizedHeight = parseInt(data.media_height, 10);
+            const sanitizedWidth = parseInt(data.media_width, 10);
+            const mediaUrls =
+                typeof data.media_url === 'string'
+                    ? data.media_url
+                          .split('\n')
+                          .map((url) => url.trim())
+                          .filter(Boolean)
+                    : [];
 
             const payload = {
                 event: 'trigger-settings',
                 data: {
                     ...data,
-                    media_height: parseInt(data.media_height),
-                    media_width: parseInt(data.media_width)
+                    media_height: isNaN(sanitizedHeight) ? 0 : sanitizedHeight,
+                    media_width: isNaN(sanitizedWidth) ? 0 : sanitizedWidth,
+                    media_url: mediaUrls,
                 },
             };
+
             socket.send(JSON.stringify(payload));
         });
 
