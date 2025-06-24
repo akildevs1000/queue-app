@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, TouchableOpacity, Text, StyleSheet } from 'react-native';
 
 const FlickerRow = ({ token, counter, isHighlighted, onPress, backgroundColor }) => {
+  const [duration] = React.useState(300);
   const animation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -10,12 +11,52 @@ const FlickerRow = ({ token, counter, isHighlighted, onPress, backgroundColor })
       Animated.sequence([
         Animated.timing(animation, {
           toValue: 1,
-          duration: 300,
+          duration: duration,
           useNativeDriver: false,
         }),
         Animated.timing(animation, {
           toValue: 0,
-          duration: 300,
+          duration: duration,
+          useNativeDriver: false,
+        }),
+        Animated.timing(animation, {
+          toValue: 1,
+          duration: duration,
+          useNativeDriver: false,
+        }),
+        Animated.timing(animation, {
+          toValue: 0,
+          duration: duration,
+          useNativeDriver: false,
+        }),
+        Animated.timing(animation, {
+          toValue: 1,
+          duration: duration,
+          useNativeDriver: false,
+        }),
+        Animated.timing(animation, {
+          toValue: 0,
+          duration: duration,
+          useNativeDriver: false,
+        }),
+        Animated.timing(animation, {
+          toValue: 1,
+          duration: duration,
+          useNativeDriver: false,
+        }),
+        Animated.timing(animation, {
+          toValue: 0,
+          duration: duration,
+          useNativeDriver: false,
+        }),
+        Animated.timing(animation, {
+          toValue: 1,
+          duration: duration,
+          useNativeDriver: false,
+        }),
+        Animated.timing(animation, {
+          toValue: 0,
+          duration: duration,
           useNativeDriver: false,
         }),
       ]).start();
@@ -24,7 +65,7 @@ const FlickerRow = ({ token, counter, isHighlighted, onPress, backgroundColor })
 
   const rowBackgroundColor = animation.interpolate({
     inputRange: [0, 1],
-    outputRange: [backgroundColor, '#fff9c4'],
+    outputRange: [backgroundColor, '#39FF14'],
   });
 
   return (

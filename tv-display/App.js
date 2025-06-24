@@ -19,6 +19,7 @@ import {
 import YoutubePlayer from 'react-native-youtube-iframe';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import FlickerRow from './compoments/FlickerRow';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -96,6 +97,9 @@ export default function Welcome() {
     if (!mediaUrl) return null;
 
     if (mediaUrl.endsWith('.png')) return 'image';
+    if (mediaUrl.endsWith('.jpg')) return 'image';
+    if (mediaUrl.endsWith('.jpeg')) return 'image';
+    if (mediaUrl.endsWith('.gif')) return 'image';
     if (mediaUrl.endsWith('.mp4')) return 'video';
     if (/^[\w-]{11}$/.test(mediaUrl)) return 'youtube';
 
@@ -334,10 +338,20 @@ export default function Welcome() {
           <ActivityIndicator size="large" color="#666" />
         ) : tokens.length > 0 ? (
           <View style={styles.tableContainer}>
-            <View style={styles.tableHeader}>
+            <LinearGradient
+              colors={['#3b82f6', '#7c3aed']} // from blue-500 to purple-600 hex colors
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.tableHeader}
+            >
+              {/* Your header content here */}
               <Text style={styles.headerCell}>Ticket</Text>
               <Text style={styles.headerCell}>Counter</Text>
-            </View>
+            </LinearGradient>
+            {/* <View style={styles.tableHeader}>
+              <Text style={styles.headerCell}>Ticket</Text>
+              <Text style={styles.headerCell}>Counter</Text>
+            </View> */}
             <FlatList
               data={tokens}
               keyExtractor={(item, index) => index.toString()}
@@ -452,7 +466,7 @@ const styles = StyleSheet.create({
   },
   tableHeader: {
     flexDirection: 'row',
-    backgroundColor: '#4287f5',
+    // backgroundColor: '#4287f5',
     paddingVertical: 3,
   },
   headerCell: {
