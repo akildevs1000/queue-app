@@ -28,6 +28,7 @@ class User extends Authenticatable
 
         'ip',
         'port',
+        'media_type',
         'media_url',
         'media_height',
         'media_width',

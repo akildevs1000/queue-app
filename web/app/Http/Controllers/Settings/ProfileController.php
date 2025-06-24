@@ -31,47 +31,29 @@ class ProfileController extends Controller
 
     public function tvSettingsUpdate(Request $request)
     {
+
         $validated = $request->validate([
             'ip' => ['required', 'ip'],
             'port' => ['required', 'integer'],
-            'media_url' => ['required', function ($attribute, $value, $fail) {
-                // Check if it's a PNG
-                if (str_ends_with($value, '.png')) {
-                    return;
-                }
-
-                if (str_ends_with($value, '.jpg')) {
-                    return;
-                }
-
-                if (str_ends_with($value, '.jpeg')) {
-                    return;
-                }
-
-                if (str_ends_with($value, '.gif')) {
-                    return;
-                }
-
-                // Check if it's an MP4
-                if (str_ends_with($value, '.mp4')) {
-                    return;
-                }
-
-                // Check if it's a valid YouTube video ID (11-character alphanumeric)
-                if (preg_match('/^[\w-]{11}$/', $value)) {
-                    return;
-                }
-
-                // Otherwise, fail validation
-                $fail('The media_url must be a .png, .mp4, or a valid YouTube video ID.');
-            }],
+            'media_type' => ['required', 'in:youtube,video,gif,image'],
+            'media_url' => ['required'],
             'media_height' => ['required'],
             'media_width' => ['required'],
         ]);
 
+
+        // // Convert media_url if type is image (multiple URLs expected)
+        // if ($validated['media_type'] === 'image') {
+        //     // Normalize input: split by newline or comma, then clean and encode
+        //     $urls = preg_split('/[\n,]+/', $validated['media_url']);
+        //     $urls = array_filter(array_map('trim', $urls));
+        //     $validated['media_url'] = json_encode(array_values($urls));
+        // }
+
         $request->user()->update($validated);
 
         return back();
+
     }
 
     /**
