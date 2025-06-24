@@ -9,7 +9,7 @@ Route::get("get-youtube-video-ids",  [YoutubeController::class, 'getYoutubeVideo
 
 Route::get("fetch_tv_settings",  function () {
 
-    return [
+    return response()->json([
         "media_type" => "image",
         "media_url" => [
             "https://picsum.photos/id/1018/800/600",
@@ -20,8 +20,9 @@ Route::get("fetch_tv_settings",  function () {
         ],
         "media_height" => "100%",
         "media_width" => "100%",
-
-    ];
+        "ip" => "192.168.3.244",
+        "port" => "8080",
+    ]);
 
     return User::whereNotNull(["ip", "port"])->where("type", "master")->first();
 
