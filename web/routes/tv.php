@@ -21,7 +21,7 @@ Route::get("fetch_tv_settings",  function () {
         "media_height" => "100%",
         "media_width" => "100%",
         "ip" => "192.168.3.244",
-        "port" => "8000",
+        "port" => "7777",
     ]);
 
     return User::whereNotNull(["ip", "port"])->where("type", "master")->first();
