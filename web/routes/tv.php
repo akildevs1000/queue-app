@@ -10,14 +10,14 @@ Route::get("get-youtube-video-ids",  [YoutubeController::class, 'getYoutubeVideo
 Route::get("fetch_tv_settings",  function () {
 
     return response()->json([
-        "media_type" => "gif",
+        "media_type" => "image",
         "media_url" => [
-            "https://i.pinimg.com/originals/46/41/61/4641611401ecb508c625eebe448da663.gif",
-            // "https://picsum.photos/id/1018/800/600",
-            // "https://picsum.photos/id/1025/800/600",
-            // "https://picsum.photos/id/1035/800/600",
-            // "https://picsum.photos/id/1043/800/600",
-            // "https://picsum.photos/id/1062/800/600"
+            // "https://i.pinimg.com/originals/46/41/61/4641611401ecb508c625eebe448da663.gif",
+            "https://picsum.photos/id/1018/800/600",
+            "https://picsum.photos/id/1025/800/600",
+            "https://picsum.photos/id/1035/800/600",
+            "https://picsum.photos/id/1043/800/600",
+            "https://picsum.photos/id/1062/800/600"
         ],
         "media_height" => "100%",
         "media_width" => "100%",
