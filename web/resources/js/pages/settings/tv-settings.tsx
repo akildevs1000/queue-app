@@ -70,7 +70,11 @@ export default function Profile() {
 
             const payload = {
                 event: 'trigger-settings',
-                data: data,
+                data: {
+                    ...data,
+                    media_height: parseInt(data.media_height),
+                    media_width: parseInt(data.media_width)
+                },
             };
             socket.send(JSON.stringify(payload));
         });
