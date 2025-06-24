@@ -2,35 +2,34 @@
 
 import { useEffect, useState } from 'react';
 
-export default function ServiceByUser() {
-    const [item, setItem] = useState<any>(null);
+export default function LastLogin() {
+    const [performance, setPerformance] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
-    const fetchLastLogin = async () => {
+    const feedbackByCounter = async () => {
         try {
-            setLoading(true);
-            const res = await fetch(`/service-by-user`);
+            const res = await fetch('/feedback-by-counter');
             const json = await res.json();
-            setItem(json);
+            setPerformance(json);
         } catch (err) {
-            console.error('Failed to fetch service-by-user', err);
+            console.error('Failed to fetch feedback-by-counter', err);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchLastLogin();
+        feedbackByCounter();
     }, []);
 
     return (
         <div className="">
             {loading ? (
                 <p className="text-gray-500">Loading...</p>
-            ) : item ? (
-               <p> {item.name}</p>
+            ) : performance ? (
+                <p>{performance}</p>
             ) : (
-                <p className="text-gray-500">No login record found.</p>
+                <p className="text-gray-500">No Performance.</p>
             )}
         </div>
     );

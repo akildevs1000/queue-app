@@ -13,7 +13,7 @@ export default function CounterByUser() {
             const json = await res.json();
             setItem(json);
         } catch (err) {
-            console.error('Failed to fetch last login', err);
+            console.error('Failed to fetch counter-by-user', err);
         } finally {
             setLoading(false);
         }

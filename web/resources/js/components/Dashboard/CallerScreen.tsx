@@ -3,6 +3,7 @@ import { usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '../ui/button';
 
+import { GradientButton } from '../ui/GradientButton';
 import ManualCall from './ManualCall';
 
 interface TokenInfo {
@@ -29,9 +30,7 @@ const TokenDisplay = () => {
     const [nextLabel, setNextLabel] = useState('Next');
     const [recallLabel, setRecallLabel] = useState('Recall');
     const [startTime, setStartTime] = useState<number | null>(null);
-    const [performance, setPerformance] = useState(null);
-    const [socketAlert, setSocketAlert] = useState(null);
-    const [counter, setCounter] = useState(null);
+    const [socketAlert, setSocketAlert] = useState<null>(null);
     const [isServing, setIsServing] = useState<boolean>(false);
     const [totalElapsed, setTotalElapsed] = useState<number>(0);
     const [displayTime, setDisplayTime] = useState<number>(0);
@@ -91,16 +90,6 @@ const TokenDisplay = () => {
             }
         } catch (err) {
             console.error('Failed to fetch services', err);
-        }
-    };
-
-    const feedbackByCounter = async () => {
-        try {
-            const res = await fetch('/feedback-by-counter');
-            const json = await res.json();
-            setPerformance(json);
-        } catch (err) {
-            console.error('Failed to fetch feedback-by-counter', err);
         }
     };
 
@@ -291,13 +280,12 @@ const TokenDisplay = () => {
     };
 
     const handleSocketConnect = async () => {
-
         const res = await fetch(`/socket-ip-and-port`);
-        
+
         const json = await res.json();
 
         if (!json?.ip || !json?.port) {
-            console.log("🚀 ~ handleSocketConnect ~ auth?.user:", auth?.user)
+            console.log('🚀 ~ handleSocketConnect ~ auth?.user:', auth?.user);
             setSocketAlert('Socket not connected');
             return;
         }
@@ -340,20 +328,6 @@ const TokenDisplay = () => {
     useEffect(() => {
         handleSocketConnect();
 
-        const getCounter = async () => {
-            try {
-                const res = await fetch(`/counter-by-user`);
-                const json = await res.json();
-                setCounter(json);
-            } catch (err) {
-                console.error('Failed to fetch last login', err);
-            }
-        };
-
-        feedbackByCounter();
-
-        getCounter();
-
         fetchTokenCounts();
     }, []);
 
@@ -377,7 +351,7 @@ const TokenDisplay = () => {
     return (
         <div className="flex h-full w-full px-15 text-gray-800 dark:bg-gray-900 dark:text-gray-900">
             {/* Left Section - Token Display */}
-            <div className="mt-15 flex w-1/2 flex-col">
+            <div className="mt-10 flex w-1/2 flex-col">
                 <div>
                     <div className="flex flex-col items-center">
                         <h2 className="mb-2 text-lg font-medium text-orange-600 dark:text-orange-400">Current Serving</h2>
@@ -405,8 +379,6 @@ const TokenDisplay = () => {
 
             <div className="mx-4 w-px bg-gray-300 dark:bg-gray-600"></div>
 
-            {/* this right section make it nice and show profole info also like name email last login i have user info in auth.user */}
-
             {/* Right Section - User Info & Buttons */}
             <div className="flex h-full w-1/2 flex-col justify-center px-15">
                 {socketAlert && (
@@ -424,78 +396,38 @@ const TokenDisplay = () => {
 
                 {!socketAlert && (
                     <>
-                        {/* Top: User Info */}
-                        <div className="mb-0 flex flex-wrap gap-6 lg:flex-nowrap">
-                            {/* Profile Info - wider section */}
-                            {/* <div className="w-full rounded-xl p-6 lg:w-3/2">
-                        <h2 className="mb-4 text-xl font-semibold text-blue-900 dark:text-blue-300">Profile Info</h2>
-                        <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                            <p>
-                                <span className="font-medium text-gray-500 dark:text-gray-400">Name:</span> {user.name}
-                            </p>
-                            <p>
-                                <span className="font-medium text-gray-500 dark:text-gray-400">Email:</span> {user.email}
-                            </p>
-                            <div className="flex items-center gap-1">
-                                <span className="font-medium text-gray-500 dark:text-gray-400">Service:</span>
-                                <div>
-                                    <ServiceByUser />
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <span className="font-medium text-gray-500 dark:text-gray-400">Counter:</span>
-                                {counter && counter?.name}
-                            </div>
-                        </div>
-                    </div> */}
-
-                            {/* Performance Status - narrower section */}
-                            {/* <div className="w-full rounded-xl p-6 lg:w-1/3">
-                        <h2 className="mb-4 text-xl font-semibold text-blue-900 dark:text-blue-300">Performance</h2>
-                        <div className="text-sm text-gray-700 dark:text-gray-300">
-                            <span className="font-medium text-orange-600 dark:text-orange-400">
-                                <b>{performance}</b>
-                            </span>
-                        </div>
-                    </div> */}
-                        </div>
-
-                        {/* Bottom: Buttons */}
-                        {/* Socket Alert */}
-
                         <div className="flex flex-col items-center space-y-4">
-                            {/* Buttons Grid */}
-                            <div className="grid w-full max-w-xl grid-cols-2 gap-4">
-                                <Button
+                            <div className="grid w-full max-w-xl grid-cols-2 gap-3">
+                                <GradientButton
                                     onClick={nextToken}
-                                    className="rounded-lg bg-indigo-500 p-6 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
+                                    className="rounded-lg p-7 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
                                 >
                                     {nextLabel}
-                                </Button>
-                                <Button
+                                </GradientButton>
+                                <GradientButton
                                     onClick={endServing}
-                                    className="rounded-lg bg-indigo-500 p-6 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
+                                    className="rounded-lg p-7 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
                                 >
                                     End
-                                </Button>
-                                <Button
+                                </GradientButton>
+                                <GradientButton
                                     onClick={noShowServing}
-                                    className="rounded-lg bg-indigo-500 p-6 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
+                                    className="rounded-lg p-7 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
                                 >
                                     No Show
-                                </Button>
-                                <Button
+                                </GradientButton>
+                                <GradientButton
                                     onClick={reCall}
-                                    className="rounded-lg bg-indigo-500 p-6 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
+                                    className="rounded-lg p-7 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
                                 >
                                     {recallLabel}
-                                </Button>
-                                <Button
+                                </GradientButton>
+                                <GradientButton
                                     onClick={toggleServing}
-                                    className="rounded-lg bg-indigo-500 p-6 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
+                                    className="rounded-lg p-7 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
                                 >
                                     {!isServing ? 'Pause' : 'Resume'}
-                                </Button>
+                                </GradientButton>
 
                                 <ManualCall title="Manual Call" onSubmitData={handleDataFromManualCall} />
                             </div>
