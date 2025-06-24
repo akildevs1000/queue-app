@@ -40,6 +40,18 @@ class ProfileController extends Controller
                     return;
                 }
 
+                if (str_ends_with($value, '.jpg')) {
+                    return;
+                }
+
+                if (str_ends_with($value, '.jpeg')) {
+                    return;
+                }
+
+                if (str_ends_with($value, '.gif')) {
+                    return;
+                }
+
                 // Check if it's an MP4
                 if (str_ends_with($value, '.mp4')) {
                     return;
