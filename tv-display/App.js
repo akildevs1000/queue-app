@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from 'react';
 import * as Speech from 'expo-speech';
 import { Audio, Video } from 'expo-av';
 import * as ScreenOrientation from 'expo-screen-orientation';
+import { Image as ExpoImage } from 'expo-image';
 
 import {
   View,
@@ -38,6 +39,9 @@ export default function Welcome() {
       webViewRef.current.postMessage(JSON.stringify({ type: 'setVolume', volume: 0 }));
     }
   }, [isWebViewReady]);
+
+  const flatListRef = useRef(null);
+  const currentIndexRef = useRef(0);
 
   const [ip, setIp] = useState("192.168.3.245");
   const [port, setPort] = useState("8000");
@@ -83,8 +87,7 @@ export default function Welcome() {
 
   const fetchServingItems = async (ip, port) => {
     try {
-      let url = `http://${ip}:${port}/api/serving_list`;
-      const res = await fetch(url);
+      const res = await fetch(`http://${ip}:${port}/api/serving_list`);
       const json = await res.json();
       setTokens(json);
     } catch (e) {
@@ -93,40 +96,18 @@ export default function Welcome() {
       setLoading(false);
     }
   };
-  const getMediaType = (mediaUrl) => {
-    if (!mediaUrl) return null;
-
-    if (mediaUrl.endsWith('.png')) return 'image';
-    if (mediaUrl.endsWith('.jpg')) return 'image';
-    if (mediaUrl.endsWith('.jpeg')) return 'image';
-    if (mediaUrl.endsWith('.gif')) return 'image';
-    if (mediaUrl.endsWith('.mp4')) return 'video';
-    if (/^[\w-]{11}$/.test(mediaUrl)) return 'youtube';
-
-    return null;
-  };
 
   const fetchTvSettings = async (ip, port) => {
     try {
-      let url = `http://${ip}:${port}/api/fetch_tv_settings`;
-      const res = await fetch(url);
+      const res = await fetch(`http://${ip}:${port}/api/fetch_tv_settings`);
       const json = await res.json();
       console.log("🚀 ~ fetchTvSettings ~ json:", json)
-
-      const mediaUrl = json?.media_url;
-
-      const mediaType = getMediaType(mediaUrl);
-
       setMedia({
-        mediaType: mediaType,
-        url: mediaUrl,
+        ...json,
         height: json?.media_height || videoHeight,
         width: json?.media_width || videoWidth,
       });
-
-
       getSocketConnection(json);
-
     } catch (e) {
       // console.error('Error saving IP and port', e);
     } finally {
@@ -180,13 +161,12 @@ export default function Welcome() {
 
   const getSocketConnection = async ({ ip, port }) => {
 
-    let url = `ws://${ip}:${port}`
-
-    ws.current = new WebSocket(url);
+    ws.current = new WebSocket(`ws://${ip}:${port}`);
 
     ws.current.onopen = () => {
       setWsModal(true);
       setWsMessage('Connected to WS server');
+      renderSlider();
     };
 
     ws.current.onmessage = (event) => {
@@ -198,12 +178,8 @@ export default function Welcome() {
         const { event: eventType, data: tokenData } = parsed;
 
         if (eventType === 'trigger-settings') {
-          const mediaUrl = tokenData?.media_url;
-          const mediaType = getMediaType(mediaUrl);
-
           const newMedia = {
-            mediaType: mediaType,
-            url: mediaUrl,
+            ...tokenData,
             height: tokenData?.media_height || videoHeight,
             width: tokenData?.media_width || videoWidth,
           };
@@ -263,8 +239,26 @@ export default function Welcome() {
     };
   }
 
+  const renderSlider = async () => {
+    if (media?.media_type === 'image' && Array.isArray(media.media_url)) {
+
+      const interval = setInterval(() => {
+        const nextIndex = (currentIndexRef.current + 1) % media.media_url.length;
+
+        flatListRef.current?.scrollToIndex({
+          index: nextIndex,
+          animated: true,
+        });
+
+        currentIndexRef.current = nextIndex;
+      }, 4000);
+
+      return () => clearInterval(interval);
+    }
+  }
+
   useEffect(() => {
-    console.log('📺 Media updated:', media);
+    renderSlider();
   }, [media]);
 
   useEffect(() => {
@@ -286,10 +280,10 @@ export default function Welcome() {
 
       <View style={styles.leftSection}>
         <>
-          {media?.mediaType === 'youtube' ? (
+          {media?.media_type === 'youtube' ? (
             <YoutubePlayer
               ref={playerRef}
-              videoId={media.url}
+              videoId={media.media_url[0]}
               height={media.height}
               width={media.width}
               play={true}
@@ -306,26 +300,50 @@ export default function Welcome() {
                 mute: true,
                 autoplay: true,
                 loop: true,
-                playlist: [media.url],
+                playlist: media.media_url,
                 modestbranding: true,
                 rel: false,
                 fs: false,
               }}
             />
-          ) : media?.mediaType === 'image' ? (
-            <Image
-              source={{ uri: media.url }}
-              style={{ width: media.width, height: media.height }}
-            />
-          ) : media?.mediaType === 'video' ? (
+          ) : media?.media_type === 'video' ? (
             <Video
-              source={{ uri: media.url }}
+              source={{ uri: media.media_url[0] }}
               style={{ width: media.width, height: media.height }}
               resizeMode="cover" // or 'contain' if you want full video visible
               shouldPlay
               isLooping
               isMuted
               useNativeControls={false}
+            />
+          ) : media?.media_type === 'gif' ? (
+            <ExpoImage
+              source={{ uri: media.media_url[0] }}
+              style={{ width: media.width, height: media.height }}
+              contentFit="cover"
+
+            />
+          ) : media?.media_type === 'image' ? (
+            <FlatList
+              ref={flatListRef}
+              data={media.media_url}
+              keyExtractor={(item, index) => index.toString()}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              renderItem={({ item }) => (
+                <Image
+                  source={{ uri: item }}
+                  style={{ width: media.width, height: media.height }}
+                  resizeMode="cover"
+                />
+              )}
+              onScrollToIndexFailed={(info) => {
+                setTimeout(() => {
+                  flatListRef.current?.scrollToIndex({ index: info.index, animated: true });
+                }, 500);
+              }}
+              style={{ width: media.width, height: media.height }}
             />
           ) : null}
         </>
