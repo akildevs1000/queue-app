@@ -291,16 +291,21 @@ const TokenDisplay = () => {
     };
 
     const handleSocketConnect = async () => {
-        // if (!auth?.user?.ip || !auth?.user?.ip) {
-        //     console.log("🚀 ~ handleSocketConnect ~ auth?.user:", auth?.user)
-        //     setSocketAlert('Socket not connected');
-        //     return;
-        // }
+
+        const res = await fetch(`/socket-ip-and-port`);
+        
+        const json = await res.json();
+
+        if (!json?.ip || !json?.port) {
+            console.log("🚀 ~ handleSocketConnect ~ auth?.user:", auth?.user)
+            setSocketAlert('Socket not connected');
+            return;
+        }
+
         setSocketAlert(null);
 
-        // let url = `ws://${auth?.user?.ip}:${auth?.user?.port}`;
+        let url = `ws://${json.ip}:${json.port}`;
 
-        let url = `ws://192.168.3.244:7777`;
         const socket = new WebSocket(url);
 
         socketRef.current = socket;
@@ -372,7 +377,7 @@ const TokenDisplay = () => {
     return (
         <div className="flex h-full w-full px-15 text-gray-800 dark:bg-gray-900 dark:text-gray-900">
             {/* Left Section - Token Display */}
-            <div className="mt-15  flex w-1/2 flex-col">
+            <div className="mt-15 flex w-1/2 flex-col">
                 <div>
                     <div className="flex flex-col items-center">
                         <h2 className="mb-2 text-lg font-medium text-orange-600 dark:text-orange-400">Current Serving</h2>
@@ -403,11 +408,13 @@ const TokenDisplay = () => {
             {/* this right section make it nice and show profole info also like name email last login i have user info in auth.user */}
 
             {/* Right Section - User Info & Buttons */}
-            <div className="flex  h-full w-1/2 flex-col justify-center px-15">
+            <div className="flex h-full w-1/2 flex-col justify-center px-15">
                 {socketAlert && (
                     <div className="mb-4 flex w-full justify-center">
                         <Button
-                            onClick={() => {handleSocketConnect()}}
+                            onClick={() => {
+                                handleSocketConnect();
+                            }}
                             className="rounded-lg bg-orange-500 p-6 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
                         >
                             {socketAlert} Reconnect
