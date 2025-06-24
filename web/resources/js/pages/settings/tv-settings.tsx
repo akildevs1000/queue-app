@@ -11,6 +11,8 @@ import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Tv Settings',
@@ -21,6 +23,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 type ProfileForm = {
     ip: string;
     port: string;
+    media_type: string;
     media_url: string;
     media_height: string;
     media_width: string;
@@ -32,6 +35,7 @@ export default function Profile() {
     const { data, setData, put, errors, processing, recentlySuccessful } = useForm<Required<ProfileForm>>({
         ip: auth.user.ip,
         port: auth.user.port,
+        media_type: auth.user.media_type || 'image', // default
         media_url: auth.user.media_url,
         media_height: auth.user.media_height,
         media_width: auth.user.media_width,
@@ -135,20 +139,55 @@ export default function Profile() {
                             <InputError className="mt-2" message={errors.port} />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="port">Media Url</Label>
+                            <Label htmlFor="media_type">Media Type</Label>
 
-                            <Input
-                                id="media_url"
-                                className="mt-1 block w-full"
-                                value={data.media_url}
-                                onChange={(e) => setData('media_url', e.target.value)}
-                                required
-                                autoComplete="media_url"
-                                placeholder="media_url"
-                            />
+                            <Select value={data.media_type} onValueChange={(value) => setData('media_type', value)}>
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Select media type" />
+                                </SelectTrigger>
 
-                            <InputError className="mt-2" message={errors.media_url} />
+                                <SelectContent>
+                                    <SelectItem value="youtube">YouTube</SelectItem>
+                                    <SelectItem value="video">Video</SelectItem>
+                                    <SelectItem value="gif">GIF</SelectItem>
+                                    <SelectItem value="image">Image (Multiple URLs)</SelectItem>
+                                </SelectContent>
+                            </Select>
+
+                            <InputError className="mt-2" message={errors.media_type} />
                         </div>
+
+                        {data.media_type === 'image' ? (
+                            <div className="grid gap-2">
+                                <Label htmlFor="media_url">Media URLs (Enter each URL and press Enter)</Label>
+                                <textarea
+                                    id="media_url"
+                                    className="mt-1 block w-full rounded border px-2 py-1 text-sm"
+                                    rows={5}
+                                    placeholder="Paste each image URL and press Enter"
+                                    value={data.media_url}
+                                    onChange={
+                                        (e) => setData('media_url', e.target.value.replace(/\r/g, '')) // Normalize line breaks
+                                    }
+                                />
+                                <InputError className="mt-2" message={errors.media_url} />
+                            </div>
+                        ) : (
+                            <div className="grid gap-2">
+                                <Label htmlFor="media_url">Media URL</Label>
+                                <Input
+                                    id="media_url"
+                                    className="mt-1 block w-full"
+                                    value={data.media_url}
+                                    onChange={(e) => setData('media_url', e.target.value)}
+                                    required
+                                    autoComplete="media_url"
+                                    placeholder="Media URL"
+                                />
+                                <InputError className="mt-2" message={errors.media_url} />
+                            </div>
+                        )}
+
                         <div className="grid gap-2">
                             <Label htmlFor="port">Media Height</Label>
 

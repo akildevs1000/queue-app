@@ -45,6 +45,7 @@ export interface User {
     email: string;
     ip: string;
     port: string;
+    media_type: string;
     media_url: string;
     media_height: string;
     media_width: string;
