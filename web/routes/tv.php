@@ -18,8 +18,8 @@ Route::get("fetch_tv_settings",  function () {
             "https://picsum.photos/id/1043/800/600",
             "https://picsum.photos/id/1062/800/600"
         ],
-        "media_height" => "100%",
-        "media_width" => "100%",
+        "media_height" => "100px",
+        "media_width" => "100px",
         "ip" => "192.168.3.244",
         "port" => "7777",
     ]);
