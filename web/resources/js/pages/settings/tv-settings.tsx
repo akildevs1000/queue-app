@@ -84,20 +84,20 @@ export default function Profile() {
         socket.addEventListener('open', () => {
             console.log('✅ Connected to WS server');
 
-            const sanitizedHeight = parseInt(data.media_height, 10);
-            const sanitizedWidth = parseInt(data.media_width, 10);
+            // const sanitizedHeight = parseInt(data.media_height, 10);
+            // const sanitizedWidth = parseInt(data.media_width, 10);
 
-            const payload = {
-                event: 'trigger-settings',
-                data: {
-                    ...data,
-                    media_height: isNaN(sanitizedHeight) ? 0 : sanitizedHeight,
-                    media_width: isNaN(sanitizedWidth) ? 0 : sanitizedWidth,
-                    media_url: data.media_url,
-                },
-            };
+            // const payload = {
+            //     event: 'trigger-settings',
+            //     data: {
+            //         ...data,
+            //         media_height: isNaN(sanitizedHeight) ? 0 : sanitizedHeight,
+            //         media_width: isNaN(sanitizedWidth) ? 0 : sanitizedWidth,
+            //         media_url: data.media_url,
+            //     },
+            // };
 
-            socket.send(JSON.stringify(payload));
+            // socket.send(JSON.stringify(payload));
         });
 
         socket.addEventListener('error', (error) => {
