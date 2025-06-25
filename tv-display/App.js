@@ -287,9 +287,6 @@ export default function Welcome() {
               height={media.height}
               width={media.width}
               play={true}
-              onReady={() => {
-                playerRef.current?.getInternalPlayer()?.mute();
-              }}
               onChangeState={(state) => {
                 if (state === 'ended') {
                   playerRef.current?.seekTo(0, true);

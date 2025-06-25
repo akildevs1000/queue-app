@@ -31,29 +31,31 @@ class ProfileController extends Controller
 
     public function tvSettingsUpdate(Request $request)
     {
-
         $validated = $request->validate([
             'ip' => ['required', 'ip'],
             'port' => ['required', 'integer'],
             'media_type' => ['required', 'in:youtube,video,gif,image'],
-            'media_url' => ['required'],
-            'media_height' => ['required'],
-            'media_width' => ['required'],
+            'media_url' => ['required'], // we'll override this below
+            'media_url.*' => ['file', 'mimes:jpg,jpeg,png,gif,mp4'], // adjust types if needed
+            'media_height' => ['required', 'integer'],
+            'media_width' => ['required', 'integer'],
         ]);
 
+        // Handle file upload (multiple files)
+        $mediaPaths = [];
 
-        // // Convert media_url if type is image (multiple URLs expected)
-        // if ($validated['media_type'] === 'image') {
-        //     // Normalize input: split by newline or comma, then clean and encode
-        //     $urls = preg_split('/[\n,]+/', $validated['media_url']);
-        //     $urls = array_filter(array_map('trim', $urls));
-        //     $validated['media_url'] = json_encode(array_values($urls));
-        // }
+        if ($request->hasFile('media_url')) {
+            foreach ($request->file('media_url') as $file) {
+                $mediaPaths[] = $file->store('uploads', 'public'); // save to storage/app/public/uploads
+            }
+        }
+
+        // Convert to JSON string or save as array if your DB column is casted
+        $validated['media_url'] = json_encode($mediaPaths);
 
         $request->user()->update($validated);
 
-        return back();
-
+        return back()->with('success', 'Settings updated successfully');
     }
 
     /**

@@ -54,6 +54,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'media_url' => 'array',
         ];
     }
 
@@ -67,7 +68,7 @@ class User extends Authenticatable
         return $this->belongsTo(Service::class);
     }
 
-    
+
     /**
      * Get the counter that owns the counter
      *

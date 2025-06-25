@@ -1,6 +1,6 @@
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Transition } from '@headlessui/react';
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useEffect, useRef } from 'react';
 
 import HeadingSmall from '@/components/heading-small';
@@ -20,11 +20,11 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-type ProfileForm = {
+type Form = {
     ip: string;
     port: string;
     media_type: string;
-    media_url: string;
+    media_url: File[]; // now an array of files
     media_height: string;
     media_width: string;
 };
@@ -32,11 +32,11 @@ type ProfileForm = {
 export default function Profile() {
     const { auth } = usePage<SharedData>().props;
 
-    const { data, setData, put, errors, processing, recentlySuccessful } = useForm<Required<ProfileForm>>({
+    const { data, setData, put, errors, processing, recentlySuccessful } = useForm<Required<Form>>({
         ip: auth.user.ip,
         port: auth.user.port,
         media_type: auth.user.media_type || 'image', // default
-        media_url: auth.user.media_url,
+        media_url: [], // start with empty array
         media_height: auth.user.media_height,
         media_width: auth.user.media_width,
     });
@@ -44,9 +44,29 @@ export default function Profile() {
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
 
-        put(route('tv_settings.update'), {
-            preserveScroll: true,
+        // put(route('tv_settings.update'), {
+        //     preserveScroll: true,
 
+        //     onSuccess: () => {
+        //         handleSocketConnect();
+        //     },
+        // });
+
+        const formData = new FormData();
+        formData.append('ip', data.ip);
+        formData.append('port', data.port);
+        formData.append('media_type', data.media_type);
+        formData.append('media_height', data.media_height);
+        formData.append('media_width', data.media_width);
+
+        // Append each file
+        data.media_url.forEach((file, index) => {
+            formData.append(`media_url[${index}]`, file); // use array syntax
+        });
+
+        router.post(route('tv_settings.update'), formData, {
+            forceFormData: true,
+            preserveScroll: true,
             onSuccess: () => {
                 handleSocketConnect();
             },
@@ -175,32 +195,45 @@ export default function Profile() {
 
                         {data.media_type === 'image' ? (
                             <div className="grid gap-2">
-                                <Label htmlFor="media_url">Media URLs (Enter each URL and press Enter)</Label>
-                                <textarea
+                                <Label htmlFor="media_url">Upload Media Files</Label>
+
+                                <Input
                                     id="media_url"
-                                    className="mt-1 block w-full rounded border px-2 py-1 text-sm"
-                                    rows={5}
-                                    placeholder="Paste each image URL and press Enter"
-                                    value={data.media_url}
-                                    onChange={
-                                        (e) => setData('media_url', e.target.value.replace(/\r/g, '')) // Normalize line breaks
-                                    }
+                                    type="file"
+                                    multiple
+                                    className="mt-1 block w-full"
+                                    accept={data.media_type === 'image' ? 'image/*' : data.media_type === 'video' ? 'video/*' : '*/*'}
+                                    onChange={(e) => setData('media_url', Array.from(e.target.files ?? []))}
                                 />
+
                                 <InputError className="mt-2" message={errors.media_url} />
                             </div>
                         ) : (
                             <div className="grid gap-2">
-                                <Label htmlFor="media_url">Media URL</Label>
+                                <Label htmlFor="media_url">Upload Media</Label>
                                 <Input
                                     id="media_url"
+                                    type="file"
+                                    multiple
                                     className="mt-1 block w-full"
-                                    value={data.media_url}
-                                    onChange={(e) => setData('media_url', e.target.value)}
-                                    required
-                                    autoComplete="media_url"
-                                    placeholder="Media URL"
+                                    accept={data.media_type === 'image' ? 'image/*' : data.media_type === 'video' ? 'video/*' : '*/*'}
+                                    onChange={(e) => setData('media_url', Array.from(e.target.files ?? []))}
                                 />
                                 <InputError className="mt-2" message={errors.media_url} />
+                            </div>
+                        )}
+
+                        {data.media_url.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-2">
+                                {data.media_url.map((file, index) => {
+                                    const url = URL.createObjectURL(file);
+
+                                    return data.media_type === 'image' ? (
+                                        <img key={index} src={url} alt={`preview-${index}`} className="h-24 w-24 rounded object-cover shadow" />
+                                    ) : data.media_type === 'video' ? (
+                                        <video key={index} src={url} controls className="h-24 w-32 rounded shadow" />
+                                    ) : null;
+                                })}
                             </div>
                         )}
 
