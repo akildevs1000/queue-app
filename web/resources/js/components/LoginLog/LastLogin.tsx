@@ -20,7 +20,7 @@ export default function LastLogin() {
     };
 
     useEffect(() => {
-        fetchLastLogin();
+        // fetchLastLogin();
     }, []);
 
     return (

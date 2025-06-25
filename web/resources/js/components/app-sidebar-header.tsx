@@ -16,7 +16,7 @@ export function AppSidebarHeader() {
                 const json = await res.json();
                 setCounter(json);
             } catch (err) {
-                console.error('Failed to fetch last login', err);
+                console.error('Failed to counter-by-user', err);
             }
         };
 
