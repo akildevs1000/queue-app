@@ -1,7 +1,7 @@
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Transition } from '@headlessui/react';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { FormEventHandler, useEffect, useRef } from 'react';
+import { FormEventHandler, useEffect, useRef, useState } from 'react';
 
 import HeadingSmall from '@/components/heading-small';
 import InputError from '@/components/input-error';
@@ -32,6 +32,8 @@ type Form = {
 export default function Profile() {
     const { auth } = usePage<SharedData>().props;
 
+    const [mediaSizeError, setMediaSizeError] = useState<string | undefined>(undefined);
+
     const { data, setData, put, errors, processing, recentlySuccessful } = useForm<Required<Form>>({
         ip: auth.user.ip,
         port: auth.user.port,
@@ -44,13 +46,7 @@ export default function Profile() {
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
 
-        // put(route('tv_settings.update'), {
-        //     preserveScroll: true,
-
-        //     onSuccess: () => {
-        //         handleSocketConnect();
-        //     },
-        // });
+        if(mediaSizeError) return;
 
         const formData = new FormData();
         formData.append('ip', data.ip);
@@ -90,13 +86,6 @@ export default function Profile() {
 
             const sanitizedHeight = parseInt(data.media_height, 10);
             const sanitizedWidth = parseInt(data.media_width, 10);
-            const mediaUrls =
-                typeof data.media_url === 'string'
-                    ? data.media_url
-                          .split('\n')
-                          .map((url) => url.trim())
-                          .filter(Boolean)
-                    : [];
 
             const payload = {
                 event: 'trigger-settings',
@@ -104,7 +93,7 @@ export default function Profile() {
                     ...data,
                     media_height: isNaN(sanitizedHeight) ? 0 : sanitizedHeight,
                     media_width: isNaN(sanitizedWidth) ? 0 : sanitizedWidth,
-                    media_url: mediaUrls,
+                    media_url: data.media_url,
                 },
             };
 
@@ -193,42 +182,42 @@ export default function Profile() {
                             <InputError className="mt-2" message={errors.media_type} />
                         </div>
 
-                        {data.media_type === 'image' ? (
-                            <div className="grid gap-2">
-                                <Label htmlFor="media_url">Upload Media Files</Label>
+                        <div className="grid gap-2">
+                            <Label htmlFor="media_url">Upload Media</Label>
+                            <Input
+                                id="media_url"
+                                type="file"
+                                multiple
+                                className="mt-1 block w-full"
+                                accept="image/gif,image/jpeg,image/png,video/mp4"
+                                onChange={(e) => {
+                                    const files = Array.from(e.target.files ?? []);
+                                    const MAX_MB = 2;
+                                    const MAX_BYTES = MAX_MB * 1024 * 1024;
 
-                                <Input
-                                    id="media_url"
-                                    type="file"
-                                    multiple
-                                    className="mt-1 block w-full"
-                                    accept={data.media_type === 'image' ? 'image/*' : data.media_type === 'video' ? 'video/*' : '*/*'}
-                                    onChange={(e) => setData('media_url', Array.from(e.target.files ?? []))}
-                                />
+                                    const oversizedFiles = files.filter((file) => file.size > MAX_BYTES);
 
-                                <InputError className="mt-2" message={errors.media_url} />
-                            </div>
-                        ) : (
-                            <div className="grid gap-2">
-                                <Label htmlFor="media_url">Upload Media</Label>
-                                <Input
-                                    id="media_url"
-                                    type="file"
-                                    multiple
-                                    className="mt-1 block w-full"
-                                    accept={data.media_type === 'image' ? 'image/*' : data.media_type === 'video' ? 'video/*' : '*/*'}
-                                    onChange={(e) => setData('media_url', Array.from(e.target.files ?? []))}
-                                />
-                                <InputError className="mt-2" message={errors.media_url} />
-                            </div>
-                        )}
+                                    if (oversizedFiles.length > 0) {
+                                        setMediaSizeError(`Some files exceed ${MAX_MB}MB and were not selected.`);
+                                        const validFiles = files.filter((file) => file.size <= MAX_BYTES);
+                                        setData('media_url', validFiles);
+                                    } else {
+                                        setMediaSizeError(undefined);
+                                        setData('media_url', files);
+                                    }
+                                }}
+                            />
+
+                            <InputError className="mt-2" message={errors.media_url} />
+                            <InputError className="mt-2" message={mediaSizeError ?? undefined} />
+                        </div>
 
                         {data.media_url.length > 0 && (
                             <div className="mt-2 flex flex-wrap gap-2">
                                 {data.media_url.map((file, index) => {
                                     const url = URL.createObjectURL(file);
 
-                                    return data.media_type === 'image' ? (
+                                    return data.media_type === 'image' || data.media_type === 'gif' ? (
                                         <img key={index} src={url} alt={`preview-${index}`} className="h-24 w-24 rounded object-cover shadow" />
                                     ) : data.media_type === 'video' ? (
                                         <video key={index} src={url} controls className="h-24 w-32 rounded shadow" />
