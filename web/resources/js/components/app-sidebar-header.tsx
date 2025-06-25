@@ -1,12 +1,10 @@
 import UiMode from '@/components/ui-mode';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { type BreadcrumbItem as BreadcrumbItemType } from '@/types';
 import { useEffect, useState } from 'react';
 import { NavUser } from './top-nav-user';
 import ServiceByUser from './User/ServiceByUser';
 
 export function AppSidebarHeader() {
-
     const [counter, setCounter] = useState(null);
 
     useEffect(() => {
@@ -28,12 +26,18 @@ export function AppSidebarHeader() {
             <div className="flex items-center gap-2">
                 <SidebarTrigger className="-ml-1" />
                 {/* <Breadcrumbs breadcrumbs={breadcrumbs} />  */}
-               
+
+                {counter && (
+                    <div className="flex items-center gap-1 text-gray-500">
+                        Counter: <span className="font-medium dark:text-gray-400">,counter?.name </span>
+                    </div>
+                )}
+
                 <div className="flex items-center gap-1 text-gray-500">
-                    Counter: <span className="font-medium dark:text-gray-400">{counter && counter?.name}, </span>
-                </div>
-                 <div className="flex items-center gap-1 text-gray-500">
-                    Service: <span className="font-medium dark:text-gray-400"><ServiceByUser /></span>
+                    Service:{' '}
+                    <span className="font-medium dark:text-gray-400">
+                        <ServiceByUser />
+                    </span>
                 </div>
             </div>
 
