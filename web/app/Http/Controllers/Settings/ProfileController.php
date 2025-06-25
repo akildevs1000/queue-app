@@ -60,7 +60,7 @@ class ProfileController extends Controller
         $user->update($validated);
 
         // Reload fresh user data from DB
-        $updatedUser = User::find($user->id);
+        $updatedUser = $user->fresh();
 
         // Transform media_url paths to full URLs if needed
         if (in_array($updatedUser->media_type, ['image', 'video', 'gif']) && is_array($updatedUser->media_url)) {
