@@ -3,23 +3,22 @@
 use App\Http\Controllers\YoutubeController;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
-Route::get("get-youtube-video-ids",  [YoutubeController::class, 'getYoutubeVideoIds']);
-
-
-Route::get("fetch_tv_settings",  function () {
-
+Route::get("fetch_tv_settings", function () {
     $found = User::whereNotNull(["ip", "port"])
         ->where("type", "master")
         ->first();
 
-    if ($found) {
-        $found->media_url = explode("\n", $found->media_url);
-
-        // Convert to integers (or float if you expect decimal dimensions)
-        $found->media_height = (int) $found->media_height;
-        $found->media_width = (int) $found->media_width;
+    if (!$found) {
+        return response()->json(['message' => 'No TV settings found'], 404);
     }
 
-    return $found;
+    if (in_array($found->media_type, ['image', 'video', 'gif']) && is_array($found->media_url)) {
+        $found->media_url = array_map(function ($path) {
+            return url(Storage::url($path));
+        }, $found->media_url);
+    }
+
+    return response()->json($found);
 });

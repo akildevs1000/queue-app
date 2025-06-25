@@ -4,15 +4,20 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
+use App\Jobs\UpdateTvSettings;
+use App\Traits\HandlesMedia;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ProfileController extends Controller
 {
+    use HandlesMedia;
+
     /**
      * Show the user's profile settings page.
      */
@@ -35,27 +40,23 @@ class ProfileController extends Controller
             'ip' => ['required', 'ip'],
             'port' => ['required', 'integer'],
             'media_type' => ['required', 'in:youtube,video,gif,image'],
-            'media_url' => ['required'], // we'll override this below
-            'media_url.*' => ['file', 'mimes:jpg,jpeg,png,gif,mp4'], // adjust types if needed
+            'media_url' => ['required'],
+            'media_url.*' => [
+                'file',
+                'max:2048', // 2MB 
+                'mimes:jpg,jpeg,png,gif,mp4'
+            ],
             'media_height' => ['required', 'integer'],
             'media_width' => ['required', 'integer'],
         ]);
 
-        // Handle file upload (multiple files)
-        $mediaPaths = [];
+        $user = $request->user();
 
-        if ($request->hasFile('media_url')) {
-            foreach ($request->file('media_url') as $file) {
-                $mediaPaths[] = $file->store('uploads', 'public'); // save to storage/app/public/uploads
-            }
-        }
+        $validated['media_url'] = $this->handleMediaUpload($user, $request, 'media_url', 'media_type');
 
-        // Convert to JSON string or save as array if your DB column is casted
-        $validated['media_url'] = json_encode($mediaPaths);
+        UpdateTvSettings::dispatch($user, $validated);
 
-        $request->user()->update($validated);
-
-        return back()->with('success', 'Settings updated successfully');
+        return back()->with('success', 'TV settings update is being processed.');
     }
 
     /**

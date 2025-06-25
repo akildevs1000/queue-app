@@ -55,6 +55,8 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'media_url' => 'array',
+            'media_height' => 'integer',
+            'media_width' => 'integer',
         ];
     }
 
