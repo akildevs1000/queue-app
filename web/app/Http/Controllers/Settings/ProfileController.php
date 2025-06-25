@@ -57,7 +57,7 @@ class ProfileController extends Controller
 
         $validated['media_url'] = $this->handleMediaUpload($user, $request, 'media_url', 'media_type');
 
-        UpdateTvSettings::dispatch($user, $validated);
+        $user->update($validated);
 
         // Reload fresh user data from DB
         $updatedUser = User::find($user->id);
