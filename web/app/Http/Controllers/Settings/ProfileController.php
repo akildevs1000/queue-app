@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
 use App\Jobs\UpdateTvSettings;
+use App\Models\User;
 use App\Traits\HandlesMedia;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
@@ -31,7 +32,9 @@ class ProfileController extends Controller
 
     public function tvSettings(): Response
     {
-        return Inertia::render('settings/tv-settings');
+        return Inertia::render('settings/tv-settings', [
+            'tv_settings' => session('tv_settings'),
+        ]);
     }
 
     public function tvSettingsUpdate(Request $request)
@@ -56,7 +59,17 @@ class ProfileController extends Controller
 
         UpdateTvSettings::dispatch($user, $validated);
 
-        return back()->with('success', 'TV settings update is being processed.');
+        // Reload fresh user data from DB
+        $updatedUser = User::find($user->id);
+
+        // Transform media_url paths to full URLs if needed
+        if (in_array($updatedUser->media_type, ['image', 'video', 'gif']) && is_array($updatedUser->media_url)) {
+            $updatedUser->media_url = array_map(function ($path) {
+                return url(Storage::url($path));
+            }, $updatedUser->media_url);
+        }
+
+        return back()->with('tv_settings', $updatedUser);
     }
 
     /**
