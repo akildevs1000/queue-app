@@ -46,7 +46,7 @@ export default function Profile() {
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
 
-        if(mediaSizeError) return;
+        if (mediaSizeError) return;
 
         const formData = new FormData();
         formData.append('ip', data.ip);
