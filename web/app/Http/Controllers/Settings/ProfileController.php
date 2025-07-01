@@ -43,12 +43,12 @@ class ProfileController extends Controller
             'ip' => ['required', 'ip'],
             'port' => ['required', 'integer'],
             'media_type' => ['required', 'in:youtube,video,gif,image'],
-            'media_url' => ['required'],
-            'media_url.*' => [
-                'file',
-                'max:2048', // 2MB 
-                'mimes:jpg,jpeg,png,gif,mp4'
-            ],
+            // 'media_url' => ['required'],
+            // 'media_url.*' => [
+            //     'file',
+            //     'max:2048', // 2MB 
+            //     'mimes:jpg,jpeg,png,gif,mp4'
+            // ],
             'media_height' => ['nullable', 'integer'],
             'media_width' => ['nullable', 'integer'],
         ]);
