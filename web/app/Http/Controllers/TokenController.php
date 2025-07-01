@@ -11,9 +11,12 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
+use WebSocket\Client;
+
 class TokenController extends Controller
 {
 
+    private $currentTokenNumber = 1;
     /**
      * Display a listing of the resource.
      */
@@ -249,7 +252,59 @@ class TokenController extends Controller
     {
         $nextToken = Token::whereDate('created_at', Carbon::today())
             ->where('token_number_display', $token_number_display)
-            ->first(['id', 'token_number_display',"language"]);
+            ->first(['id', 'token_number_display', "language"]);
         return response()->json($nextToken);
+    }
+
+    public function sendToken(Request $request)
+    {
+        $ip = $request->input('ip', '192.168.3.245');
+        $port = $request->input('port', 7777);
+
+        $url = "ws://{$ip}:{$port}";
+
+        try {
+            // Connect to WebSocket server
+            $client = new Client($url, [
+                'context' => stream_context_create([
+                    'ssl' => [
+                        'verify_peer' => false,
+                        'verify_peer_name' => false
+                    ]
+                ])
+            ]);
+
+            // Generate token like "LQ0001"
+            $token = 'LQ' . str_pad($this->currentTokenNumber, 4, '0', STR_PAD_LEFT);
+            $this->currentTokenNumber++;
+
+            // Create message payload
+            $message = [
+                'event' => 'token-serving',
+                'data' => [
+                    'token' => $token,
+                    'counter' => 'Counter 1'
+                ]
+            ];
+
+            // Send message
+            $client->send(json_encode($message));
+
+            // Optionally receive response
+            $response = $client->receive();
+
+            $client->close();
+
+            return response()->json([
+                'success' => true,
+                'sent' => $message,
+                'response' => $response,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

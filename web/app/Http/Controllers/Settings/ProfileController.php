@@ -49,8 +49,8 @@ class ProfileController extends Controller
                 'max:2048', // 2MB 
                 'mimes:jpg,jpeg,png,gif,mp4'
             ],
-            'media_height' => ['required', 'integer'],
-            'media_width' => ['required', 'integer'],
+            'media_height' => ['nullable', 'integer'],
+            'media_width' => ['nullable', 'integer'],
         ]);
 
         $user = $request->user();

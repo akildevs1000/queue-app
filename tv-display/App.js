@@ -32,38 +32,38 @@ const videoWidth = screenWidth;
 
 export default function Welcome() {
 
- useEffect(() => {
-  const backPressCountRef = { count: 0 };
-  let timeoutId = null;
+  useEffect(() => {
+    const backPressCountRef = { count: 0 };
+    let timeoutId = null;
 
-  const handleBackPress = () => {
-    backPressCountRef.count += 1;
+    const handleBackPress = () => {
+      backPressCountRef.count += 1;
 
-    if (timeoutId) clearTimeout(timeoutId);
+      if (timeoutId) clearTimeout(timeoutId);
 
-    if (backPressCountRef.count >= 3) {
-      setShowModal(true);
-      backPressCountRef.count = 0;
-      return true;
-    }
+      if (backPressCountRef.count >= 3) {
+        setShowModal(true);
+        backPressCountRef.count = 0;
+        return true;
+      }
 
-    timeoutId = setTimeout(() => {
-      backPressCountRef.count = 0;
-    }, 2000);
+      timeoutId = setTimeout(() => {
+        backPressCountRef.count = 0;
+      }, 2000);
 
-    return true; // prevent default back behavior
-  };
+      return true; // prevent default back behavior
+    };
 
-  const backHandler = BackHandler.addEventListener(
-    'hardwareBackPress',
-    handleBackPress
-  );
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      handleBackPress
+    );
 
-  return () => {
-    backHandler.remove(); // ✅ Correct way to clean up
-    if (timeoutId) clearTimeout(timeoutId);
-  };
-}, []);
+    return () => {
+      backHandler.remove(); // ✅ Correct way to clean up
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, []);
 
 
 
@@ -83,6 +83,7 @@ export default function Welcome() {
   const [port, setPort] = useState("8000");
   const [loading, setLoading] = useState(false);
   const [tokens, setTokens] = useState([]);
+  const [info, setInfo] = useState(null);
   const [media, setMedia] = useState({
     media_type: "image",
     media_url: [],
@@ -91,7 +92,8 @@ export default function Welcome() {
   });
 
   const [showModal, setShowModal] = useState(true);
-  const [highlightedToken, setHighlightedToken] = useState(null);
+  const [displayToken, setDisplayToken] = useState(null);
+
   const timeoutRef = useRef(null);
   const ws = useRef(null);
 
@@ -130,17 +132,7 @@ export default function Welcome() {
     try {
       const res = await fetch(`http://${ip}:${port}/api/serving_list`);
       const json = await res.json();
-      setTokens(json.length ? json : [
-        { token: '---', counter: '---', language: 'en' },
-        { token: '---', counter: '---', language: 'en' },
-        { token: '---', counter: '---', language: 'ur' },
-        { token: '---', counter: '---', language: 'en' },
-        { token: '---', counter: '---', language: 'ur' },
-        { token: '---', counter: '---', language: 'en' },
-        { token: '---', counter: '---', language: 'en' },
-        { token: '---', counter: '---', language: 'en' },
-        { token: '---', counter: '---', language: 'en' },
-      ]);
+      setTokens(json);
     } catch (e) {
       // console.error('Error saving IP and port', e);
     } finally {
@@ -152,7 +144,7 @@ export default function Welcome() {
     try {
       const res = await fetch(`http://${ip}:${port}/api/fetch_tv_settings`);
       const json = await res.json();
-      console.log("🚀 ~ fetchTvSettings ~ json:", json)
+      setInfo(json);
       setMedia({
         ...json,
         height: json?.media_height || videoHeight,
@@ -249,13 +241,12 @@ export default function Welcome() {
             return [...prevTokens, tokenData];
           });
 
-          setHighlightedToken(tokenData.token); // Highlight it
           announceTheToken(tokenData.token, tokenData.counter, tokenData.language);
 
-          // Remove highlight after 1 second
-          setTimeout(() => setHighlightedToken(null), 1000);
-        }
+          setDisplayToken(tokenData);
 
+          setTimeout(() => setDisplayToken(null), 10000);
+        }
 
         else if (tokenData?.token && eventType === 'token-serving-end') {
           setTokens(prevTokens => {
@@ -320,7 +311,7 @@ export default function Welcome() {
 
     ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
 
-    loadIpPort();
+    // loadIpPort();
 
     return () => {
       if (timeoutRef.current) {
@@ -344,14 +335,12 @@ export default function Welcome() {
   }
 
   return (
-
     <View style={styles.container}>
-
       {/* Left Section */}
       <View style={styles.leftSection}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerText}>Emirates Islamic Bank</Text>
+          <Text style={styles.headerText}>{info?.name || "Organize Name"}</Text>
         </View>
 
         <ScrollView contentContainerStyle={styles.buttonWrapper}>
@@ -376,7 +365,7 @@ export default function Welcome() {
 
       {/* Right Section */}
       <View style={styles.rightSection}>
-        {media?.media_type === 'video' ? (
+        {media?.media_type === "video" ? (
           <Video
             source={{ uri: media.media_url[0] }}
             style={{ width: media.width, height: media.height }}
@@ -386,7 +375,7 @@ export default function Welcome() {
             isMuted
             useNativeControls={false}
           />
-        ) : media?.media_type === 'image' ? (
+        ) : media?.media_type === "image" ? (
           <FlatList
             ref={flatListRef}
             data={media.media_url}
@@ -395,7 +384,13 @@ export default function Welcome() {
             pagingEnabled
             showsHorizontalScrollIndicator={false}
             renderItem={({ item }) => (
-              <View style={{ width: media.width, height: media.height, opacity: 0.2 }}>
+              <View
+                style={{
+                  width: media.width,
+                  height: media.height,
+                  opacity: displayToken ? 0.2 : 1,
+                }}
+              >
                 <Image
                   source={{ uri: item }}
                   style={styles.image}
@@ -403,27 +398,34 @@ export default function Welcome() {
                 />
               </View>
             )}
-            onScrollToIndexFailed={(info) => {
+            onScrollToIndexFailed={(e) => {
               setTimeout(() => {
-                flatListRef.current?.scrollToIndex({ index: info.index, animated: true });
+                flatListRef.current?.scrollToIndex({
+                  index: e.index,
+                  animated: true,
+                });
               }, 500);
             }}
             style={{ width: media.width, height: media.height }}
           />
         ) : null}
 
-        <View style={styles.borderWrapper}>
-          <View style={styles.ticketBox}>
-            <View style={styles.leftTicket}>
-              <Text style={styles.numberTitle}>Number</Text>
-              <Text style={styles.numberValue}>D7044</Text>
-            </View>
-            <View style={styles.rightTicket}>
-              <Text style={styles.proceedText}>Please proceed to counter</Text>
-              <Text style={styles.counterNumber}>5</Text>
+        {displayToken ? (
+          <View style={styles.borderWrapper}>
+            <View style={styles.ticketBox}>
+              <View style={styles.leftTicket}>
+                <Text style={styles.numberTitle}>Number</Text>
+                <Text style={styles.numberValue}>{displayToken.token}</Text>
+              </View>
+              <View style={styles.rightTicket}>
+                <Text style={styles.proceedText}>
+                  Please proceed to counter
+                </Text>
+                <Text style={styles.counterNumber}>{displayToken.counter}</Text>
+              </View>
             </View>
           </View>
-        </View>
+        ) : null}
       </View>
 
       <Modal
@@ -479,7 +481,7 @@ export default function Welcome() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
             <Text style={styles.modalTitle}>Connection Status</Text>
-            <Text style={{ textAlign: 'center', marginBottom: 20 }}>
+            <Text style={{ textAlign: "center", marginBottom: 20 }}>
               {wsMessage}
             </Text>
 
@@ -501,6 +503,8 @@ export default function Welcome() {
 const styles = StyleSheet.create({
 
   container: {
+    marginTop: 30,
+
     flexDirection: "row",
     flex: 1,
     backgroundColor: "#1a202c", // dark background
@@ -532,6 +536,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   headerText: {
+    marginLeft:10,
     fontSize: 20,
     fontWeight: "bold",
     color: "#ffffff",
@@ -637,8 +642,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     backgroundColor: "#1e1e1e",
-    width: 450,
-    height: 250,
+    width: 300,
+    height: 200,
     padding: 1,
     zIndex: 1,
     backgroundColor: "none",

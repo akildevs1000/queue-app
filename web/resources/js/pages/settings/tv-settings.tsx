@@ -250,7 +250,6 @@ export default function Profile({ tv_settings }) {
                                 className="mt-1 block w-full"
                                 value={data.media_height}
                                 onChange={(e) => setData('media_height', e.target.value)}
-                                required
                                 autoComplete="media_height"
                                 placeholder="Media Height"
                             />
@@ -264,7 +263,6 @@ export default function Profile({ tv_settings }) {
                                 className="mt-1 block w-full"
                                 value={data.media_width}
                                 onChange={(e) => setData('media_width', e.target.value)}
-                                required
                                 autoComplete="media_width"
                                 placeholder="Media Width"
                             />
