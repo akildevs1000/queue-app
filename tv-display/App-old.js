@@ -15,10 +15,7 @@ import {
   TextInput,
   Modal,
   Pressable,
-  Image,
-  ScrollView,
-  TouchableOpacity, Animated,
-  BackHandler
+  Image
 } from 'react-native';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -32,40 +29,7 @@ const videoWidth = screenWidth;
 
 export default function Welcome() {
 
- useEffect(() => {
-  const backPressCountRef = { count: 0 };
-  let timeoutId = null;
-
-  const handleBackPress = () => {
-    backPressCountRef.count += 1;
-
-    if (timeoutId) clearTimeout(timeoutId);
-
-    if (backPressCountRef.count >= 3) {
-      setShowModal(true);
-      backPressCountRef.count = 0;
-      return true;
-    }
-
-    timeoutId = setTimeout(() => {
-      backPressCountRef.count = 0;
-    }, 2000);
-
-    return true; // prevent default back behavior
-  };
-
-  const backHandler = BackHandler.addEventListener(
-    'hardwareBackPress',
-    handleBackPress
-  );
-
-  return () => {
-    backHandler.remove(); // ✅ Correct way to clean up
-    if (timeoutId) clearTimeout(timeoutId);
-  };
-}, []);
-
-
+  const playerRef = useRef(null);
 
   const webViewRef = useRef(null);
   const [isWebViewReady, setWebViewReady] = useState(false);
@@ -83,12 +47,7 @@ export default function Welcome() {
   const [port, setPort] = useState("8000");
   const [loading, setLoading] = useState(false);
   const [tokens, setTokens] = useState([]);
-  const [media, setMedia] = useState({
-    media_type: "image",
-    media_url: [],
-    width: videoWidth / 2,
-    height: videoHeight,
-  });
+  const [media, setMedia] = useState(null);
 
   const [showModal, setShowModal] = useState(true);
   const [highlightedToken, setHighlightedToken] = useState(null);
@@ -130,17 +89,7 @@ export default function Welcome() {
     try {
       const res = await fetch(`http://${ip}:${port}/api/serving_list`);
       const json = await res.json();
-      setTokens(json.length ? json : [
-        { token: '---', counter: '---', language: 'en' },
-        { token: '---', counter: '---', language: 'en' },
-        { token: '---', counter: '---', language: 'ur' },
-        { token: '---', counter: '---', language: 'en' },
-        { token: '---', counter: '---', language: 'ur' },
-        { token: '---', counter: '---', language: 'en' },
-        { token: '---', counter: '---', language: 'en' },
-        { token: '---', counter: '---', language: 'en' },
-        { token: '---', counter: '---', language: 'en' },
-      ]);
+      setTokens(json);
     } catch (e) {
       // console.error('Error saving IP and port', e);
     } finally {
@@ -156,7 +105,7 @@ export default function Welcome() {
       setMedia({
         ...json,
         height: json?.media_height || videoHeight,
-        width: json?.media_width / 2 || videoWidth / 2,
+        width: json?.media_width || videoWidth,
       });
       getSocketConnection(json);
     } catch (e) {
@@ -291,14 +240,10 @@ export default function Welcome() {
   }
 
   const renderSlider = async () => {
-    if (
-      media?.media_type === "image" &&
-      Array.isArray(media.media_url) &&
-      media.media_url.length > 0
-    ) {
+    if (media?.media_type === 'image' && Array.isArray(media.media_url)) {
+
       const interval = setInterval(() => {
-        const nextIndex =
-          (currentIndexRef.current + 1) % media.media_url.length;
+        const nextIndex = (currentIndexRef.current + 1) % media.media_url.length;
 
         flatListRef.current?.scrollToIndex({
           index: nextIndex,
@@ -330,102 +275,117 @@ export default function Welcome() {
 
   }, []);
 
-  function CustomButton({ label, isDark }) {
-    return (
-      <TouchableOpacity
-        style={[
-          styles.button,
-          isDark ? styles.buttonDark : styles.buttonLight,
-        ]}
-      >
-        <Text style={styles.buttonText}>{label}</Text>
-      </TouchableOpacity>
-    );
-  }
-
   return (
-
     <View style={styles.container}>
 
-      {/* Left Section */}
       <View style={styles.leftSection}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerText}>Emirates Islamic Bank</Text>
-        </View>
+        <>
+          {media?.media_type === 'youtube' ? (
+            <YoutubePlayer
+              ref={playerRef}
+              videoId={media.media_url[0]}
+              height={media.height}
+              width={media.width}
+              play={true}
+              onChangeState={(state) => {
+                if (state === 'ended') {
+                  playerRef.current?.seekTo(0, true);
+                }
+              }}
+              initialPlayerParams={{
+                controls: true,
+                mute: true,
+                autoplay: true,
+                loop: true,
+                playlist: media.media_url,
+                modestbranding: true,
+                rel: false,
+                fs: false,
+              }}
+            />
+          ) : media?.media_type === 'video' ? (
+            <Video
+              source={{ uri: media.media_url[0] }}
+              style={{ width: media.width, height: media.height }}
+              resizeMode="cover" // or 'contain' if you want full video visible
+              shouldPlay
+              isLooping
+              isMuted
+              useNativeControls={false}
+            />
+          ) : media?.media_type === 'gif' ? (
+            <ExpoImage
+              source={{ uri: media.media_url[0] }}
+              style={{ width: media.width, height: media.height }}
+              contentFit="cover"
 
-        <ScrollView contentContainerStyle={styles.buttonWrapper}>
-          {/* Heading Row */}
-          <View style={styles.buttonRow}>
-            <CustomButton label="TOKEN" />
-            <CustomButton label="COUNTER" />
-          </View>
-
-          {/* Data Rows */}
-          {tokens.map((item, index) => (
-            <View key={index} style={styles.buttonRow}>
-              <CustomButton label={item.token} isDark />
-              <CustomButton label={item.counter} isDark />
-            </View>
-          ))}
-        </ScrollView>
-      </View>
-
-      {/* Divider */}
-      <View style={styles.divider} />
-
-      {/* Right Section */}
-      <View style={styles.rightSection}>
-        {media?.media_type === 'video' ? (
-          <Video
-            source={{ uri: media.media_url[0] }}
-            style={{ width: media.width, height: media.height }}
-            resizeMode="cover" // or 'contain' if you want full video visible
-            shouldPlay
-            isLooping
-            isMuted
-            useNativeControls={false}
-          />
-        ) : media?.media_type === 'image' ? (
-          <FlatList
-            ref={flatListRef}
-            data={media.media_url}
-            keyExtractor={(item, index) => index.toString()}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            renderItem={({ item }) => (
-              <View style={{ width: media.width, height: media.height, opacity: 0.2 }}>
+            />
+          ) : media?.media_type === 'image' ? (
+            <FlatList
+              ref={flatListRef}
+              data={media.media_url}
+              keyExtractor={(item, index) => index.toString()}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              renderItem={({ item }) => (
                 <Image
                   source={{ uri: item }}
-                  style={styles.image}
+                  style={{ width: media.width, height: media.height }}
                   resizeMode="cover"
                 />
-              </View>
-            )}
-            onScrollToIndexFailed={(info) => {
-              setTimeout(() => {
-                flatListRef.current?.scrollToIndex({ index: info.index, animated: true });
-              }, 500);
-            }}
-            style={{ width: media.width, height: media.height }}
-          />
-        ) : null}
+              )}
+              onScrollToIndexFailed={(info) => {
+                setTimeout(() => {
+                  flatListRef.current?.scrollToIndex({ index: info.index, animated: true });
+                }, 500);
+              }}
+              style={{ width: media.width, height: media.height }}
+            />
+          ) : null}
+        </>
 
-        <View style={styles.borderWrapper}>
-          <View style={styles.ticketBox}>
-            <View style={styles.leftTicket}>
-              <Text style={styles.numberTitle}>Number</Text>
-              <Text style={styles.numberValue}>D7044</Text>
-            </View>
-            <View style={styles.rightTicket}>
-              <Text style={styles.proceedText}>Please proceed to counter</Text>
-              <Text style={styles.counterNumber}>5</Text>
-            </View>
-          </View>
-        </View>
+
       </View>
 
+      <View style={styles.rightSection}>
+        {loading ? (
+          <ActivityIndicator size="large" color="#666" />
+        ) : tokens.length > 0 ? (
+          <View style={styles.tableContainer}>
+            <LinearGradient
+              colors={['#3b82f6', '#7c3aed']} // from blue-500 to purple-600 hex colors
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.tableHeader}
+            >
+              {/* Your header content here */}
+              <Text style={styles.headerCell}>Ticket</Text>
+              <Text style={styles.headerCell}>Counter</Text>
+            </LinearGradient>
+            {/* <View style={styles.tableHeader}>
+              <Text style={styles.headerCell}>Ticket</Text>
+              <Text style={styles.headerCell}>Counter</Text>
+            </View> */}
+            <FlatList
+              data={tokens}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({ item, index }) => (
+                <FlickerRow
+                  onPress={() => announceTheToken(item.token, item.counter, item.language)}
+                  token={item.token}
+                  counter={item.counter}
+                  isHighlighted={item.token === highlightedToken}
+                  backgroundColor={index % 2 === 0 ? '#eaf4fc' : '#fff'}
+                />
+              )}
+            />
+
+          </View>
+        ) : (
+          <Text style={styles.noData}>No tickets found.</Text>
+        )}
+      </View>
       <Modal
         animationType="slide"
         transparent={true}
@@ -485,7 +445,7 @@ export default function Welcome() {
 
             <View style={styles.modalButtonContainer}>
               <Pressable
-                style={[styles.button, styles.buttonClose, styles.fullWidth]}
+                style={[styles.button, styles.buttonClose]}
                 onPress={() => setWsModal(false)}
               >
                 <Text style={styles.textStyle}>Dismiss</Text>
@@ -499,91 +459,56 @@ export default function Welcome() {
 }
 
 const styles = StyleSheet.create({
-
   container: {
-    flexDirection: "row",
     flex: 1,
-    backgroundColor: "#1a202c", // dark background
-  },
-  borderWrapper: {
-    position: "absolute",
-    padding: 2,
-    borderRadius: 20,
-    overflow: "hidden",
-    backgroundColor: "none",
-  },
-  animatedBorder: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 10,
-    border: 1,
-    height: "100%",
-    width: "200%",
-  },
-  gradient: {
-    flex: 1,
-    height: 10,
+    flexDirection: 'row',
+    backgroundColor: '#f4f4f4',
+    paddingTop: 10,
   },
   leftSection: {
-    width: "50%",
-    backgroundColor: "#111827",
-  },
-  header: {
-    backgroundColor: "#6366f1",
-    padding: 16,
-  },
-  headerText: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#ffffff",
-  },
-  buttonWrapper: {
-    padding: 16,
-  },
-  buttonRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 12,
-  },
-  button: {
-    width: "48%",
-    borderRadius: 10,
-    padding: 20,
-    alignItems: "center",
-  },
-  buttonLight: {
-    backgroundColor: "#3b82f6",
-  },
-  buttonDark: {
-    backgroundColor: "#1e3a8a",
-  },
-  buttonText: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#ffffff",
-  },
-  divider: {
-    width: 1,
-    backgroundColor: "#ccc",
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 0, marginHorizontal: 0, width: '50%'
   },
   rightSection: {
-    width: "50%",
-    backgroundColor: "#1e40af",
-    alignItems: "center",
-    justifyContent: "center",
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
+  tableContainer: {
+    paddingHorizontal: 1,
+
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    // backgroundColor: '#4287f5',
+    paddingVertical: 3,
+  },
+  headerCell: {
+    flex: 1,
+    textAlign: 'center',
+    color: 'white',
+    fontSize: 30,
   },
 
+  noData: {
+    marginTop: 20,
+    textAlign: 'center',
+    color: '#999',
+    fontSize: 24,
+  },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalBox: {
-    width: "50%",
-    backgroundColor: "#fff",
+    width: '50%',
+    backgroundColor: '#fff',
     borderRadius: 16,
     padding: 20,
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -591,88 +516,39 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: "bold",
+    fontWeight: 'bold',
     marginBottom: 16,
-    textAlign: "center",
-    color: "#333",
+    textAlign: 'center',
+    color: '#333',
   },
   modalInput: {
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: '#ccc',
     borderRadius: 8,
     padding: 12,
     marginBottom: 16,
     fontSize: 16,
-    color: "#333",
+    color: '#333',
   },
   modalButtonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     gap: 12,
   },
-  fullWidth: {
-    width: "100%",
+  button: {
+    padding: 12,
+    borderRadius: 8,
+    flex: 1,
+    alignItems: 'center',
   },
   buttonClose: {
-    backgroundColor: "#aaa",
+    backgroundColor: '#aaa',
   },
   buttonSave: {
-    backgroundColor: "#4287f5",
+    backgroundColor: '#4287f5',
   },
   textStyle: {
-    color: "white",
-    fontWeight: "bold",
-  },
-  rightSection: {
-    position: "relative",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  image: {
-    width: "100%",
-    height: "100%",
-  },
-  ticketBox: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    backgroundColor: "#1e1e1e",
-    width: 450,
-    height: 250,
-    padding: 1,
-    zIndex: 1,
-    backgroundColor: "none",
-  },
-  leftTicket: {
-    backgroundColor: "#fff",
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  rightTicket: {
-    backgroundColor: "#3b82f6",
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  numberTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#3b82f6",
-  },
-  numberValue: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#3b82f6",
-  },
-  proceedText: {
-    fontSize: 20,
-    textAlign: "center",
-    color: "#fff",
-  },
-  counterNumber: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#fff",
+    color: 'white',
+    fontWeight: 'bold',
   },
 });
