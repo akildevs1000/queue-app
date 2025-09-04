@@ -1,5 +1,5 @@
 import { SharedData, TokenCounts } from '@/types';
-import { usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '../ui/button';
 
@@ -36,6 +36,42 @@ const TokenDisplay = () => {
     const [displayTime, setDisplayTime] = useState<number>(0);
     const [announcerPayload, setAnnouncerPayload] = useState<AnnouncerPayload | null>(null);
     const socketRef = useRef<WebSocket | null>(null);
+
+    // Inactivity detection
+    const INACTIVITY_LIMIT = 10 * 1000; // 10 seconds for testing
+    const lastActivityRef = useRef(Date.now());
+
+    useEffect(() => {
+        const updateActivity = () => {
+            lastActivityRef.current = Date.now();
+        };
+        window.addEventListener('mousemove', updateActivity);
+        window.addEventListener('keydown', updateActivity);
+        window.addEventListener('mousedown', updateActivity);
+        window.addEventListener('touchstart', updateActivity);
+
+        const interval = setInterval(() => {
+            console.log('Checking inactivity...');
+            if (Date.now() - lastActivityRef.current > INACTIVITY_LIMIT) {
+                console.log('Logging out due to 10 seconds of inactivity');
+                handleTestLogout();
+            }
+        }, 5000); // check every 5 seconds for faster response
+
+        return () => {
+            window.removeEventListener('mousemove', updateActivity);
+            window.removeEventListener('keydown', updateActivity);
+            window.removeEventListener('mousedown', updateActivity);
+            window.removeEventListener('touchstart', updateActivity);
+            clearInterval(interval);
+        };
+    }, []);
+
+    // Test logout function
+    const handleTestLogout = () => {
+        console.log('Test logout function called');
+        router.post(route('logout'));
+    };
 
     // Assuming you have `auth.user` available like:
     const user = auth.user || {
@@ -362,6 +398,14 @@ const TokenDisplay = () => {
                         <div className="mt-6 text-center">
                             <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">Serving Time</p>
                             <p className="text-3xl font-bold text-blue-900 dark:text-blue-300"> {formatTime(displayTime)}</p>
+                            {/* Test Logout Button */}
+                            {/* <button
+                                type="button"
+                                className="mt-4 px-4 py-2 rounded bg-red-600 text-white font-bold hover:bg-red-700"
+                                onClick={handleTestLogout}
+                            >
+                                Test Logout
+                            </button> */}
                         </div>
                     </div>
                 </div>
