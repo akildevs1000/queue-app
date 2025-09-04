@@ -22,6 +22,9 @@ interface AnnouncerPayload {
 }
 
 const TokenDisplay = () => {
+    // Persistent WebSocket retry logic
+    const SOCKET_RETRY_INTERVAL = 5000; // 5 seconds
+    const socketRetryTimeout = useRef<NodeJS.Timeout | null>(null);
     const { auth } = usePage<SharedData>().props;
 
     const [tokenCounts, setTokenCounts] = useState<TokenCounts | null>(null);
@@ -316,49 +319,55 @@ const TokenDisplay = () => {
     };
 
     const handleSocketConnect = async () => {
-        const res = await fetch(`/socket-ip-and-port`);
+        const connectSocket = async () => {
+            const res = await fetch(`/socket-ip-and-port`);
+            const json = await res.json();
 
-        const json = await res.json();
-
-        if (!json?.ip || !json?.port) {
-            console.log('🚀 ~ handleSocketConnect ~ auth?.user:', auth?.user);
-            setSocketAlert('Socket not connected');
-            return;
-        }
-
-        setSocketAlert(null);
-
-        let url = `ws://${json.ip}:${json.port}`;
-
-        const socket = new WebSocket(url);
-
-        socketRef.current = socket;
-
-        socket.addEventListener('open', () => {
-            console.log('Connected to WS server');
-        });
-
-        socket.addEventListener('message', (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                if (data.event === 'new-ticket') {
-                    console.log('Received new-ticket event:', data);
-                    fetchTokenCounts();
-                } else {
-                    // console.log('Received other event:', data);
-                }
-            } catch (err) {
-                console.error('Failed to parse message:', event.data);
+            if (!json?.ip || !json?.port) {
+                console.log('🚀 ~ handleSocketConnect ~ auth?.user:', auth?.user);
+                setSocketAlert && setSocketAlert(null);
+                // Retry after interval
+                socketRetryTimeout.current = setTimeout(connectSocket, SOCKET_RETRY_INTERVAL);
+                return;
             }
-        });
 
-        socket.addEventListener('error', (error) => {
-            console.error('WebSocket error:', error);
-        });
+            setSocketAlert && setSocketAlert(null);
+            let url = `ws://${json.ip}:${json.port}`;
+            const socket = new WebSocket(url);
+            socketRef.current = socket;
 
-        return () => {
-            socket.close();
+            socket.addEventListener('open', () => {
+                console.log('Connected to WS server');
+                if (socketRetryTimeout.current) {
+                    clearTimeout(socketRetryTimeout.current);
+                    socketRetryTimeout.current = null;
+                }
+            });
+
+            socket.addEventListener('message', (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.event === 'new-ticket') {
+                        console.log('Received new-ticket event:', data);
+                        fetchTokenCounts();
+                    } else {
+                        // console.log('Received other event:', data);
+                    }
+                } catch (err) {
+                    console.error('Failed to parse message:', event.data);
+                }
+            });
+
+            const retrySocket = () => {
+                console.warn('WebSocket closed or error. Retrying in 5 seconds...');
+                socketRetryTimeout.current = setTimeout(connectSocket, SOCKET_RETRY_INTERVAL);
+            };
+
+            socket.addEventListener('close', retrySocket);
+            socket.addEventListener('error', retrySocket);
         };
+
+        connectSocket();
     };
 
     useEffect(() => {
