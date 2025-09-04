@@ -22,6 +22,8 @@ export default function Welcome() {
     const [step, setStep] = useState<'language' | 'service' | 'thankyou'>('language');
     const [services, setServices] = useState<Service[]>([]);
     const socketRef = useRef<WebSocket | null>(null);
+    const [retrying, setRetrying] = useState(false);
+    const socketRetryTimeout = useRef<NodeJS.Timeout | null>(null);
 
     const { data, setData, post } = useForm({
         language: '',
@@ -59,27 +61,50 @@ export default function Welcome() {
     };
 
     useEffect(() => {
-        const fetchSocketIpAndPort = async () => {
+        const SOCKET_RETRY_INTERVAL = 5000; // 5 seconds
+        const connectSocket = async () => {
             try {
                 const res = await fetch(`/socket-ip-and-port`);
                 const json = await res.json();
+                if (!json?.ip || !json?.port) {
+                    setRetrying(true);
+                    socketRetryTimeout.current = setTimeout(connectSocket, SOCKET_RETRY_INTERVAL);
+                    return;
+                }
+                setRetrying(false);
                 const socket = new WebSocket(`ws://${json.ip}:${json.port}`);
                 socketRef.current = socket;
 
                 socket.addEventListener('open', () => {
                     console.log('Connected to WS server');
+                    setRetrying(false);
+                    if (socketRetryTimeout.current) {
+                        clearTimeout(socketRetryTimeout.current);
+                        socketRetryTimeout.current = null;
+                    }
                 });
 
-                socket.addEventListener('error', (error) => {
-                    console.error('WebSocket error:', error);
-                });
+                const retrySocket = () => {
+                    setRetrying(true);
+                    socketRetryTimeout.current = setTimeout(connectSocket, SOCKET_RETRY_INTERVAL);
+                };
+
+                socket.addEventListener('close', retrySocket);
+                socket.addEventListener('error', retrySocket);
             } catch (err) {
+                setRetrying(true);
+                socketRetryTimeout.current = setTimeout(connectSocket, SOCKET_RETRY_INTERVAL);
                 console.error('Failed to fetch services', err);
             }
         };
 
-        fetchSocketIpAndPort();
-        
+        connectSocket();
+
+        return () => {
+            if (socketRetryTimeout.current) {
+                clearTimeout(socketRetryTimeout.current);
+            }
+        };
     }, []);
 
     useEffect(() => {
@@ -127,10 +152,15 @@ export default function Welcome() {
     }, [step, setData]);
 
     return (
-        <div className="flex min-h-screen flex-col items-center justify-center bg-[#f5f5f5] px-4 text-center">
+        <div className="relative flex min-h-screen flex-col items-center justify-center bg-[#f5f5f5] px-4 text-center">
             <Head title="Guest" />
 
             <div>
+                {retrying && (
+                    <div className="fixed top-0 left-0 z-50 w-full bg-yellow-500 py-1 text-center text-sm text-white shadow">
+                        Retrying connection to server...
+                    </div>
+                )}
                 {/* Step 1: Language Selection */}
                 {step === 'language' && (
                     <div className="space-y-6">
