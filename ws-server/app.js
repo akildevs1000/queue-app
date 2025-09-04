@@ -1,14 +1,20 @@
 const WebSocket = require('ws');
 const os = require('os');
 
-
 const WS_PORT = 7777;
-
 const wss = new WebSocket.Server({ port: WS_PORT });
 
 wss.on('connection', function connection(ws) {
     console.log('Client connected');
 
+    ws.isAlive = true;
+
+    // Handle pong from client (heartbeat response)
+    ws.on('pong', () => {
+        ws.isAlive = true;
+    });
+
+    // Broadcast message to all connected clients
     ws.on('message', function incoming(message) {
         wss.clients.forEach(client => {
             if (client.readyState === WebSocket.OPEN) {
@@ -22,6 +28,21 @@ wss.on('connection', function connection(ws) {
     });
 });
 
+// 🔑 Heartbeat check every 30s
+const interval = setInterval(() => {
+    wss.clients.forEach((ws) => {
+        if (ws.isAlive === false) {
+            console.log("💀 Terminating dead client");
+            return ws.terminate();
+        }
+        ws.isAlive = false;
+        ws.ping(); // send ping, client must reply with pong
+    });
+}, 30000);
+
+wss.on('close', () => {
+    clearInterval(interval);
+});
 
 function getIps(WS_PORT) {
     const interfaces = os.networkInterfaces();
