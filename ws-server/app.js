@@ -1,34 +1,63 @@
 const WebSocket = require('ws');
-const os = require('os');
+const url = require('url'); // Import the URL module
 
+const WS_HOST = "0.0.0.0";
 const WS_PORT = 7777;
-const wss = new WebSocket.Server({ port: WS_PORT });
 
-wss.on('connection', function connection(ws) {
-    console.log('Client connected');
+const wss = new WebSocket.Server({ host: WS_HOST, port: WS_PORT });
+
+// A Set to store unique client IDs
+const connectedClients = new Set();
+
+// 🟢 Handle new client connection
+wss.on('connection', function connection(ws, req) {
+    // Parse the URL to get the clientId from the query string
+    const parameters = url.parse(req.url, true).query;
+    const clientId = parameters.clientId;
+
+    if (clientId) {
+        if (connectedClients.has(clientId)) {
+            // It's a reconnection from an existing client
+            console.log(`🔄 Client reconnected with ID: ${clientId}`);
+        } else {
+            // It's a brand new client connection
+            connectedClients.add(clientId);
+            console.log(`✅ New client connected with ID: ${clientId}`);
+        }
+        // Attach the clientId to the WebSocket object for later reference
+        ws.clientId = clientId;
+    } else {
+        console.log('✅ Client connected without an ID');
+    }
 
     ws.isAlive = true;
 
-    // Handle pong from client (heartbeat response)
     ws.on('pong', () => {
         ws.isAlive = true;
     });
 
-    // Broadcast message to all connected clients
     ws.on('message', function incoming(message) {
+        console.log('📩 Received:', message.toString());
+
+        // Broadcast to all clients
         wss.clients.forEach(client => {
-            if (client.readyState === WebSocket.OPEN) {
+            if (client !== ws && client.readyState === WebSocket.OPEN) {
                 client.send(message.toString());
             }
         });
     });
 
-    ws.on('close', () => {
-        console.log('Client disconnected');
+    ws.once('close', () => {
+        console.log('❌ Client disconnected');
+        // If the client had an ID, remove it from the set of active connections
+        if (ws.clientId) {
+            connectedClients.delete(ws.clientId);
+            console.log(`🗑️ Removed disconnected client ID: ${ws.clientId}`);
+        }
     });
 });
 
-// 🔑 Heartbeat check every 30s
+// 🔄 Heartbeat check every 30s
 const interval = setInterval(() => {
     wss.clients.forEach((ws) => {
         if (ws.isAlive === false) {
@@ -36,7 +65,7 @@ const interval = setInterval(() => {
             return ws.terminate();
         }
         ws.isAlive = false;
-        ws.ping(); // send ping, client must reply with pong
+        ws.ping();
     });
 }, 30000);
 
@@ -44,31 +73,4 @@ wss.on('close', () => {
     clearInterval(interval);
 });
 
-function getIps(WS_PORT) {
-    const interfaces = os.networkInterfaces();
-    const privateRanges = [
-        /^192\.168\./,
-        /^10\./,
-        /^172\.(1[6-9]|2[0-9]|3[0-1])\./
-    ];
-
-    let found = false;
-
-    for (const name of Object.keys(interfaces)) {
-        for (const iface of interfaces[name]) {
-            if (iface.family === 'IPv4' && !iface.internal) {
-                if (privateRanges.some((regex) => regex.test(iface.address))) {
-                    console.log(`✅ WebSocket server is running at ws://${iface.address}:${WS_PORT}`);
-                    found = true;
-                }
-            }
-        }
-    }
-
-    if (!found) {
-        console.log(`⚠️ No private LAN/Wi-Fi IPv4 address found. Use ws://127.0.0.1:${WS_PORT} for local testing.`);
-    }
-}
-
-
-getIps(WS_PORT);
+console.log(`🚀 WebSocket server running at ws://${WS_HOST}:${WS_PORT}`);
