@@ -202,6 +202,19 @@ export default function Welcome() {
     }
   };
 
+  // Safe reconnect function
+  const safeReconnect = ({ ip, port }) => {
+    if (reconnectTimeoutRef.current) return; // prevent multiple timers
+
+    const RECONNECT_DELAY = 30 * 1000; // 30 seconds
+
+    reconnectTimeoutRef.current = setTimeout(() => {
+      console.log('🔄 Reconnecting WebSocket...');
+      getSocketConnection({ ip, port });
+      reconnectTimeoutRef.current = null; // allow next reconnect
+    }, RECONNECT_DELAY);
+  };
+
   const getSocketConnection = ({ ip, port = 7777 }) => {
     // Clear any previous reconnect timer
     if (reconnectTimeoutRef.current) {
@@ -244,18 +257,8 @@ export default function Welcome() {
 
         const { event: eventType, data: tokenData } = parsed;
 
-        // if (eventType === 'trigger-settings') {
-        //   const newMedia = {
-        //     ...tokenData,
-        //     height: tokenData?.media_height || videoHeight,
-        //     width: tokenData?.media_width / 2 || videoWidth,
-        //   };
 
-        //   setMedia(prev => {
-        //     const hasChanged = JSON.stringify(prev) !== JSON.stringify(newMedia);
-        //     return hasChanged ? newMedia : prev;
-        //   });
-        // }
+
 
         if (tokenData?.token && tokenData?.counter !== undefined && eventType === 'token-serving') {
           setTokens(prevTokens => {
@@ -276,61 +279,29 @@ export default function Welcome() {
       }
     };
 
-    // On Error
-    ws.current.onerror = (error) => {
-      console.error('❌ WebSocket error:', error.message || error);
-      setWsStatus('Failed to connect to server. Retrying...');
-      if (wsStatusTimeoutRef.current) clearTimeout(wsStatusTimeoutRef.current);
-      // Safe retry logic
-      if (reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
-        reconnectAttemptsRef.current += 1;
-        if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
-        reconnectTimeoutRef.current = setTimeout(() => {
-          getSocketConnection({ ip, port });
-        }, RECONNECT_DELAY);
-      } else {
-        setWsStatus('Failed to connect after multiple attempts. Please check your network.');
-        setShowReloadBar(true);
-      }
-    };
-
-    // On Close
-    ws.current.onclose = () => {
-      console.log('🔌 WebSocket disconnected');
-      setWsStatus('WebSocket connection closed. Retrying...');
-      if (wsStatusTimeoutRef.current) clearTimeout(wsStatusTimeoutRef.current);
-      // Safe retry logic
-      if (reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
-        reconnectAttemptsRef.current += 1;
-        if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
-        reconnectTimeoutRef.current = setTimeout(() => {
-          getSocketConnection({ ip, port });
-        }, RECONNECT_DELAY);
-      } else {
-        setWsStatus('Failed to connect after multiple attempts. Please check your network.');
-        setShowReloadBar(true);
-      }
-    };
-
-    // Listen to AppState to reconnect when app becomes active
-    const subscription = AppState.addEventListener('change', (nextAppState) => {
-      if (nextAppState === 'active') {
-        console.log('📱 App is active, checking WS...');
-        if (!ws.current || ws.current.readyState !== 1) {
-          console.log('🔄 Reconnecting WebSocket...');
-          getSocketConnection({ ip, port });
-        }
-      }
-    });
+    ws.current.onerror = () => safeReconnect({ ip, port });
+    ws.current.onclose = () => safeReconnect({ ip, port });
 
     // Cleanup function (call on component unmount)
     return () => {
       if (ws.current) ws.current.close();
       if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
-      subscription.remove();
     };
   };
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') {
+        console.log('📱 App is active, checking WS...');
+        if (!ws.current || ws.current.readyState !== 1) {
+          safeReconnect({ ip, port });
+        }
+      }
+    });
+
+    return () => subscription.remove();
+  }, []);
 
   const renderSlider = async () => {
     if (
