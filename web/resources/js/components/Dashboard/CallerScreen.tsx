@@ -41,7 +41,7 @@ const TokenDisplay = () => {
     const socketRef = useRef<WebSocket | null>(null);
 
     // Inactivity detection
-    const INACTIVITY_LIMIT = 3600 * 1000; // 1 hour
+    const INACTIVITY_LIMIT = 1800 * 1000; // 30 minutes
     const lastActivityRef = useRef(Date.now());
 
     useEffect(() => {

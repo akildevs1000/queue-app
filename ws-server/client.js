@@ -1,7 +1,7 @@
 const WebSocket = require('ws');
 
 // Get IP and port from command-line args or use defaults
-const IP = process.argv[2] || '192.168.3.244';
+const IP = process.argv[2] || '192.168.2.79';
 const PORT = process.argv[3] || 7777;
 
 let ws;
@@ -30,6 +30,10 @@ function connect() {
 
     // Send first token message
     sendToken();
+
+    setInterval(() => {
+      sendToken();
+    }, 1 * 5 * 1000); // 30 minutes in ms
   });
 
   ws.on('message', (message) => {

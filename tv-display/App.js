@@ -18,7 +18,9 @@ import {
   Image,
   ScrollView,
   TouchableOpacity,
-  BackHandler
+  BackHandler,
+  DevSettings,
+  Platform
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -31,8 +33,8 @@ export default function Welcome() {
   const [showReloadBar, setShowReloadBar] = useState(false);
   // Reconnect control
   const reconnectAttemptsRef = useRef(0);
-  const reconnectTimeoutRef = useRef(null);
-  const MAX_RECONNECT_ATTEMPTS = 10;
+  const reconnectTimeoutRef = useRef("");
+  const MAX_RECONNECT_ATTEMPTS = 2;
   const RECONNECT_DELAY = 30000; // 30 seconds
   // Track which modal button is focused for TV remote navigation
   const [focusedButton, setFocusedButton] = useState('cancel');
@@ -41,16 +43,16 @@ export default function Welcome() {
 
 
   const currentIndexRef = useRef(0);
-  const flatListRef = useRef(null);
-  const timeoutRef = useRef(null);
-  const ws = useRef(null);
-  const pingIntervalRef = useRef(null);
+  const flatListRef = useRef("");
+  const timeoutRef = useRef("");
+  const ws = useRef("");
+  const pingIntervalRef = useRef("");
 
   const [ip, setIp] = useState("192.168.3.244");
   const [port, setPort] = useState("8000");
   const [loading, setLoading] = useState(false);
   const [tokens, setTokens] = useState([]);
-  const [info, setInfo] = useState(null);
+  const [info, setInfo] = useState("");
   const [media, setMedia] = useState({
     media_type: "image",
     media_url: [],
@@ -101,8 +103,8 @@ export default function Welcome() {
   const loadIpPort = async () => {
     const ip = await AsyncStorage.getItem('ip');
     const port = await AsyncStorage.getItem('port');
-    setIp(ip);
-    setPort(port);
+    setIp(ip ?? "");
+    setPort(port ?? "");
     setShowModal(true);
   };
 
@@ -119,6 +121,7 @@ export default function Welcome() {
       setShowModal(false);
       fetchTvSettings(ip, port);
       fetchServingItems(ip, port);
+      getSocketConnection({ ip, port });
     } catch (e) {
       console.error('Error saving IP and port', e);
     } finally {
@@ -148,7 +151,6 @@ export default function Welcome() {
         height: json?.media_height || videoHeight,
         width: json?.media_width / 2 || videoWidth / 2,
       });
-      getSocketConnection(json);
     } catch (e) {
       // console.error('Error saving IP and port', e);
     } finally {
@@ -206,15 +208,14 @@ export default function Welcome() {
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
     }
-    reconnectAttemptsRef.current = 0;
-    console.log("🚀 ~ getSocketConnection ~ ip, port:", ip, port)
+    // reconnectAttemptsRef.current = 0;
     if (ws.current) {
       ws.current.close();
       ws.current = null;
     }
 
     // Create WebSocket
-    ws.current = new WebSocket(`ws://${ip}:${port}`);
+    ws.current = new WebSocket(`ws://${ip}:${port}?clientId=tv_display`);
 
     // On Open
     ws.current.onopen = () => {
@@ -324,10 +325,10 @@ export default function Welcome() {
 
     // Cleanup function (call on component unmount)
     return () => {
-  if (ws.current) ws.current.close();
-  if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
-  if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
-  subscription.remove();
+      if (ws.current) ws.current.close();
+      if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+      subscription.remove();
     };
   };
 
@@ -391,10 +392,14 @@ export default function Welcome() {
         <View style={styles.wsStatusBanner}>
           <Text style={styles.wsStatusText}>{wsStatus}</Text>
           {showReloadBar && (
-            <Pressable style={styles.reloadBar} onPress={() => {
-              setShowReloadBar(false);
-              reconnectAttemptsRef.current = 0;
-              getSocketConnection({ ip, port });
+            <Pressable style={styles.reloadBar} onPress={async () => {
+              if (Platform.OS === 'web') {
+                window.location.reload();
+              } else if (__DEV__) {
+                DevSettings.reload();
+              } else {
+                DevSettings.reload();
+              }
             }}>
               <Text style={styles.reloadBarText}>Reload App</Text>
             </Pressable>
