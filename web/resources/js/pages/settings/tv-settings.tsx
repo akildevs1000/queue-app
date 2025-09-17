@@ -64,7 +64,7 @@ export default function Profile({ tv_settings }) {
             forceFormData: true,
             preserveScroll: true,
             onSuccess: () => {
-                handleSocketConnect();
+                // handleSocketConnect();
             },
         });
     };
@@ -134,10 +134,10 @@ export default function Profile({ tv_settings }) {
 
     // Call on mount
     useEffect(() => {
-        handleSocketConnect();
+        // handleSocketConnect();
 
         return () => {
-            handleSocketDisconnect();
+            // handleSocketDisconnect();
         };
     }, []);
     return (
