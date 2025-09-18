@@ -210,6 +210,7 @@ export default function Welcome() {
 
     reconnectTimeoutRef.current = setTimeout(() => {
       console.log('🔄 Reconnecting WebSocket...');
+      setWsStatus('🔄 Reconnecting WebSocket...');
       getSocketConnection({ ip, port });
       reconnectTimeoutRef.current = null; // allow next reconnect
     }, RECONNECT_DELAY);
@@ -362,6 +363,7 @@ export default function Welcome() {
       {wsStatus ? (
         <View style={styles.wsStatusBanner}>
           <Text style={styles.wsStatusText}>{wsStatus}</Text>
+          {/* 
           {showReloadBar && (
             <Pressable style={styles.reloadBar} onPress={async () => {
               if (Platform.OS === 'web') {
@@ -375,6 +377,7 @@ export default function Welcome() {
               <Text style={styles.reloadBarText}>Reload App</Text>
             </Pressable>
           )}
+          */}
         </View>
       ) : null}
       {/* Left Section */}
