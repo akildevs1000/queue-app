@@ -229,7 +229,7 @@ export default function Welcome() {
     }
 
     // Create WebSocket
-    ws.current = new WebSocket(`ws://${ip}:${port}?clientId=tv_display`);
+    ws.current = new WebSocket(`ws://${ip}:${7777}?clientId=tv_display`);
 
     // On Open
     ws.current.onopen = () => {
