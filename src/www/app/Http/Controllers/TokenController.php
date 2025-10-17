@@ -192,7 +192,7 @@ class TokenController extends Controller
         // Get the latest token number globally and increment it
         // Predict next token number (for immediate display)
         $lastTokenNumber       = Token::latest('token_number')->value('token_number') ?? 0;
-        $predictedTokenNumber  = $lastTokenNumber + 1;
+        $predictedTokenNumber  = (int) $lastTokenNumber + 1;
         $predictedTokenDisplay = $validatedData['code'] . str_pad($predictedTokenNumber, 4, '0', STR_PAD_LEFT);
 
         // Prepare data for new token creation
@@ -204,8 +204,8 @@ class TokenController extends Controller
         ];
 
         // Create the new token
-        // $token = Token::create($tokenData);
-        CreateTokenJob::dispatch($tokenData);
+        $token = Token::create($tokenData);
+        // CreateTokenJob::dispatch($tokenData);
 
         // Prepare response data for the ticket
         $response = [
