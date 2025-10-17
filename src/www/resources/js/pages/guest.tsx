@@ -219,7 +219,7 @@ export default function Welcome() {
                             </div>
                         </div>
                         <div className="mt-15">
-                            <Input value={qrCode || ''} onChange={(e) => setQrCode(e.target.value || '')} />
+                            <Input value={qrCode || ''} onChange={(e) => setQrCode(e.target.value || '')} autoFocus/>
                         </div>
                     </>
                 )}
