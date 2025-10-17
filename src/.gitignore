@@ -5,4 +5,3 @@ package.json
 *.pid
 *.log
 dist
-public
