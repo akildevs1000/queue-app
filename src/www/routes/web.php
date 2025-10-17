@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\CounterController;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LoginLogController;
 use App\Http\Controllers\MessageController;
@@ -105,3 +106,7 @@ Route::get('/latest-serving-token-event', function () {
 
     return response()->json($data);
 });
+
+Route::resource("customers", CustomerController::class)->middleware("auth");
+Route::get("customers-list", [CustomerController::class, 'dropDown'])->middleware("auth");
+Route::get("next-vipnumber", [CustomerController::class, 'nextVipNumber'])->middleware("auth");

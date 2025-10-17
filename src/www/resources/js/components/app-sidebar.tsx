@@ -1,7 +1,7 @@
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BadgeDollarSign, LayoutDashboard, Monitor, Users } from 'lucide-react';
+import { BadgeDollarSign, Gem, LayoutDashboard, Monitor, Users } from 'lucide-react';
 import AppLogo from './app-logo';
 import LastLogin from './LoginLog/LastLogin';
 import { NavMain } from './nav-main';
@@ -11,6 +11,11 @@ const mainNavItems: NavItem[] = [
         title: 'Dashboard',
         href: '/dashboard',
         icon: LayoutDashboard,
+    },
+    {
+        title: 'Customers',
+        href: '/customers',
+        icon: Gem,
     },
     {
         title: 'Users',

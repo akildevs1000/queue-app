@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import TicketPrint, { type TicketPrintProps } from '@/components/TicketPrint';
 
 import GradientCard from '@/components/ui/GradientCard';
+import { Input } from '@/components/ui/input';
 
 type PageProps = {
     ticketInfo: TicketPrintProps;
@@ -18,6 +19,8 @@ type Service = {
 
 export default function Welcome() {
     const { ticketInfo } = usePage<PageProps>().props;
+
+    const [qrUrl, setQrURL] = useState<string | null>(null);
 
     const [step, setStep] = useState<'language' | 'service' | 'thankyou'>('language');
     const [services, setServices] = useState<Service[]>([]);
@@ -197,6 +200,10 @@ export default function Welcome() {
             <div>
                 {/* Step 3: Thank You Message */}
                 {step === 'thankyou' && ticketInfo && <TicketPrint {...ticketInfo} />}
+            </div>
+
+            <div style={{ display: 'none' }}>
+                <Input value={qrUrl || ''} onChange={(e) => setQrURL(e.target.value || '')} />
             </div>
         </div>
     );

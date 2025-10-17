@@ -1,10 +1,17 @@
 import UiMode from '@/components/ui-mode';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import { NavUser } from './top-nav-user';
 import ServiceByUser from './User/ServiceByUser';
 
 export function AppSidebarHeader() {
+    const page = usePage();
+
+    const user = page.props.auth?.user;
+
+    let isMaster = user.type == 'master';
+
     const [counter, setCounter] = useState(null);
 
     useEffect(() => {
@@ -27,18 +34,21 @@ export function AppSidebarHeader() {
                 <SidebarTrigger className="-ml-1" />
                 {/* <Breadcrumbs breadcrumbs={breadcrumbs} />  */}
 
-                {counter && (
-                    <div className="flex items-center gap-1 text-gray-500">
-                        Counter: <span className="font-medium dark:text-gray-400">,counter?.name </span>
-                    </div>
+                {isMaster ? null : (
+                    <>
+                        {counter && (
+                            <div className="flex items-center gap-1 text-gray-500">
+                                Counter: <span className="font-medium dark:text-gray-400">, {counter?.name} </span>
+                            </div>
+                        )}
+                        <div className="flex items-center gap-1 text-gray-500">
+                            Service:{' '}
+                            <span className="font-medium dark:text-gray-400">
+                                <ServiceByUser />
+                            </span>
+                        </div>
+                    </>
                 )}
-
-                <div className="flex items-center gap-1 text-gray-500">
-                    Service:{' '}
-                    <span className="font-medium dark:text-gray-400">
-                        <ServiceByUser />
-                    </span>
-                </div>
             </div>
 
             {/* Right side: UiMode toggle */}
