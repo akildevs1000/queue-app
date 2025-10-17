@@ -18,6 +18,7 @@ class StoreRequest extends FormRequest
             'service_id' => 'required|numeric',
             'code' => 'required',
             'service_name' => 'required',
+            'vip_number' => 'nullable'
         ];
     }
 }

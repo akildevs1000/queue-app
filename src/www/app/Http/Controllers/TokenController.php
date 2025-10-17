@@ -3,7 +3,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Token\StoreRequest;
 use App\Http\Requests\Token\UpdateRequest;
-use App\Jobs\CreateTokenJob;
 use App\Models\Token;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -70,13 +69,26 @@ class TokenController extends Controller
 
     public function nextToken()
     {
-        $nextToken = Token::where('service_id', Auth::user()->service_id ?? 0)
-            ->whereDate('created_at', Carbon::today())
-            ->where('status', TOKEN::PENDING)
-        // ->where(function ($q) {
-        //     $q->whereNull('end_serving');
+        $serviceId = Auth::user()->service_id ?? 0;
 
-        // })
+        // Step 1️⃣ — Try to get the next VIP token first
+        $vipToken = Token::where('service_id', $serviceId)
+            ->whereDate('created_at', Carbon::today())
+            ->where('status', Token::PENDING)
+            ->where('token_number_display', 'LIKE', 'VIP-%')
+            ->orderBy('id', 'asc') // oldest VIP first
+            ->first(['id', 'token_number_display']);
+
+        if ($vipToken) {
+            return response()->json($vipToken);
+        }
+
+        // Step 2️⃣ — If no VIP token, get the next normal token
+        $nextToken = Token::where('service_id', $serviceId)
+            ->whereDate('created_at', Carbon::today())
+            ->where('status', Token::PENDING)
+            ->where('token_number_display', 'NOT LIKE', 'VIP-%')
+            ->orderBy('id', 'asc')
             ->first(['id', 'token_number_display']);
 
         return response()->json($nextToken);
@@ -187,41 +199,56 @@ class TokenController extends Controller
         $validatedData = $request->validated();
 
         // Count how many tokens are already waiting for this service
-        $waitingCount = Token::where('service_id', $validatedData['service_id'])->where("status", Token::PENDING)->count();
+        $waitingCount = Token::where('service_id', $validatedData['service_id'])
+            ->where("status", Token::PENDING)
+            ->count();
 
-        // Get the latest token number globally and increment it
-        // Predict next token number (for immediate display)
-        $lastTokenNumber       = Token::latest('token_number')->value('token_number') ?? 0;
-        $predictedTokenNumber  = $lastTokenNumber + 1;
-        $predictedTokenDisplay = $validatedData['code'] . str_pad($predictedTokenNumber, 4, '0', STR_PAD_LEFT);
+        // Prepare variables
+        $tokenNumber  = null;
+        $tokenDisplay = null;
 
-        // Prepare data for new token creation
+        // ✅ If VIP number exists, use it directly
+        if (! empty($validatedData['vip_number'])) {
+            $tokenNumber  = (int) explode("-", $validatedData['vip_number'])[1] + 1;
+            $tokenDisplay = $validatedData['vip_number'];
+        } else {
+            // ✅ Get latest non-VIP token (ignore VIP-%)
+            $lastToken = Token::where('token_number_display', 'NOT LIKE', 'VIP-%')
+                ->orderByDesc('id') // safer and faster than latest('token_number')
+                ->first();
+
+            // If no previous non-VIP tokens, start from 0
+            $lastTokenNumber = $lastToken?->token_number ?? 0;
+
+            // Increment the number
+            $tokenNumber = $lastTokenNumber + 1;
+
+            // Create display format like "LQ000001"
+            $tokenDisplay = $validatedData['code'] . str_pad($tokenNumber, 4, '0', STR_PAD_LEFT);
+        }
+
+        // ✅ Create token
         $tokenData = [
             'language'             => $validatedData['language'],
             'service_id'           => $validatedData['service_id'],
-            'token_number'         => $predictedTokenNumber,
-            'token_number_display' => $validatedData['code'] . str_pad($predictedTokenNumber, 4, '0', STR_PAD_LEFT),
+            'token_number'         => $tokenNumber,
+            'token_number_display' => $tokenDisplay,
         ];
 
-        // Create the new token
-        // $token = Token::create($tokenData);
-        CreateTokenJob::dispatch($tokenData);
+        $token = Token::create($tokenData);
 
-        // Prepare response data for the ticket
+        // ✅ Prepare response data
         $response = [
             'name'                  => 'ABC Bank',
             'code'                  => $validatedData['code'],
-            'token_number_display'  => $predictedTokenDisplay,
+            'token_number_display'  => $tokenDisplay,
             'service'               => $validatedData['service_name'],
-            'already_waiting_count' => $waitingCount,                                                    // position in queue
-            'estimated_wait_time'   => (new Token)->getAverageServingTime($validatedData['service_id']), // assuming 10 mins per token
+            'already_waiting_count' => $waitingCount,
+            'estimated_wait_time'   => (new Token)->getAverageServingTime($validatedData['service_id']),
             'date'                  => now()->format('d-M-Y'),
             'time'                  => now()->format('h:i A'),
         ];
 
-        // return response()->json(['ticketInfo' => $response]);
-
-        // Redirect with ticket information
         return redirect()->route('guest')->with('ticketInfo', $response);
     }
 

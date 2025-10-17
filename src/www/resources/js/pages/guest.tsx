@@ -20,7 +20,8 @@ type Service = {
 export default function Welcome() {
     const { ticketInfo } = usePage<PageProps>().props;
 
-    const [qrUrl, setQrURL] = useState<string | null>(null);
+    const [qrCode, setQrCode] = useState<string | null>(null);
+    const lastQrRef = useRef<string | null>(null);
 
     const [step, setStep] = useState<'language' | 'service' | 'thankyou'>('language');
     const [services, setServices] = useState<Service[]>([]);
@@ -33,6 +34,7 @@ export default function Welcome() {
         service_id: 0,
         service_name: '',
         code: '',
+        vip_number: null,
     });
 
     const fetchServices = async (lang: string) => {
@@ -52,13 +54,17 @@ export default function Welcome() {
     };
 
     const handleServiceSelect = (service: Service) => {
-        // Prepare new data object
-        const updatedData = {
+        const updatedData: any = {
             language: data.language,
             service_id: service.id,
             code: service.code,
             service_name: service.name,
         };
+
+        // Only include vip_number if qrCode has a value
+        if (qrCode) {
+            updatedData.vip_number = qrCode;
+        }
 
         setData(updatedData);
     };
@@ -126,6 +132,7 @@ export default function Welcome() {
                     } else {
                         console.warn('WebSocket is not open.');
                     }
+                    setQrCode(null)
                 },
                 onFinish: () => {},
                 onError: (errors) => {
@@ -134,6 +141,20 @@ export default function Welcome() {
             });
         }
     }, [data]);
+
+    useEffect(() => {
+        if (qrCode && qrCode !== lastQrRef.current) {
+            const timer = setTimeout(() => {
+                console.log('🚀 Updating code with QR value:', qrCode);
+                // Only update if it's a new QR code
+                setData((prev) => ({ ...prev, vip_number: qrCode }));
+                lastQrRef.current = qrCode;
+            }, 1000); // 1 second delay
+
+            // Cleanup if qrCode changes before timeout finishes
+            return () => clearTimeout(timer);
+        }
+    }, [qrCode, setData]);
 
     // Reset after 5 seconds on thankyou step
     useEffect(() => {
@@ -147,9 +168,10 @@ export default function Welcome() {
                     service_id: 0,
                     service_name: '',
                     code: '',
+                    vip_number:null
                 });
                 setServices([]);
-            }, 1000);
+            }, 5000);
         }
         return () => clearTimeout(timer);
     }, [step, setData]);
@@ -179,31 +201,32 @@ export default function Welcome() {
                     </div>
                 )}
                 {step === 'service' && data.language && (
-                    <div className="space-y-6">
-                        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">
-                            {data.language === 'en' ? 'Please select a service' : 'الرجاء اختيار الخدمة'}
-                        </h1>
-                        <div className="mx-auto grid max-w-md grid-cols-1 gap-6 md:grid-cols-2">
-                            {services.map((service) => (
-                                <GradientCard
-                                    key={service.id}
-                                    onClick={() => handleServiceSelect(service)}
-                                    className="cursor-pointer transition-transform hover:scale-105"
-                                >
-                                    <CardContent className="py-10 text-xl font-semibold">{service.name}</CardContent>
-                                </GradientCard>
-                            ))}
+                    <>
+                        <div className="space-y-6">
+                            <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">
+                                {data.language === 'en' ? 'Please select a service' : 'الرجاء اختيار الخدمة'}
+                            </h1>
+                            <div className="mx-auto grid max-w-md grid-cols-1 gap-6 md:grid-cols-2">
+                                {services.map((service) => (
+                                    <GradientCard
+                                        key={service.id}
+                                        onClick={() => handleServiceSelect(service)}
+                                        className="cursor-pointer transition-transform hover:scale-105"
+                                    >
+                                        <CardContent className="py-10 text-xl font-semibold">{service.name}</CardContent>
+                                    </GradientCard>
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                        <div className="mt-15">
+                            <Input value={qrCode || ''} onChange={(e) => setQrCode(e.target.value || '')} />
+                        </div>
+                    </>
                 )}
             </div>
             <div>
                 {/* Step 3: Thank You Message */}
                 {step === 'thankyou' && ticketInfo && <TicketPrint {...ticketInfo} />}
-            </div>
-
-            <div style={{ display: 'none' }}>
-                <Input value={qrUrl || ''} onChange={(e) => setQrURL(e.target.value || '')} />
             </div>
         </div>
     );
