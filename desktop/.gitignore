@@ -1,0 +1,8 @@
+node_modules
+composer.phar
+logs/*
+package.json
+*.pid
+*.log
+dist
+public

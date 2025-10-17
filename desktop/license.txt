@@ -1,0 +1,27 @@
+SmartQueue License Summary
+Key Agreements (Acceptance)
+You Agree: Using this software means you automatically agree to these terms.
+
+License Name: This software is provided under the terms described here.
+
+Usage Rights
+Permitted Use: You may use this software for both Personal and Commercial purposes.
+
+Prohibited Actions (DO NOT)
+Modify/Tinker: Do not modify, adapt, or reverse engineer the software.
+
+Share/Sell: Do not distribute or sublicense it without explicit permission.
+
+Illegal Use: Do not use the software for any illegal activities.
+
+Risk & Responsibility
+No Warranty: The software is provided "AS IS"—there is NO WARRANTY of any kind.
+
+No Liability: The authors/copyright holders are NOT LIABLE for any damages, claims, or issues resulting from your use of the software.
+
+Maintenance & Law
+Support: Updates and support are not guaranteed and are provided solely at the developer's discretion.
+
+Governing Law: The terms are governed by the laws of your country.
+
+By installing or using this software, you acknowledge and agree to be bound by these SmartQueue terms.

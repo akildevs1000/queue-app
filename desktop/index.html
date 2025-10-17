@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>App Server</title>
+  <link rel="stylesheet" href="./assets/style.css" />
+</head>
+
+<body>
+  <h2>App Server</h2>
+
+  <div>
+    <button class="btn" onclick="startServer()">Start Server</button>
+    <button class="btn" onclick="stopServer()">Stop Server</button>
+  </div>
+
+  <div class="search-controls">
+    <!-- these thing should be in one oline -->
+    <input type="text" id="searchInput" placeholder="Search logs..." />
+    <button class="btn" onclick="clearLogs()">Clear</button>
+    <button class="btn" onclick="exportLogs()">Export</button>
+  </div>
+
+
+  <div id="logs"></div>
+
+ <script>
+  const { ipcRenderer } = require('electron');
+
+  let allLogs = ''; // Preserve original logs
+
+  function startServer() {
+    ipcRenderer.send('start-server');
+  }
+
+  function stopServer() {
+    ipcRenderer.send('stop-server');
+  }
+
+  ipcRenderer.on('log', (event, message) => {
+    allLogs += message;
+    updateLogDisplay();
+  });
+
+  function updateLogDisplay() {
+    const filter = document.getElementById('searchInput').value.toLowerCase();
+    const filtered = allLogs
+      .split('\n')
+      .filter(line => line.toLowerCase().includes(filter))
+      .join('\n');
+    const logs = document.getElementById('logs');
+    logs.textContent = filtered;
+    logs.scrollTop = logs.scrollHeight;
+  }
+
+  function clearLogs() {
+    allLogs = '';
+    updateLogDisplay();
+  }
+
+  function exportLogs() {
+    const blob = new Blob([allLogs], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'app-server-logs.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  document.getElementById('searchInput').addEventListener('input', updateLogDisplay);
+</script>
+
+</body>
+
+</html>
