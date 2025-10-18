@@ -75,8 +75,7 @@ export default function ItemEdit({
                             tabIndex={3}
                             autoComplete="vip_number"
                             value={data.vip_number}
-                            disabled={processing}
-                            readOnly
+                             onChange={(e) => setData('vip_number', e.target.value)}
                         />
                         <InputError message={errors.vip_number} />
                     </div>

@@ -453,31 +453,31 @@ const TokenDisplay = () => {
                             <div className="grid w-full max-w-xl grid-cols-2 gap-3">
                                 <GradientButton
                                     onClick={nextToken}
-                                    className="rounded-lg p-7 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
+                                    className="rounded-lg p-15 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
                                 >
                                     {nextLabel}
                                 </GradientButton>
                                 <GradientButton
                                     onClick={endServing}
-                                    className="rounded-lg p-7 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
+                                    className="rounded-lg p-15 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
                                 >
                                     End
                                 </GradientButton>
                                 <GradientButton
                                     onClick={noShowServing}
-                                    className="rounded-lg p-7 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
+                                    className="rounded-lg p-15 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
                                 >
                                     No Show
                                 </GradientButton>
                                 <GradientButton
                                     onClick={reCall}
-                                    className="rounded-lg p-7 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
+                                    className="rounded-lg p-15 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
                                 >
                                     {recallLabel}
                                 </GradientButton>
                                 <GradientButton
                                     onClick={toggleServing}
-                                    className="rounded-lg p-7 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
+                                    className="rounded-lg p-15 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800"
                                 >
                                     {!isServing ? 'Pause' : 'Resume'}
                                 </GradientButton>

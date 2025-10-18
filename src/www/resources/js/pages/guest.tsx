@@ -1,8 +1,8 @@
 import { CardContent } from '@/components/ui/card';
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 
-import TicketPrint, { type TicketPrintProps } from '@/components/TicketPrint';
+import { type TicketPrintProps } from '@/components/TicketPrint';
 
 import GradientCard from '@/components/ui/GradientCard';
 import { Input } from '@/components/ui/input';
@@ -18,8 +18,6 @@ type Service = {
 };
 
 export default function Welcome() {
-    const { ticketInfo } = usePage<PageProps>().props;
-
     const [qrCode, setQrCode] = useState<string | null>(null);
     const lastQrRef = useRef<string | null>(null);
 
@@ -47,10 +45,13 @@ export default function Welcome() {
         }
     };
 
+    useEffect(() => {
+        fetchServices('en');
+    }, []);
+
     const handleLanguageSelect = (lang: 'en' | 'ar') => {
         setData('language', lang);
         setStep('service');
-        fetchServices(lang);
     };
 
     const handleServiceSelect = (service: Service) => {
@@ -118,6 +119,7 @@ export default function Welcome() {
 
     useEffect(() => {
         if (data.service_id) {
+            console.log('🚀 ~ Welcome ~ data:', data);
             post('/tokens', {
                 onSuccess: () => {
                     setStep('thankyou');
@@ -132,7 +134,18 @@ export default function Welcome() {
                     } else {
                         console.warn('WebSocket is not open.');
                     }
-                    setQrCode(null)
+
+                    setQrCode(null);
+
+                    setStep('language');
+
+                    setData({
+                        language: '',
+                        service_id: 0,
+                        service_name: '',
+                        code: '',
+                        vip_number: null,
+                    });
                 },
                 onFinish: () => {},
                 onError: (errors) => {
@@ -156,25 +169,11 @@ export default function Welcome() {
         }
     }, [qrCode, setData]);
 
-    // Reset after 5 seconds on thankyou step
-    useEffect(() => {
-        let timer: ReturnType<typeof setTimeout>;
-        if (step === 'thankyou') {
-            timer = setTimeout(() => {
-                // Reset step to language and clear form & services
-                setStep('language');
-                setData({
-                    language: '',
-                    service_id: 0,
-                    service_name: '',
-                    code: '',
-                    vip_number:null
-                });
-                setServices([]);
-            }, 5000);
-        }
-        return () => clearTimeout(timer);
-    }, [step, setData]);
+    const handleQrCodeChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newValue = e.target.value;
+        setQrCode(newValue);
+        console.log('✅ QR Code set:', newValue);
+    };
 
     return (
         <div className="relative flex min-h-screen flex-col items-center justify-center bg-[#f5f5f5] px-4 text-center">
@@ -218,15 +217,11 @@ export default function Welcome() {
                                 ))}
                             </div>
                         </div>
-                        <div className="mt-15">
-                            <Input value={qrCode || ''} onChange={(e) => setQrCode(e.target.value || '')} autoFocus/>
+                        <div className="absolute left-[-500px]">
+                            <Input value={qrCode || ''} onChange={handleQrCodeChange} autoFocus />
                         </div>
                     </>
                 )}
-            </div>
-            <div>
-                {/* Step 3: Thank You Message */}
-                {step === 'thankyou' && ticketInfo && <TicketPrint {...ticketInfo} />}
             </div>
         </div>
     );

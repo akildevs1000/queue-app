@@ -41,7 +41,7 @@ export default function ManualCall({
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <GradientButton className="rounded-lg p-7 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800">
+                <GradientButton className="rounded-lg p-15 font-semibold text-white transition hover:bg-indigo-700 dark:border-gray-600 dark:bg-gray-800">
                     {title}
                 </GradientButton>
             </DialogTrigger>

@@ -5,6 +5,7 @@ use App\Http\Requests\Token\StoreRequest;
 use App\Http\Requests\Token\UpdateRequest;
 use App\Jobs\CreateTokenJob;
 use App\Models\Token;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -13,11 +14,8 @@ use WebSocket\Client;
 
 class TokenController extends Controller
 {
-
     private $currentTokenNumber = 1;
-    /**
-     * Display a listing of the resource.
-     */
+
     public function index()
     {
         return Token::latest()
@@ -70,13 +68,21 @@ class TokenController extends Controller
 
     public function nextToken()
     {
+
         $nextToken = Token::where('service_id', Auth::user()->service_id ?? 0)
             ->whereDate('created_at', Carbon::today())
             ->where('status', TOKEN::PENDING)
-        // ->where(function ($q) {
-        //     $q->whereNull('end_serving');
+            ->where('vip_serving', 1)
+            ->whereNotNull("vip_number")
+            ->first(['id', 'token_number_display']);
 
-        // })
+        if ($nextToken) {
+            return $nextToken;
+        }
+
+        $nextToken = Token::where('service_id', Auth::user()->service_id ?? 0)
+            ->whereDate('created_at', Carbon::today())
+            ->where('status', TOKEN::PENDING)
             ->first(['id', 'token_number_display']);
 
         return response()->json($nextToken);
@@ -154,6 +160,7 @@ class TokenController extends Controller
         $token->total_serving_time_display = $request->total_serving_time_display;
         $token->pause_time_display         = $pauseTimeDisplay;
         $token->status                     = Token::SERVED;
+        $token->vip_serving                = 0;
         $token->counter_id                 = Auth::user()->counter_id;
         $token->save();
 
@@ -185,44 +192,10 @@ class TokenController extends Controller
     public function store(StoreRequest $request)
     {
         $validatedData = $request->validated();
+        // Token::create($tokenData);
+        CreateTokenJob::dispatch($validatedData);
 
-        // Count how many tokens are already waiting for this service
-        $waitingCount = Token::where('service_id', $validatedData['service_id'])->where("status", Token::PENDING)->count();
-
-        // Get the latest token number globally and increment it
-        // Predict next token number (for immediate display)
-        $lastTokenNumber       = Token::latest('token_number')->value('token_number') ?? 0;
-        $predictedTokenNumber  = (int) $lastTokenNumber + 1;
-        $predictedTokenDisplay = $validatedData['code'] . str_pad($predictedTokenNumber, 4, '0', STR_PAD_LEFT);
-
-        // Prepare data for new token creation
-        $tokenData = [
-            'language'             => $validatedData['language'],
-            'service_id'           => $validatedData['service_id'],
-            'token_number'         => $predictedTokenNumber,
-            'token_number_display' => $validatedData['code'] . str_pad($predictedTokenNumber, 4, '0', STR_PAD_LEFT),
-        ];
-
-        // Create the new token
-        $token = Token::create($tokenData);
-        // CreateTokenJob::dispatch($tokenData);
-
-        // Prepare response data for the ticket
-        $response = [
-            'name'                  => 'ABC Bank',
-            'code'                  => $validatedData['code'],
-            'token_number_display'  => $predictedTokenDisplay,
-            'service'               => $validatedData['service_name'],
-            'already_waiting_count' => $waitingCount,                                                    // position in queue
-            'estimated_wait_time'   => (new Token)->getAverageServingTime($validatedData['service_id']), // assuming 10 mins per token
-            'date'                  => now()->format('d-M-Y'),
-            'time'                  => now()->format('h:i A'),
-        ];
-
-        // return response()->json(['ticketInfo' => $response]);
-
-        // Redirect with ticket information
-        return redirect()->route('guest')->with('ticketInfo', $response);
+        return redirect()->route('guest');
     }
 
     /**

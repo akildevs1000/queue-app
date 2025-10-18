@@ -56,7 +56,7 @@ public function getAverageServingTime($service_id)
     return Cache::remember($cacheKey, 3600, function () use ($service_id) {
         // Use DB to calculate average directly
         $avgSeconds = self::where('service_id', $service_id)
-            ->whereDate('created_at', now())
+            ->whereDate('created_at', Carbon::today())
             ->where('status', self::SERVED)
             ->whereNotNull('total_serving_time')
             ->avg('total_serving_time'); // DB calculates average

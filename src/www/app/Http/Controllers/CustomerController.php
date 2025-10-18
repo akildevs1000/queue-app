@@ -44,7 +44,7 @@ class CustomerController extends Controller
 
         $Customer->update($data);
 
-        return redirect()->route("users.index");
+        return redirect()->route("customers.index");
     }
 
     /**
