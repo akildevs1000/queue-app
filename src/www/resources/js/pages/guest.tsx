@@ -217,7 +217,7 @@ export default function Welcome() {
                                 ))}
                             </div>
                         </div>
-                        <div className="absolute left-[-500px]">
+                        <div className="absolute left-[500px]">
                             <Input value={qrCode || ''} onChange={handleQrCodeChange} autoFocus />
                         </div>
                     </>
