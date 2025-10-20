@@ -94,4 +94,13 @@ class UserController extends Controller
 
         return $found;
     }
+
+    public function appDetails()
+    {
+        $found = User::where("type", "master")->first();
+
+        $found->ip = gethostbyname(gethostname());
+
+        return $found;
+    }
 }

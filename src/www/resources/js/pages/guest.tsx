@@ -2,14 +2,8 @@ import { CardContent } from '@/components/ui/card';
 import { Head, useForm } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 
-import { type TicketPrintProps } from '@/components/TicketPrint';
-
 import GradientCard from '@/components/ui/GradientCard';
 import { Input } from '@/components/ui/input';
-
-type PageProps = {
-    ticketInfo: TicketPrintProps;
-};
 
 type Service = {
     id: number;
@@ -23,6 +17,8 @@ export default function Welcome() {
 
     const [step, setStep] = useState<'language' | 'service' | 'thankyou'>('language');
     const [services, setServices] = useState<Service[]>([]);
+    const [appDetails, setAppDetails] = useState<any>({ name: 'Emirate Islamic Bank' });
+
     const socketRef = useRef<WebSocket | null>(null);
     const [retrying, setRetrying] = useState(false);
     const socketRetryTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -45,8 +41,19 @@ export default function Welcome() {
         }
     };
 
+    const fetchAppDetails = async () => {
+        try {
+            const res = await fetch(`/app-details`);
+            const json = await res.json();
+            setAppDetails(json);
+        } catch (err) {
+            console.error('Failed to fetch services', err);
+        }
+    };
+
     useEffect(() => {
         fetchServices('en');
+        fetchAppDetails();
     }, []);
 
     const handleLanguageSelect = (lang: 'en' | 'ar') => {
@@ -179,6 +186,10 @@ export default function Welcome() {
         <div className="relative flex min-h-screen flex-col items-center justify-center bg-[#f5f5f5] px-4 text-center">
             <Head title="Guest" />
 
+            <header className="absolute top-0 left-0 w-full py-2 text-2xl text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                Welcome to <span className="text-purple-600">{appDetails?.name}</span>
+            </header>
+
             <div>
                 {retrying && (
                     <div className="fixed top-0 left-0 z-50 w-full bg-yellow-500 py-1 text-center text-sm text-white shadow">
@@ -188,7 +199,7 @@ export default function Welcome() {
                 {/* Step 1: Language Selection */}
                 {step === 'language' && (
                     <div className="space-y-6">
-                        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Please choose your language</h1>
+                        <h1 className="text-3xl text-gray-800 dark:text-gray-100">Please choose your language</h1>
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                             <GradientCard onClick={() => handleLanguageSelect('en')}>
                                 <CardContent className="py-10 text-xl font-semibold">English</CardContent>
@@ -202,7 +213,7 @@ export default function Welcome() {
                 {step === 'service' && data.language && (
                     <>
                         <div className="space-y-6">
-                            <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">
+                            <h1 className="text-3xl mb-10 text-gray-800 dark:text-gray-100">
                                 {data.language === 'en' ? 'Please select a service' : 'الرجاء اختيار الخدمة'}
                             </h1>
                             <div className="mx-auto grid max-w-md grid-cols-1 gap-6 md:grid-cols-2">
@@ -217,12 +228,15 @@ export default function Welcome() {
                                 ))}
                             </div>
                         </div>
-                        <div className="absolute left-[500px]">
+                        <div className="absolute left-[-5000px]">
                             <Input value={qrCode || ''} onChange={handleQrCodeChange} autoFocus />
                         </div>
                     </>
                 )}
             </div>
+            <footer className="absolute bottom-0 left-0 w-full py-4 text-center text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                Powered by <span className="text-purple-600">Smart Queue</span>
+            </footer>
         </div>
     );
 }
