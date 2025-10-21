@@ -4,7 +4,6 @@ import { Head, usePage } from '@inertiajs/react';
 import { Activity, Check, Clock, Users } from 'lucide-react';
 
 import CallerScreen from '@/components/Dashboard/CallerScreen';
-import LoginLogs from '@/components/LoginLog/Index';
 import { useEffect, useState } from 'react';
 
 import PeakDay from '@/components/Dashboard/PeakDay';
@@ -19,39 +18,39 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Dashboard({ items }: any) {
-    console.log('🚀 ~ Dashboard ~ items:', items);
+   
     const { auth } = usePage<SharedData>().props;
 
     const stats = [
         {
             title: 'Total Visits Today',
             value: items.total_visits,
-            icon: <Users className="h-8 w-8 text-blue-500" />,
+            icon: <Users className="h-8 w-8 text-indigo-500" />,
+            borderColor: '#6366f1', // dynamic color
         },
         {
             title: 'Total in Served',
             value: items.served,
-            icon: <Check className="h-8 w-8 text-green-500" />,
+            icon: <Check className="h-8 w-8 text-green-300" />,
+            borderColor: '#06b400ff',
         },
         {
             title: 'Total in Serving',
             value: items.serving,
             icon: <Clock className="h-8 w-8 text-blue-500" />,
+            borderColor: '#3b82f6',
         },
         {
             title: 'Total in Queue',
             value: items.pending,
-            icon: <Clock className="h-8 w-8 text-yellow-500" />,
+            icon: <Clock className="h-8 w-8 text-orange-300" />,
+            borderColor: '#f59e0b',
         },
-        // {
-        //     title: 'VIP Customers',
-        //     value: '8',
-        //     icon: <UserCheck className="h-8 w-8 text-purple-500" />,
-        // },
         {
             title: 'Avg. Wait Time',
             value: `${items.avgTimeInMinutes} Min`,
-            icon: <Activity className="h-8 w-8 text-green-500" />,
+            icon: <Activity className="h-8 w-8 text-indigo-500" />,
+            borderColor: '#6366f1',
         },
     ];
     const [tokens, setTokens] = useState([]);
@@ -71,17 +70,6 @@ export default function Dashboard({ items }: any) {
         fetchTokenCounts();
     }, []);
 
-    const vipCustomers = [
-        { ticket: 'V001', name: 'Mr. Khan', counter: '1', status: 'Serving' },
-        { ticket: 'V002', name: 'Dr. Ayesha', counter: 'VIP Lounge', status: 'Waiting' },
-    ];
-
-    const counters = [
-        { name: 'Counter A', ticket: 'A101', status: 'Serving' },
-        { name: 'Counter B', ticket: 'B205', status: 'Idle' },
-        { name: 'Counter C', ticket: 'C309', status: 'Serving' },
-    ];
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Queue Management Dashboard" />
@@ -89,34 +77,47 @@ export default function Dashboard({ items }: any) {
             {auth?.user?.type === 'master' && (
                 <div className="flex h-full flex-1 flex-col gap-6 p-4">
                     {/* Cards Section */}
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-5">
                         {stats.map((item, index) => (
-                            <div key={index} className="flex items-center justify-between rounded-xl border p-4 shadow-sm dark:border-gray-700">
+                            <div
+                                key={index}
+                                className="relative flex items-center justify-between rounded-xl bg-white p-6 shadow-md transition-all hover:shadow-lg dark:bg-gray-800"
+                                style={{ borderBottom: `2px solid ${item.borderColor}` }}
+                            >
                                 <div>
                                     <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{item.title}</h3>
-                                    <p className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{item.value}</p>
+                                    <p className="mt-2 text-3xl font-semibold text-gray-900 dark:text-white">{item.value}</p>
                                 </div>
-                                <div className="ml-4">{item.icon}</div>
+
+                                <div className="ml-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 transition-transform hover:scale-110 dark:bg-gray-700">
+                                    {item.icon}
+                                </div>
                             </div>
                         ))}
                     </div>
 
                     {/* Tables Section */}
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <div className="rounded-xl border border-gray-200 bg-[var(--background)] p-4 text-[var(--foreground)] dark:border-gray-700">
+                        <div
+                            className="rounded-xl bg-[var(--background)] p-4 text-[var(--foreground)] shadow-md dark:border-gray-700 dark:bg-gray-800"
+                            style={{ borderBottom: `2px solid #6366f1` }}
+                        >
                             <PeakDay />
                         </div>
 
-                        <div className="rounded-xl border border-gray-200 bg-[var(--background)] p-4 text-[var(--foreground)] dark:border-gray-700">
+                        <div
+                            className="rounded-xl bg-[var(--background)] p-4 text-[var(--foreground)] shadow-md dark:border-gray-700 dark:bg-gray-800"
+                            style={{ borderBottom: `2px solid #6366f1` }}
+                        >
                             <PeakHour />
                         </div>
                     </div>
-                    <div className="rounded-xl border border-gray-200 bg-[var(--background)] p-4 text-[var(--foreground)] dark:border-gray-700">
+                    <div className="rounded-xl bg-[var(--background)] p-4 text-[var(--foreground)] shadow-md dark:border-gray-700 dark:bg-gray-800">
                         <Tickets />
                     </div>
-                    <div className="w-full rounded-lg border border-gray-100 bg-[var(--background)] p-4 p-6 text-[var(--foreground)] shadow dark:border-gray-700 dark:bg-gray-900">
+                    {/* <div className="w-full rounded-lg border border-gray-100 bg-[var(--background)] p-4 p-6 text-[var(--foreground)] shadow dark:border-gray-700 dark:bg-gray-900">
                         <LoginLogs />
-                    </div>
+                    </div> */}
                 </div>
             )}
 

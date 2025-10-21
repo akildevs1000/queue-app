@@ -28,7 +28,7 @@ export function AppSidebarHeader() {
         getCounter();
     }, []);
     return (
-        <header className="border-sidebar-border/50 flex h-16 shrink-0 items-center justify-between border-b px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4">
+        <header className=" dark:bg-gray-800 border-sidebar-border/50 flex h-16 shrink-0 items-center justify-between border-b px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4">
             {/* Left side: Sidebar trigger + Breadcrumbs */}
             <div className="flex items-center gap-2">
                 <SidebarTrigger className="-ml-1" />

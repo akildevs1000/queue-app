@@ -17,6 +17,7 @@ type CreateInterFace = {
     address: string;
     vip_number: string;
     date_of_birth: string;
+    rfid: string | null;
 };
 export default function Create({ title, endpoint }: { title: any; endpoint: any }) {
     const [open, setOpen] = useState(false);
@@ -29,6 +30,7 @@ export default function Create({ title, endpoint }: { title: any; endpoint: any 
         address: '',
         vip_number: '',
         date_of_birth: '',
+        rfid: '',
     });
 
     const fetchServices = async () => {
@@ -156,6 +158,18 @@ export default function Create({ title, endpoint }: { title: any; endpoint: any 
                             disabled={processing}
                         />
                         <InputError message={errors.date_of_birth} />
+                    </div>
+                    <div className="max-w-md">
+                        <Label htmlFor="rfid">RFID</Label>
+                        <Input
+                            id="rfid"
+                            required
+                            autoComplete="rfid"
+                            value={data.rfid || ''}
+                            disabled={processing}
+                            onChange={(e) => setData('rfid', e.target.value)}
+                        />
+                        <InputError message={errors.rfid} />
                     </div>
                     <Button className="bg-gradient-to-r from-blue-500 to-purple-600 text-white" type="submit" disabled={processing}>
                         {processing ? 'Submitting...' : 'Submit'}

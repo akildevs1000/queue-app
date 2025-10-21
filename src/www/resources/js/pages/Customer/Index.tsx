@@ -39,20 +39,38 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-// Contact type definition
 export type Contact = {
-    id: number;
-    name: string;
-    description: string;
+    vip_number: string;
 };
 
 // Define Table Columns
 export const columns: ColumnDef<Contact>[] = [
     {
-        accessorKey: 'vip_number',
-        header: 'Vip Number',
+        accessorKey: 'rfid',
+        header: 'RFID',
+        cell: () => {
+            let width = 30,
+                height = 30,
+                color = '#000';
+            return (
+                <svg width={width} height={height} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    {/* Card rectangle */}
+                    <rect x="2" y="8" width="60" height="48" rx="4" stroke={color} strokeWidth="2" fill="white" />
+
+                    {/* Profile circle */}
+                    <circle cx="16" cy="24" r="8" stroke={color} strokeWidth="2" fill="#eee" />
+
+                    {/* Name line */}
+                    <line x1="28" y1="20" x2="56" y2="20" stroke={color} strokeWidth="2" strokeLinecap="round" />
+
+                    {/* Info lines */}
+                    <line x1="28" y1="28" x2="56" y2="28" stroke={color} strokeWidth="2" strokeLinecap="round" />
+                    <line x1="28" y1="36" x2="48" y2="36" stroke={color} strokeWidth="2" strokeLinecap="round" />
+                </svg>
+            );
+        },
     },
-      {
+    {
         id: 'qrcode',
         header: 'QrCode',
         cell: ({ row }) => {
@@ -62,7 +80,7 @@ export const columns: ColumnDef<Contact>[] = [
             return (
                 <QRCodeSVG
                     value={vip_number} // encode VIP number directly
-                    size={64} // adjust size
+                    size={30} // adjust size
                     bgColor="#ffffff"
                     fgColor="#000000"
                 />
@@ -94,7 +112,6 @@ export const columns: ColumnDef<Contact>[] = [
         header: 'Date Of Birth',
     },
 
-  
     {
         id: 'actions',
         header: 'Action',

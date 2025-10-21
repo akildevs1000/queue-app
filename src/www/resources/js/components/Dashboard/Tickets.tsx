@@ -82,19 +82,19 @@ export const columns: ColumnDef<Contact>[] = [
 
             switch (statusId) {
                 case '2': // Corresponds to 'Serving'
-                    statusClasses += ' bg-green-100 text-green-800 dark:bg-green-800/30 dark:text-green-300';
+                    statusClasses += 'bg-green-100 text-green-800 dark:bg-green-800/30 dark:text-green-300';
                     break;
                 case '3': // Corresponds to 'Served'
-                    statusClasses += ' bg-blue-100 text-blue-800 dark:bg-blue-800/30 dark:text-blue-300';
+                    statusClasses += 'bg-blue-100 text-blue-800 dark:bg-blue-800/30 dark:text-blue-300';
                     break;
                 case '0': // Corresponds to 'Pending'
-                    statusClasses += ' bg-yellow-100 text-yellow-800 dark:bg-yellow-800/30 dark:text-yellow-300';
+                    statusClasses += 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800/30 dark:text-yellow-300';
                     break;
                 case '1': // Corresponds to 'Not Answered'
-                    statusClasses += ' bg-red-100 text-red-800 dark:bg-red-800/30 dark:text-red-300';
+                    statusClasses += 'bg-red-100 text-red-800 dark:bg-red-800/30 dark:text-red-300';
                     break;
                 default:
-                    statusClasses += ' bg-gray-100 text-gray-800 dark:bg-gray-800/30 dark:text-gray-300';
+                    statusClasses += 'bg-gray-100 text-gray-800 dark:bg-gray-800/30 dark:text-gray-300';
                     break;
             }
 
