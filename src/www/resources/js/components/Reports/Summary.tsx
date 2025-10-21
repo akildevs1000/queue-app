@@ -238,12 +238,12 @@ export default function App({ services }: { services: any }) {
 
     return (
         <>
-            <div className="flex w-full flex-wrap items-center justify-between gap-2  p-5">
+            <div className="flex w-full flex-wrap items-center justify-between p-4">
                 {/* Left Filters Group */}
                 <div className="flex flex-wrap items-center gap-2">
                     {/* Service Filter */}
                     <Select onValueChange={handleServiceFilterChange}>
-                        <SelectTrigger className="w-[180px]">
+                        <SelectTrigger className="w-[180px] bg-white dark:bg-gray-900">
                             <SelectValue placeholder="Filter by Service" />
                         </SelectTrigger>
                         <SelectContent>
@@ -260,7 +260,7 @@ export default function App({ services }: { services: any }) {
 
                     {/* Counter Filter */}
                     <Select onValueChange={handleCounterFilterChange}>
-                        <SelectTrigger className="w-[180px]">
+                        <SelectTrigger className="w-[180px] bg-white dark:bg-gray-900">
                             <SelectValue placeholder="Filter by Counter" />
                         </SelectTrigger>
                         <SelectContent>
@@ -280,7 +280,7 @@ export default function App({ services }: { services: any }) {
                         <PopoverTrigger asChild>
                             <button
                                 className={cn(
-                                    'w-[260px] justify-start rounded-md border px-4 py-2 text-left font-normal',
+                                    'w-[260px] justify-start rounded-md border px-4 py-1 text-left font-normal bg-white dark:bg-gray-900',
                                     !dateRange?.from && !dateRange?.to && 'text-muted-foreground',
                                 )}
                             >
@@ -318,7 +318,7 @@ export default function App({ services }: { services: any }) {
             </div>
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-6">
-                    <div className="flex items-center justify-between rounded-xl border p-4 shadow-sm dark:border-gray-700">
+                    <div className="flex items-center justify-between rounded-xl p-4 shadow-md shadow-sm bg-white dark:bg-gray-900 dark:border-gray-700">
                         <div>
                             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Visits Today</h3>
                             <p className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{totalVisits}</p>
@@ -326,7 +326,7 @@ export default function App({ services }: { services: any }) {
                         {/* <div className="ml-4">{item.icon}</div> */}
                     </div>
                     {stats.map((item, index) => (
-                        <div key={index} className="flex items-center justify-between rounded-xl border p-4 shadow-sm dark:border-gray-700">
+                        <div key={index} className="flex items-center justify-between rounded-xl p-4 shadow-md shadow-sm bg-white dark:bg-gray-900 dark:border-gray-700">
                             <div>
                                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{item.service_name}</h3>
                                 <p className="mt-2 text-2xl text-gray-900 dark:text-white">{item.service_count}</p>
@@ -339,9 +339,7 @@ export default function App({ services }: { services: any }) {
                     ))}
                 </div>
 
-                <div className="gap-4 rounded-xl border border-gray-200 bg-[var(--background)] text-[var(--foreground)] dark:border-gray-700">
-                    <div className="p-2 px-4 text-2xl text-black dark:text-white">{selectedServiceName || '---'}</div>
-                    <div className="p-4">
+               <div className="rounded-xl p-4 text-[var(--foreground) bg-white dark:bg-gray-900">
                         <Table>
                             <TableHeader>
                                 {table.getHeaderGroups().map((headerGroup) => (
@@ -404,7 +402,6 @@ export default function App({ services }: { services: any }) {
                             </div>
                         </div>
                     </div>
-                </div>
             </div>
         </>
     );

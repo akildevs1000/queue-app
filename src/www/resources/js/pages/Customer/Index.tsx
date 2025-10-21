@@ -259,7 +259,7 @@ export default function App({ items }: { items: any }) {
                 <Create title="Customer" endpoint="customers" />
             </div>
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-                <div className="gap-4 rounded-xl border border-gray-200 bg-[var(--background)] p-4 text-[var(--foreground)] dark:border-gray-700">
+                <div className="gap-4 rounded-xl p-4 text-[var(--foreground) bg-white dark:bg-gray-900">
                     <Table>
                         <TableHeader>
                             {table.getHeaderGroups().map((headerGroup) => (

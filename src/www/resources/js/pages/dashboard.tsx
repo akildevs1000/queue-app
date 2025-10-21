@@ -4,7 +4,6 @@ import { Head, usePage } from '@inertiajs/react';
 import { Activity, Check, Clock, Users } from 'lucide-react';
 
 import CallerScreen from '@/components/Dashboard/CallerScreen';
-import { useEffect, useState } from 'react';
 
 import PeakDay from '@/components/Dashboard/PeakDay';
 import PeakHour from '@/components/Dashboard/PeakHour';
@@ -53,22 +52,6 @@ export default function Dashboard({ items }: any) {
             borderColor: '#6366f1',
         },
     ];
-    const [tokens, setTokens] = useState([]);
-
-    const fetchTokenCounts = async () => {
-        try {
-            const res = await fetch('/tokens');
-            const json = await res.json();
-            console.log('🚀 ~ fetchTokenCounts ~ json:', json);
-            setTokens(json.data);
-        } catch (err) {
-            console.error('Failed to fetch services', err);
-        }
-    };
-
-    useEffect(() => {
-        fetchTokenCounts();
-    }, []);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
