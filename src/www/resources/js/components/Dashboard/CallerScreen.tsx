@@ -40,47 +40,48 @@ const TokenDisplay = () => {
     const [announcerPayload, setAnnouncerPayload] = useState<AnnouncerPayload | null>(null);
     const socketRef = useRef<WebSocket | null>(null);
 
-    // Inactivity detection
-    const INACTIVITY_LIMIT = 1800 * 1000; // 30 minutes
-    const lastActivityRef = useRef(Date.now());
+    //Inactivity detection
+    // const INACTIVITY_LIMIT = 5256000 * 60 * 1000; // 1 year in ms
 
-    useEffect(() => {
-        const updateActivity = () => {
-            lastActivityRef.current = Date.now();
-        };
-        window.addEventListener('mousemove', updateActivity);
-        window.addEventListener('keydown', updateActivity);
-        window.addEventListener('mousedown', updateActivity);
-        window.addEventListener('touchstart', updateActivity);
+    // const lastActivityRef = useRef(Date.now());
 
-        const interval = setInterval(() => {
-            console.log('Checking inactivity...');
-            if (Date.now() - lastActivityRef.current > INACTIVITY_LIMIT) {
-                console.log('Logging out due to 10 seconds of inactivity');
-                handleTestLogout();
-            }
-        }, 5000); // check every 5 seconds for faster response
+    // useEffect(() => {
+    //     const updateActivity = () => {
+    //         lastActivityRef.current = Date.now();
+    //     };
+    //     window.addEventListener('mousemove', updateActivity);
+    //     window.addEventListener('keydown', updateActivity);
+    //     window.addEventListener('mousedown', updateActivity);
+    //     window.addEventListener('touchstart', updateActivity);
 
-        return () => {
-            window.removeEventListener('mousemove', updateActivity);
-            window.removeEventListener('keydown', updateActivity);
-            window.removeEventListener('mousedown', updateActivity);
-            window.removeEventListener('touchstart', updateActivity);
-            clearInterval(interval);
-        };
-    }, []);
+    //     const interval = setInterval(() => {
+    //         console.log('Checking inactivity...');
+    //         if (Date.now() - lastActivityRef.current > INACTIVITY_LIMIT) {
+    //             console.log('Logging out due to 10 seconds of inactivity');
+    //             handleTestLogout();
+    //         }
+    //     }, 10000); // check every 10 seconds for faster response
+
+    //     return () => {
+    //         window.removeEventListener('mousemove', updateActivity);
+    //         window.removeEventListener('keydown', updateActivity);
+    //         window.removeEventListener('mousedown', updateActivity);
+    //         window.removeEventListener('touchstart', updateActivity);
+    //         clearInterval(interval);
+    //     };
+    // }, []);
 
     // Test logout function
-    const handleTestLogout = () => {
-        console.log('Test logout function called');
-        router.post(route('logout'));
-    };
+    // const handleTestLogout = () => {
+    //     console.log('Test logout function called');
+    //     router.post(route('logout'));
+    // };
 
     // Assuming you have `auth.user` available like:
-    const user = auth.user || {
-        name: 'John Doe',
-        email: 'john@example.com',
-    };
+    // const user = auth.user || {
+    //     name: 'John Doe',
+    //     email: 'john@example.com',
+    // };
 
     const fetchTokenCounts = async () => {
         try {
@@ -375,6 +376,16 @@ const TokenDisplay = () => {
 
         fetchTokenCounts();
     }, []);
+
+    useEffect(() => {
+        // Function to run every 30 seconds
+        const interval = setInterval(() => {
+            fetchTokenCounts();
+        }, 30000); // 30000 ms = 30 seconds
+
+        // Cleanup interval on component unmount
+        return () => clearInterval(interval);
+    }, []); // Empty dependency array ensures it runs once and sets the interval
 
     useEffect(() => {
         let interval: NodeJS.Timeout;
