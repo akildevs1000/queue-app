@@ -1,2 +1,4 @@
 electron-vcredist
 test
+frontend
+src/www/public/build
