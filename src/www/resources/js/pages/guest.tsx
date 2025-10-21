@@ -1,8 +1,7 @@
-import { CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Head, useForm } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 
-import GradientCard from '@/components/ui/GradientCard';
 import { Input } from '@/components/ui/input';
 
 type Service = {
@@ -201,30 +200,36 @@ export default function Welcome() {
                     <div className="space-y-6">
                         <h1 className="text-3xl text-gray-800 dark:text-gray-100">Please choose your language</h1>
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                            <GradientCard onClick={() => handleLanguageSelect('en')}>
+                            <Card
+                                className="cursor-pointer border-none bg-gradient-to-r from-blue-500 to-purple-600 text-white transition-transform hover:scale-105"
+                                onClick={() => handleLanguageSelect('en')}
+                            >
                                 <CardContent className="py-10 text-xl font-semibold">English</CardContent>
-                            </GradientCard>
-                            <GradientCard onClick={() => handleLanguageSelect('ar')}>
+                            </Card>
+                            <Card
+                                className="cursor-pointer border-none bg-gradient-to-r from-blue-500 to-purple-600 text-white transition-transform hover:scale-105"
+                                onClick={() => handleLanguageSelect('ar')}
+                            >
                                 <CardContent className="py-10 text-xl font-semibold">العربية</CardContent>
-                            </GradientCard>
+                            </Card>
                         </div>
                     </div>
                 )}
                 {step === 'service' && data.language && (
                     <>
                         <div className="space-y-6">
-                            <h1 className="text-3xl mb-10 text-gray-800 dark:text-gray-100">
+                            <h1 className="mb-10 text-3xl text-gray-800 dark:text-gray-100">
                                 {data.language === 'en' ? 'Please select a service' : 'الرجاء اختيار الخدمة'}
                             </h1>
                             <div className="mx-auto grid max-w-md grid-cols-1 gap-6 md:grid-cols-2">
                                 {services.map((service) => (
-                                    <GradientCard
+                                    <Card
                                         key={service.id}
                                         onClick={() => handleServiceSelect(service)}
-                                        className="cursor-pointer transition-transform hover:scale-105"
+                                        className="cursor-pointer border-none bg-gradient-to-r from-blue-500 to-purple-600 text-white transition-transform hover:scale-105"
                                     >
                                         <CardContent className="py-10 text-xl font-semibold">{service.name}</CardContent>
-                                    </GradientCard>
+                                    </Card>
                                 ))}
                             </div>
                         </div>
