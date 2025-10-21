@@ -13,6 +13,8 @@ class Customer extends Model
         'address',
         'vip_number',
         'date_of_birth',
+
+        'rfid'
     ];
 
     // protected static function boot()
