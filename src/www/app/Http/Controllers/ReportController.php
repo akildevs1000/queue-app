@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Models\Counter;
@@ -30,8 +29,8 @@ class ReportController extends Controller
         $filters = [
             'service_id' => request('service_id', -1),
             'counter_id' => request('counter_id', -1),
-            'status' => request('status', -1),
-            'language' => request('language', -1),
+            'status'     => request('status', -1),
+            'language'   => request('language', -1),
         ];
 
         $this->filters = $filters;
@@ -56,7 +55,7 @@ class ReportController extends Controller
     {
         // return $this->processData();
 
-        $pdf = Pdf::loadView('reports.token-pdf',  $this->processData())->setPaper('a4', 'landscape');
+        $pdf = Pdf::loadView('reports.token-pdf', $this->processData())->setPaper('a4', 'landscape');
 
         return $pdf->stream('report.pdf');
     }
@@ -67,12 +66,12 @@ class ReportController extends Controller
             'service_id' => request('service_id', -1) ?? -1,
             'counter_id' => request('counter_id', -1) ?? -1,
             'start_date' => request('start_date') ?? date("Y-m-d"),
-            'end_date' => request('end_date') ?? date("Y-m-d"),
+            'end_date'   => request('end_date') ?? date("Y-m-d"),
         ];
 
         $this->filters = [
-            'start_date' =>  $filters['start_date'] . ' 00:00:00',
-            'end_date' =>  $filters['end_date'] . ' 23:59:59',
+            'start_date' => $filters['start_date'] . ' 00:00:00',
+            'end_date'   => $filters['end_date'] . ' 23:59:59',
         ];
 
         // Fetch counters with token counts and service/user info
@@ -82,7 +81,7 @@ class ReportController extends Controller
                     $q->withCount([
                         'tokens as pending_count' => function ($q) {
                             $q->where('status', Token::PENDING);
-                            if (!empty($this->filters['start_date']) && !empty($this->filters['end_date'])) {
+                            if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {
                                 $q->whereBetween('created_at', $this->filters);
                             }
                         },
@@ -91,47 +90,47 @@ class ReportController extends Controller
                 'user',
             ])
             ->withCount([
-                'tokens as not_show_count' => function ($q) {
+                'tokens as not_show_count'                  => function ($q) {
                     $q->where('status', Token::NOT_SHOW);
-                    if (!empty($this->filters['start_date']) && !empty($this->filters['end_date'])) {
+                    if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {
                         $q->whereBetween('created_at', $this->filters);
                     }
                 },
-                'tokens as serving_count' => function ($q) {
+                'tokens as serving_count'                   => function ($q) {
                     $q->where('status', Token::SERVING);
-                    if (!empty($this->filters['start_date']) && !empty($this->filters['end_date'])) {
+                    if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {
                         $q->whereBetween('created_at', $this->filters);
                     }
                 },
-                'tokens as served_count' => function ($q) {
+                'tokens as served_count'                    => function ($q) {
                     $q->where('status', Token::SERVED);
-                    if (!empty($this->filters['start_date']) && !empty($this->filters['end_date'])) {
+                    if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {
                         $q->whereBetween('created_at', $this->filters);
                     }
                 },
                 'tokens as no_show_count_plus_served_count' => function ($q) {
                     $q->whereIn('status', [Token::NOT_SHOW, Token::SERVED]);
-                    if (!empty($this->filters['start_date']) && !empty($this->filters['end_date'])) {
+                    if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {
                         $q->whereBetween('created_at', $this->filters);
                     }
                 },
             ])
-            // ->with(['tokens' => function ($q) {
-            //     if (!empty($this->filters['start_date']) && !empty($this->filters['end_date'])) {
-            //         $q->whereBetween('created_at', $this->filters);
-            //     }
-            // }])
+        // ->with(['tokens' => function ($q) {
+        //     if (!empty($this->filters['start_date']) && !empty($this->filters['end_date'])) {
+        //         $q->whereBetween('created_at', $this->filters);
+        //     }
+        // }])
             ->get()
             ->map(function ($counter) {
-                $timeStrings = $counter->tokens->pluck('total_serving_time_display')->toArray();
-                $counter->avgTime = Token::getAvgTime($timeStrings);
+                $timeStrings       = $counter->tokens->pluck('total_serving_time_display')->toArray();
+                $counter->avgTime  = Token::getAvgTime($timeStrings);
                 $counter->feedback = Feedback::feedbackRatingInNumber($counter->id);
                 return $counter;
             });
 
         // Total visits with date filter applied
         $tokenVisitQuery = Token::query();
-        if (!empty($this->filters['start_date']) && !empty($this->filters['end_date'])) {
+        if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {
             $tokenVisitQuery->whereBetween('created_at', $this->filters);
         }
         $totalVisits = $tokenVisitQuery->count();
@@ -139,7 +138,7 @@ class ReportController extends Controller
         // Token counts by service
         $tokenCountsQuery = Token::query();
 
-        if (!empty($this->filters['start_date']) && !empty($this->filters['end_date'])) {
+        if (! empty($this->filters['start_date']) && ! empty($this->filters['end_date'])) {
             $tokenCountsQuery->whereBetween('created_at', $this->filters);
         }
 
@@ -163,45 +162,46 @@ class ReportController extends Controller
 
                 ->pluck('total_serving_time_display')->toArray();
 
-
             if ($service->id == $filters["service_id"]) {
                 $selectedServiceName = $service->name;
             }
 
             $serviceStats[] = [
-                "service_name" => $service->name,
+                "service_name"  => $service->name,
                 "service_count" => $tokenCounts[$service->id] ?? 0,
-                "avgTime" => Token::getAvgTime(($getArrayofServingTimeDisplayForAVG)),
+                "avgTime"       => Token::getAvgTime(($getArrayofServingTimeDisplayForAVG)),
             ];
         }
 
         return [
-            'name' => Auth::user()->name ?? "Anonymous",
-            'total_visits' => $totalVisits,
-            'stats' => $serviceStats,
-            'records' => $counters,
+            'name'                => Auth::user()->name ?? "Anonymous",
+            'total_visits'        => $totalVisits,
+            'stats'               => $serviceStats,
+            'records'             => $counters,
             "selectedServiceName" => $selectedServiceName,
-            'dates' => Carbon::parse($filters['start_date'])->format('M d, Y')  . " - "  .
-                Carbon::parse($filters['end_date'])->format('M d, Y'),
+            'dates'               => Carbon::parse($filters['start_date'])->format('M d, Y') . " - " .
+            Carbon::parse($filters['end_date'])->format('M d, Y'),
         ];
     }
     public function peakHourReport()
     {
 
         $start = now()->subDay()->startOfDay(); // Yesterday 00:00:00
-        $end = now()->subDay()->endOfDay();     // Yesterday 23:59:59
+        $end   = now()->subDay()->endOfDay();   // Yesterday 23:59:59
 
         $tokens = Token::whereBetween('created_at', [$start, $end])
             ->get(['created_at', 'service_id']);
 
-        $services = Service::pluck('name', 'id'); // id => name
-        $hours = range(0, 23);
+        $service_id = request("service_id");
+
+        $services = Service::when($service_id, fn($q) => $q->where("id", $service_id))->pluck('name', 'id'); // id => name
+        $hours  = range(0, 23);
         $result = [];
 
         // Initialize result with all 24 hours
         foreach ($hours as $hour) {
             $hourLabel = str_pad($hour, 2, '0', STR_PAD_LEFT) . ':00';
-            $row = ['time' => $hourLabel];
+            $row       = ['time' => $hourLabel];
 
             foreach ($services as $serviceName) {
                 $row[$serviceName] = rand(5, 25); // Default count
@@ -211,8 +211,8 @@ class ReportController extends Controller
         }
 
         foreach ($tokens as $token) {
-            $created = $token->created_at->copy()->timezone(config('app.timezone'));
-            $hourKey = $created->format('H:00');
+            $created     = $token->created_at->copy()->timezone(config('app.timezone'));
+            $hourKey     = $created->format('H:00');
             $serviceName = $services[$token->service_id] ?? null;
 
             if ($serviceName && isset($result[$hourKey])) {
@@ -226,10 +226,13 @@ class ReportController extends Controller
     public function peakDayReport()
     {
         $startDate = now()->subDays(6)->startOfDay(); // last 7 days including today
-        $endDate = now()->endOfDay();
+        $endDate   = now()->endOfDay();
 
-        $services = Service::pluck('name', 'id'); // [id => name]
-        $tokens = Token::whereBetween('created_at', [$startDate, $endDate])
+        $service_id = request("service_id");
+
+        $services = Service::when($service_id, fn($q) => $q->where("id", $service_id))->pluck('name', 'id'); // id => name
+        
+        $tokens   = Token::whereBetween('created_at', [$startDate, $endDate])
             ->get(['created_at', 'service_id']);
 
         $dateRange = collect();
@@ -243,14 +246,14 @@ class ReportController extends Controller
         foreach ($dateRange as $date) {
             $row = ['date' => $date];
             foreach ($services as $serviceName) {
-                $row[$serviceName] = rand(15,100);
+                $row[$serviceName] = rand(15, 100);
             }
             $result[$date] = $row;
         }
 
         // Step 2: Populate actual token counts
         foreach ($tokens as $token) {
-            $date = $token->created_at->copy()->timezone(config('app.timezone'))->format('Y-m-d');
+            $date        = $token->created_at->copy()->timezone(config('app.timezone'))->format('Y-m-d');
             $serviceName = $services[$token->service_id] ?? null;
 
             if ($serviceName && isset($result[$date])) {
