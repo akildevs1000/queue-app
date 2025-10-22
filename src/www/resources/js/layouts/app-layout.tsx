@@ -9,7 +9,7 @@ interface AppLayoutProps {
 
 export default ({ children, breadcrumbs, ...props }: AppLayoutProps) => (
     <AppLayoutTemplate breadcrumbs={breadcrumbs} {...props}>
-        <div className="min-h-[95vh] bg-gray-100 transition-colors duration-300 dark:bg-gray-900">{children}</div>
+        <div className="min-h-[95vh] transition-colors duration-300">{children}</div>
 
         {/* <footer className="absolute bottom-12 left-0 w-full border-t bg-white p-2 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
             Powered By{' '}

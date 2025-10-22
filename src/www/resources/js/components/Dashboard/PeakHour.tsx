@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { Area, AreaChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 export default function App() {
     const [data, setData] = useState([]);
@@ -38,8 +38,8 @@ export default function App() {
     }, []);
 
     return (
-       <div className="flex flex-1 flex-col  rounded-xl">
-                    <div className="rounded-xl bg-[var(--background)] text-[var(--foreground)] dark:border-gray-700 dark:bg-gray-800">
+        <div className="flex flex-1 flex-col rounded-xl">
+            <div className="rounded-xl bg-[var(--background)] text-[var(--foreground)] dark:border-gray-700 dark:bg-gray-800">
                 <h2 className="mb-4 text-lg font-semibold">Peak Hours (Yesterday)</h2>
                 <div>
                     <h3 style={{ textAlign: 'center' }}>Queue Flow (to identify peak Hours)</h3>
@@ -66,7 +66,6 @@ export default function App() {
                                     stroke={colors[index % colors.length]}
                                     fill={colors[index % colors.length] + '33'} // semi-transparent fill
                                     strokeWidth={2}
-                                    stackId="1"
                                 />
                             ))}
                         </AreaChart>
