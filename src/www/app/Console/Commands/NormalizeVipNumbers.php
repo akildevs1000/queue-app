@@ -8,38 +8,32 @@ use Illuminate\Support\Facades\DB;
 class NormalizeVipNumbers extends Command
 {
     protected $signature = 'vip:normalize';
-    protected $description = 'Normalize VIP numbers in tokens table to keep only the first occurrence';
+    protected $description = 'Normalize VIP numbers to keep only the first value';
 
     public function handle()
     {
-        // Get tokens that may contain repeated VIP numbers
-        $tokens = DB::table('tokens')
-            ->whereNotNull('vip_number')
-            ->where('vip_number', 'like', 'VIP-%VIP-%') // e.g. VIP-00001VIP-00001
+        // Fetch records that might need normalization
+        $customers = DB::table('customers')
+            ->where('vip_number', 'like', 'VIP-%VIP-%') // only duplicates
             ->get(['id', 'vip_number']);
 
-        if ($tokens->isEmpty()) {
-            $this->info('✅ No duplicate VIP numbers found.');
-            return;
-        }
-
-        foreach ($tokens as $token) {
-            preg_match('/VIP-\d+/', $token->vip_number, $matches);
+        foreach ($customers as $customer) {
+            preg_match('/VIP-\d+/', $customer->vip_number, $matches);
 
             if (!empty($matches)) {
-                $normalizedVip = $matches[0];
+                $firstVip = $matches[0];
 
-                // Only update if normalization changes the value
-                if ($normalizedVip !== $token->vip_number) {
-                    DB::table('tokens')
-                        ->where('id', $token->id)
-                        ->update(['vip_number' => $normalizedVip]);
+                // Update only if different
+                if ($firstVip !== $customer->vip_number) {
+                    DB::table('customers')
+                        ->where('id', $customer->id)
+                        ->update(['vip_number' => $firstVip]);
 
-                    $this->info("✅ Normalized Token ID {$token->id} → {$normalizedVip}");
+                    $this->info("Normalized ID {$customer->id} to {$firstVip}");
                 }
             }
         }
 
-        $this->info('🎯 VIP number normalization completed successfully.');
+        $this->info('VIP number normalization completed.');
     }
 }

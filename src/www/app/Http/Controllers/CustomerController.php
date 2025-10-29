@@ -54,7 +54,7 @@ class CustomerController extends Controller
     {
         $Customer->delete();
 
-        return redirect()->route("customers.index");
+        return redirect()->route("users.index");
     }
 
     public function nextVipNumber()

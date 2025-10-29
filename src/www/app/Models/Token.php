@@ -1,7 +1,9 @@
 <?php
+
 namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
@@ -11,10 +13,10 @@ use WebSocket\Client;
 class Token extends Model
 {
     // Status constants
-    public const PENDING  = 0;
+    public const PENDING = 0;
     public const NOT_SHOW = 1;
-    public const SERVING  = 2;
-    public const SERVED   = 3;
+    public const SERVING = 2;
+    public const SERVED = 3;
 
     protected $guarded = [];
 
@@ -26,6 +28,7 @@ class Token extends Model
         return $this->created_at->format('d M Y, h:i A');
     }
 
+
     public function service()
     {
         return $this->belongsTo(Service::class);
@@ -34,41 +37,42 @@ class Token extends Model
     public function counter()
     {
         return $this->belongsTo(Counter::class)->withDefault([
-            "name" => "---",
+            "name" => "---"
         ]);
     }
 
     public function user()
     {
         return $this->belongsTo(User::class)->withDefault([
-            "name" => "---",
+            "name" => "---"
         ]);
     }
 
-    public function getAverageServingTime($service_id)
-    {
-        $cacheKey = 'avg_serving_time_' . $service_id . '_' . now()->toDateString();
 
-        return Cache::remember($cacheKey, 3600, function () use ($service_id) {
-            // Use DB to calculate average directly
-            $avgSeconds = self::where('service_id', $service_id)
-                ->whereDate('created_at', Carbon::today())
-                ->where('status', self::SERVED)
-                ->whereNotNull('total_serving_time')
-                ->avg('total_serving_time'); // DB calculates average
+public function getAverageServingTime($service_id)
+{
+    $cacheKey = 'avg_serving_time_' . $service_id . '_' . now()->toDateString();
 
-            if (! $avgSeconds) {
-                $avgSeconds = 0;
-            }
+    return Cache::remember($cacheKey, 3600, function () use ($service_id) {
+        // Use DB to calculate average directly
+        $avgSeconds = self::where('service_id', $service_id)
+            ->whereDate('created_at', Carbon::today())
+            ->where('status', self::SERVED)
+            ->whereNotNull('total_serving_time')
+            ->avg('total_serving_time'); // DB calculates average
 
-            // Convert seconds to HH:MM:SS
-            $hours   = floor($avgSeconds / 3600);
-            $minutes = floor(($avgSeconds % 3600) / 60);
-            $seconds = $avgSeconds % 60;
+        if (!$avgSeconds) {
+            $avgSeconds = 0;
+        }
 
-            return sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
-        });
-    }
+        // Convert seconds to HH:MM:SS
+        $hours = floor($avgSeconds / 3600);
+        $minutes = floor(($avgSeconds % 3600) / 60);
+        $seconds = $avgSeconds % 60;
+
+        return sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
+    });
+}
 
     protected static function booted()
     {
@@ -83,6 +87,7 @@ class Token extends Model
             }
         });
     }
+
 
     // protected static function booted()
     // {
@@ -101,19 +106,19 @@ class Token extends Model
             $client = new Client("wss://192.168.2.6:8080", [
                 'context' => stream_context_create([
                     'ssl' => [
-                        'verify_peer'       => false,
-                        'verify_peer_name'  => false,
+                        'verify_peer' => false,
+                        'verify_peer_name' => false,
                         'allow_self_signed' => true,
-                    ],
-                ]),
+                    ]
+                ])
             ]);
 
             $client->send(json_encode([
                 'event' => 'token-serving',
-                'data'  => [
-                    "token"   => $this->token_number_display . "-----",
-                    "counter" => $this->counter->name ?? "",
-                ],
+                'data' => [
+                    "token" => $this->token_number_display . "-----",
+                    "counter" => $this->counter->name ?? ""
+                ]
             ]));
 
             $client->close();
@@ -127,8 +132,8 @@ class Token extends Model
         $this->loadMissing('counter:id,name');
 
         $data = [
-            "token"   => $this->token_number_display,
-            "counter" => $this->counter->name ?? "",
+            "token" => $this->token_number_display,
+            "counter" => $this->counter->name ?? ""
         ];
 
         $path = public_path('latest-event.json');
@@ -138,11 +143,11 @@ class Token extends Model
 
     public function scopeFilter($query, array $filters)
     {
-        if (! empty($filters['service_id']) && $filters['service_id'] != -1) {
+        if (!empty($filters['service_id']) && $filters['service_id'] != -1) {
             $query->where('service_id', $filters['service_id']);
         }
 
-        if (! empty($filters['counter_id']) && $filters['counter_id'] != -1) {
+        if (!empty($filters['counter_id']) && $filters['counter_id'] != -1) {
             $query->where('counter_id', $filters['counter_id']);
         }
 
@@ -154,7 +159,7 @@ class Token extends Model
             $query->where('language', $filters['language']);
         }
 
-        if (! empty($filters['start_date']) && ! empty($filters['end_date'])) {
+        if (!empty($filters['start_date']) && !empty($filters['end_date'])) {
             $query->whereBetween('created_at', [
                 $filters['start_date'] . ' 00:00:00',
                 $filters['end_date'] . ' 23:59:59',
@@ -175,17 +180,17 @@ class Token extends Model
     public static function getAvgTime(array $timeStrings): string
     {
         $totalSeconds = 0;
-        $validCount   = 0;
+        $validCount = 0;
 
         foreach ($timeStrings as $time) {
             // Skip invalid or empty time values
-            if (! $time || $time === '00:00:00') {
+            if (!$time || $time === '00:00:00') {
                 continue;
             }
 
             // Convert time string to seconds
             [$hours, $minutes, $seconds] = explode(':', $time);
-            $secondsTotal                = ((int) $hours * 3600) + ((int) $minutes * 60) + (int) $seconds;
+            $secondsTotal = ((int)$hours * 3600) + ((int)$minutes * 60) + (int)$seconds;
 
             if ($secondsTotal > 0) {
                 $totalSeconds += $secondsTotal;
@@ -200,7 +205,7 @@ class Token extends Model
         $avgSeconds = (int) round($totalSeconds / $validCount);
 
         // Convert average seconds back to HH:MM:SS
-        $hours   = floor($avgSeconds / 3600);
+        $hours = floor($avgSeconds / 3600);
         $minutes = floor(($avgSeconds % 3600) / 60);
         $seconds = $avgSeconds % 60;
 

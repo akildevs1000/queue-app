@@ -13,9 +13,20 @@ class Customer extends Model
         'address',
         'vip_number',
         'date_of_birth',
-
-        'rfid'
     ];
+
+     protected static function booted()
+    {
+        static::creating(function ($customer) {
+            if ($customer->vip_number) {
+                // Keep only the first VIP number
+                preg_match('/VIP-\d+/', $customer->vip_number, $matches);
+                if (!empty($matches)) {
+                    $customer->vip_number = $matches[0];
+                }
+            }
+        });
+    }
 
     // protected static function boot()
     // {

@@ -3,11 +3,11 @@ namespace App\Jobs;
 
 use App\Models\Token;
 use App\Models\User;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Support\Facades\File;
+use Barryvdh\DomPDF\Facade\Pdf;
+
 
 class CreateTokenJob implements ShouldQueue
 {
@@ -21,49 +21,49 @@ class CreateTokenJob implements ShouldQueue
     }
 
     public function handle(): void
-    {
-        $validatedData = $this->data;
+{
+    $validatedData = $this->data;
 
-        // Generate token number
-        $lastTokenNumber       = Token::latest('token_number')->whereDate('created_at', Carbon::today())->value('token_number') ?? 0;
-        $predictedTokenNumber  = (int) $lastTokenNumber + 1;
-        $predictedTokenDisplay = $validatedData['code'] . str_pad($predictedTokenNumber, 4, '0', STR_PAD_LEFT);
+    // Generate token number
+    $lastTokenNumber       = Token::latest('token_number')->whereDate('created_at', Carbon::today())->value('token_number') ?? 0;
+    $predictedTokenNumber  = (int) $lastTokenNumber + 1;
+    $predictedTokenDisplay = $validatedData['code'] . str_pad($predictedTokenNumber, 4, '0', STR_PAD_LEFT);
 
-        $tokenData = [
-            'language'             => $validatedData['language'],
-            'service_id'           => $validatedData['service_id'],
-            'token_number'         => $predictedTokenNumber,
-            'token_number_display' => $predictedTokenDisplay,
-        ];
+    $tokenData = [
+        'language'             => $validatedData['language'],
+        'service_id'           => $validatedData['service_id'],
+        'token_number'         => $predictedTokenNumber,
+        'token_number_display' => $predictedTokenDisplay,
+    ];
 
-        if (! empty($validatedData['vip_number'])) {
-            $tokenData['vip_number']  = $validatedData['vip_number'];
-            $tokenData['vip_serving'] = 1;
-        }
+    if (! empty($validatedData['vip_number'])) {
+        $tokenData['vip_number']  = $validatedData['vip_number'];
+        $tokenData['vip_serving'] = 1;
+    }
 
-        Token::create($tokenData);
+    Token::create($tokenData);
 
-        // Prepare response data for the ticket
-        $response = [
-            'name'                  => User::where("type", "master")->value("name") ?? 'ABC Hospital',
-            'token_number_display'  => $tokenData['token_number_display'],
-            'service'               => $validatedData['service_name'],
-            'already_waiting_count' => Token::whereDate('created_at', Carbon::today())
-                ->where('service_id', $tokenData['service_id'])
-                ->where("status", Token::PENDING)
-                ->count(),
-            'estimated_wait_time'   => (new Token)->getAverageServingTime($tokenData['service_id']),
-            'date'                  => now()->format('d-M-Y'),
-            'time'                  => now()->format('h:i A'),
-            'code'                  => $validatedData['code'],
-        ];
+    // Prepare response data for the ticket
+    $response = [
+        'name'                  => User::where("type", "master")->value("name") ?? 'ABC Hospital',
+        'token_number_display'  => $tokenData['token_number_display'],
+        'service'               => $validatedData['service_name'],
+        'already_waiting_count' => Token::whereDate('created_at', Carbon::today())
+                                        ->where('service_id', $tokenData['service_id'])
+                                        ->where("status", Token::PENDING)
+                                        ->count(),
+        'estimated_wait_time'   => (new Token)->getAverageServingTime($tokenData['service_id']),
+        'date'                  => now()->format('d-M-Y'),
+        'time'                  => now()->format('h:i A'),
+        'code'                  => $validatedData['code'],
+    ];
 
-        info($response);
+    info($response);
 
-        // ----------------------------
-        // Generate PDF
-        // ----------------------------
-        $html = '
+    // ----------------------------
+    // Generate PDF
+    // ----------------------------
+     $html = '
 <style>
     body {
         font-family: Arial, sans-serif;
@@ -121,29 +121,30 @@ class CreateTokenJob implements ShouldQueue
     <div class="datetime">' . $response['time'] . ' ' . $response['date'] . '</div>
 </div>';
 
-        // Save temporary PDF
-        $tempPdf = storage_path('app/temp_ticket.pdf');
-        Pdf::loadHTML($html)
-            ->setPaper([0, 0, 280, 600], 'portrait')
-            ->save($tempPdf);
+    // Save temporary PDF
+    $tempPdf = storage_path('app/temp_ticket.pdf');
+    Pdf::loadHTML($html)
+        ->setPaper([0, 0, 280, 600], 'portrait')
+        ->save($tempPdf);
 
-        // ----------------------------
-        // Print PDF silently (Windows example using SumatraPDF)
-        // ----------------------------
-        $sumatraPath = '"C:\\Users\\admin\\Downloads\\SumatraPDF-3.5.2-64\\print.exe"';
-        $command     = "$sumatraPath -print-to-default \"$tempPdf\"";
+    // ----------------------------
+    // Print PDF silently (Windows example using SumatraPDF)
+    // ----------------------------
+    $sumatraPath = '"C:\\Users\\admin\\Downloads\\SumatraPDF-3.5.2-64\\print.exe"';
+    $command = "$sumatraPath -print-to-default \"$tempPdf\"";
 
-        exec($command, $output, $status);
+    exec($command, $output, $status);
 
-        // Delete temp PDF
-        File::delete($tempPdf);
+    // Delete temp PDF
+    //File::delete($tempPdf);
 
-        if ($status === 0) {
-            info("Ticket printed successfully!");
-        } else {
-            info("Failed to print ticket.");
-        }
+    if ($status === 0) {
+        info("Ticket printed successfully!");
+    } else {
+        info("Failed to print ticket.");
     }
+}
+
 
     public function handle_old(): void
     {

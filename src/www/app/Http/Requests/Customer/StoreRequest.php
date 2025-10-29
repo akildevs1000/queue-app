@@ -29,8 +29,6 @@ class StoreRequest extends FormRequest
             'address' => 'nullable|string|max:255',
             'vip_number' => 'nullable|string|max:15|unique:customers,vip_number',
             'date_of_birth' => 'nullable|date|before:today',
-
-            'rfid' => 'nullable'
         ];
     }
 
