@@ -51,13 +51,13 @@ export default function Welcome() {
     };
 
     useEffect(() => {
-        fetchServices('en');
         fetchAppDetails();
     }, []);
 
-    const handleLanguageSelect = (lang: 'en' | 'ar') => {
+    const handleLanguageSelect = (lang: any) => {
         setData('language', lang);
         setStep('service');
+        fetchServices(lang);
     };
 
     const handleServiceSelect = (service: Service) => {
@@ -211,6 +211,18 @@ export default function Welcome() {
                                 onClick={() => handleLanguageSelect('ar')}
                             >
                                 <CardContent className="py-10 text-xl font-semibold">العربية</CardContent>
+                            </Card>
+                            <Card
+                                className="cursor-pointer border-none bg-gradient-to-r from-blue-500 to-purple-600 text-white transition-transform hover:scale-105"
+                                onClick={() => handleLanguageSelect('fr')}
+                            >
+                                <CardContent className="py-10 text-xl font-semibold">Français</CardContent>
+                            </Card>
+                            <Card
+                                className="cursor-pointer border-none bg-gradient-to-r from-blue-500 to-purple-600 text-white transition-transform hover:scale-105"
+                                onClick={() => handleLanguageSelect('es')}
+                            >
+                                <CardContent className="py-10 text-xl font-semibold">Español</CardContent>
                             </Card>
                         </div>
                     </div>
