@@ -2,18 +2,26 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\Translator;
 use App\Http\Requests\Service\ValidationRequest;
 use App\Models\Service;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Stichoza\GoogleTranslate\GoogleTranslate;
 
 class ServiceController extends Controller
 {
-    public function dropDown()
-    {
-        return response()->json(Service::get(["id", "name", "code"]));
-    }
 
+    public function dropDown(Request $request)
+    {
+        $language = $request->get('language', 'en');
+
+        $services = Service::all()->map(function ($service) use ($language) {
+            return Translator::translateModel($service, $language, ['name', 'code']);
+        });
+
+        return response()->json($services);
+    }
 
     /**
      * Display a listing of the resource.
