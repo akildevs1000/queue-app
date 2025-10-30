@@ -10,6 +10,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\UserController;
 use App\Models\Token;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
@@ -110,3 +111,134 @@ Route::get('/latest-serving-token-event', function () {
 Route::resource("customers", CustomerController::class)->middleware("auth");
 Route::get("customers-list", [CustomerController::class, 'dropDown'])->middleware("auth");
 Route::get("next-vipnumber", [CustomerController::class, 'nextVipNumber'])->middleware("auth");
+
+Route::get('/test-arabic', function () {
+    $html = '
+    <html lang="ar" dir="rtl">
+    <head>
+        <meta charset="utf-8">
+        <style>
+            @font-face {
+                font-family: "NotoNaskhArabic";
+                src: url("' . storage_path('fonts/NotoNaskhArabic-Regular.ttf') . '") format("truetype");
+            }
+            body {
+                font-family: "NotoNaskhArabic", sans-serif;
+                direction: rtl;
+                text-align: right;
+                font-size: 18px;
+            }
+        </style>
+    </head>
+    <body>
+        مرحباً بكم في المستشفى <span dir="ltr">ABC</span>
+    </body>
+    </html>';
+
+    return \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)->stream('arabic-test.pdf');
+});
+
+use Mpdf\Mpdf;
+use App\Helpers\Translator;
+
+
+Route::get('/pdf-ticket-test', function () {
+
+    $lang = request('lang', 'en'); // default to Arabic
+
+    // Set content based on lang
+    if ($lang === 'ar') {
+        $font = 'notonaskharabic';
+        $direction = 'rtl';
+    } else {
+        $font = 'arial'; // system font or any English font
+        $direction = 'ltr';
+    }
+
+    $headingTest = Translator::translateText('Welcome to', $lang);
+    $nameText = Translator::translateText('ABC Hospital', $lang);
+    $titleText = Translator::translateText('Ticket', $lang);
+    $token = Translator::translateText('0012', $lang);
+    $serviceText = Translator::translateText('Example Service', $lang);
+    $infoText = Translator::translateText('Total: 5 tokens waiting<br/>Average waiting time: 10 minutes', $lang);
+    $datetimeText = '10:30 AM 30-Oct-2025';
+
+    $html = "
+    <!DOCTYPE html>
+    <html lang='{$lang}' dir='{$direction}'>
+    <head>
+        <meta charset='UTF-8'>
+        <title>Ticket Preview</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                font-size: 16px;
+                color: black;
+                line-height: 1.5;
+                margin: 0;
+                padding: 0;
+                direction: {$direction};
+                text-align: " . ($direction === 'rtl' ? 'right' : 'left') . ";
+            }
+            .ticket {
+                width: 260px;
+                border: 2px dashed #000;
+                padding: 12px;
+                text-align: center;
+            }
+            .ticket .heading { font-weight: ; font-size: 16px; margin-bottom: 10px; }
+            .ticket .name { font-weight: bold; font-size: 20px; margin-bottom: 10px; }
+            .ticket .title { font-size: 18px; margin-bottom: 8px; }
+            .ticket .token { font-size: 40px; font-weight: bold; margin: 12px 0; }
+            .ticket .service { font-size: 18px; font-weight: bold; margin: 10px 0; }
+            .ticket .info { font-size: 16px; margin-top: 10px; }
+            .ticket .datetime { font-size: 16px; margin-top: 20px; margin-bottom: 20px; }
+        </style>
+    </head>
+    <body>
+        <div class='ticket'>
+            <div class='heading'>{$headingTest}</div>
+            <div class='name'>{$nameText}</div>
+            <div class='title'>{$titleText}</div>
+            <div class='token'>{$token}</div>
+            <div class='service'>{$serviceText}</div>
+            <div class='info'>{$infoText}</div>
+            <div class='datetime'>{$datetimeText}</div>
+        </div>
+    </body>
+    </html>
+    ";
+
+    $mpdf = new Mpdf([
+        'mode' => 'utf-8',
+        'format' => [75, 115],
+        'margin_left' => 5,
+        'margin_right' => 5,
+        'margin_top' => 5,
+        'margin_bottom' => 5,
+    ]);
+
+    // Arabic font registration
+    if ($lang === 'ar') {
+        $mpdf->AddFontDirectory(storage_path('fonts'));
+        $mpdf->fontdata['notonaskharabic'] = [
+            'R' => 'NotoNaskhArabic-Regular.ttf',
+            'B' => 'NotoNaskhArabic-Bold.ttf',
+            'I' => 'NotoNaskhArabic-Regular.ttf',
+            'BI' => 'NotoNaskhArabic-Bold.ttf',
+        ];
+    }
+
+    $tempPdf = storage_path('app/temp_ticket.pdf'); // will be saved in storage/app/temp/ticket.pdf
+
+    $mpdf->SetFont($font, '', 16);
+    $mpdf->WriteHTML($html);
+    $mpdf->Output($tempPdf);
+
+    $sumatraPath = '"C:\\Users\\admin\\Downloads\\SumatraPDF-3.5.2-64\\print.exe"';
+    $command     = "$sumatraPath -print-to-default \"$tempPdf\"";
+
+    exec($command, $output, $status);
+
+    return $status === 0 ? "Ticket printed successfully" : "Failed to print ticket.";
+});
