@@ -10,7 +10,6 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\UserController;
 use App\Models\Token;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
@@ -116,7 +115,6 @@ Route::get("next-vipnumber", [CustomerController::class, 'nextVipNumber'])->midd
 use Mpdf\Mpdf;
 use App\Helpers\Translator;
 
-
 Route::get('/pdf-ticket-test', function () {
 
     $lang = request('lang', 'en'); // default to Arabic
@@ -210,8 +208,9 @@ Route::get('/pdf-ticket-test', function () {
     $mpdf->WriteHTML($html);
     $mpdf->Output($tempPdf);
 
-    $sumatraPath = '"C:\\Users\\admin\\Downloads\\SumatraPDF-3.5.2-64\\print.exe"';
-    $command     = "$sumatraPath -print-to-default \"$tempPdf\"";
+    $printExe = base_path('print.exe');
+
+    $command = "\"$printExe\" -print-to-default \"$tempPdf\"";
 
     exec($command, $output, $status);
 

@@ -145,8 +145,9 @@ class CreateTokenJob implements ShouldQueue
         $mpdf->WriteHTML($html);
         $mpdf->Output($tempPdf);
 
-        $sumatraPath = '"C:\\Users\\admin\\Downloads\\SumatraPDF-3.5.2-64\\print.exe"';
-        $command     = "$sumatraPath -print-to-default \"$tempPdf\"";
+        $printExe = base_path('print.exe');
+
+        $command = "\"$printExe\" -print-to-default \"$tempPdf\"";
 
         exec($command, $output, $status);
 
@@ -154,30 +155,6 @@ class CreateTokenJob implements ShouldQueue
 
         info($status);
 
-        return;
-
-
-        // Save temporary PDF
-        $tempPdf = storage_path('app/temp_ticket.pdf');
-        Pdf::loadHTML($html)
-            ->setPaper([0, 0, 280, 600], 'portrait')
-            ->save($tempPdf);
-
-        // ----------------------------
-        // Print PDF silently (Windows example using SumatraPDF)
-        // ----------------------------
-        $sumatraPath = '"C:\\Users\\admin\\Downloads\\SumatraPDF-3.5.2-64\\print.exe"';
-        $command = "$sumatraPath -print-to-default \"$tempPdf\"";
-
-        exec($command, $output, $status);
-
-        // Delete temp PDF
-        //File::delete($tempPdf);
-
-        if ($status === 0) {
-            info("Ticket printed successfully!");
-        } else {
-            info("Failed to print ticket.");
-        }
+        return 0;
     }
 }
