@@ -112,31 +112,6 @@ Route::resource("customers", CustomerController::class)->middleware("auth");
 Route::get("customers-list", [CustomerController::class, 'dropDown'])->middleware("auth");
 Route::get("next-vipnumber", [CustomerController::class, 'nextVipNumber'])->middleware("auth");
 
-Route::get('/test-arabic', function () {
-    $html = '
-    <html lang="ar" dir="rtl">
-    <head>
-        <meta charset="utf-8">
-        <style>
-            @font-face {
-                font-family: "NotoNaskhArabic";
-                src: url("' . storage_path('fonts/NotoNaskhArabic-Regular.ttf') . '") format("truetype");
-            }
-            body {
-                font-family: "NotoNaskhArabic", sans-serif;
-                direction: rtl;
-                text-align: right;
-                font-size: 18px;
-            }
-        </style>
-    </head>
-    <body>
-        مرحباً بكم في المستشفى <span dir="ltr">ABC</span>
-    </body>
-    </html>';
-
-    return \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)->stream('arabic-test.pdf');
-});
 
 use Mpdf\Mpdf;
 use App\Helpers\Translator;
