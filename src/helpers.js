@@ -1,7 +1,7 @@
 const simpleGit = require('simple-git');
 const fs = require('fs');
 const path = require('path');
-const { spawn } = require('child_process');
+const { spawn,spawnSync } = require('child_process');
 const os = require("os");
 const { app, Notification } = require('electron');
 
@@ -75,7 +75,7 @@ function spawnWrapper(mainWindow, processType, command, argsOrOptions, maybeOpti
     return child;
 }
 
-function spawnPhpCgiWorker(mainWindow, phpCGi, port) {
+function spawnPhpCgiWorker(phpCGi, port) {
     const args = ['-b', `127.0.0.1:${port}`];
     const options = { cwd: appDir };
 
@@ -83,20 +83,20 @@ function spawnPhpCgiWorker(mainWindow, phpCGi, port) {
         const child = spawn(phpCGi, args, options);
 
         child.stdout.on('data', (data) => {
-            log(mainWindow, `[PHP-CGI:${port}] ${data.toString()}`);
+            logger(port, `[PHP-CGI:${port}] ${data.toString()}`);
         });
 
         child.stderr.on('data', (data) => {
-            log(mainWindow, `[PHP-CGI:${port}] ${data.toString()}`);
+            logger(port, `[PHP-CGI:${port}] ${data.toString()}`);
         });
 
         child.on('close', (code) => {
-            log(mainWindow, `[PHP-CGI:${port}] exited with code ${code}. Restarting in 2s...`);
+            logger(port, `[PHP-CGI:${port}] exited with code ${code}. Restarting in 2s...`);
             setTimeout(start, 2000); // auto-restart after 2 seconds
         });
 
         child.on('error', (err) => {
-            log(mainWindow, `[PHP-CGI:${port}] error: ${err.message}`);
+            logger(port, `[PHP-CGI:${port}] error: ${err.message}`);
         });
 
         return child;
@@ -223,8 +223,96 @@ function notify(title = "", body = "", icon = 'favicon-256x256.png', onClick = n
     notification.show();
 }
 
+function logger(processType, message) {
+    const now = new Date();
+
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+
+    const timestamp = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    const fullMessage = `[${timestamp}] ${message}\n`;
+
+    // Write to file in logs directory within appDir
+    const logDir = path.join(appDir, 'logs');
+    const logFile = path.join(logDir, `${processType}-${year}-${month}-${day}.log`);
+
+    // Create logs directory if it doesn't exist
+    if (!fs.existsSync(logDir)) {
+        fs.mkdirSync(logDir, { recursive: true });
+    }
+
+    fs.appendFile(logFile, fullMessage, (err) => {
+        if (err) {
+            console.error("❌ Failed to write log file:", err);
+        }
+    });
+}
+
+
+/**
+ * Checks if VS Redistributable is already installed
+ * @param {string} displayName - Part of the name to check in installed programs
+ * @returns {boolean}
+ */
+function isVSRedistInstalled(displayName = 'Microsoft Visual C++') {
+    // Use PowerShell to check registry for installed programs
+    const psScript = `
+    Get-ItemProperty HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*,
+                      HKLM:\\Software\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\* |
+    Where-Object { $_.DisplayName -like "*${displayName}*" } |
+    Select-Object -ExpandProperty DisplayName
+  `;
+
+    const result = spawnSync('powershell.exe', ['-Command', psScript], { encoding: 'utf8' });
+
+    return result.stdout && result.stdout.trim().length > 0;
+}
+
+function runInstaller(installerPath) {
+    return new Promise((resolve, reject) => {
+        if (isVSRedistInstalled()) {
+            logger(`VS_REDIST`, '✅ VS Redistributable already installed.');
+            console.log('✅ VS Redistributable already installed.');
+            return resolve('Already installed');
+        }
+
+        const installer = spawn(installerPath, ['/quiet', '/norestart']);
+
+        installer.stdout.on('data', (data) => {
+            console.log(data.toString());
+            logger(`VS_REDIST`, data.toString());
+        });
+
+        installer.stderr.on('data', (data) => {
+            logger(`VS_REDIST`, data.toString());
+        });
+
+        installer.on('close', (code) => {
+            if (code === 0) {
+                console.log('Installed successfully');
+                
+                logger(`VS_REDIST`, 'Installed successfully');
+                resolve('Installed successfully');
+            } else if (code === 1638) {
+                console.log('Already installed (code 1638)');
+
+                logger(`VS_REDIST`, 'Already installed (code 1638)');
+                resolve('Already installed');
+            } else {
+                console.log( `❌ Installation failed with code ${code}`);
+                logger(`VS_REDIST`, `❌ Installation failed with code ${code}`);
+                reject(new Error(`Installation failed with code ${code}`));
+            }
+        });
+    });
+}
+
 module.exports = {
-    log,
+    logger, runInstaller,
     tailLogFile,
     spawnWrapper, spawnPhpCgiWorker,
     stopProcess,

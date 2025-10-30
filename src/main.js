@@ -6,7 +6,7 @@ const { spawn, execSync } = require('child_process');
 app.setName('SmartQueue');
 app.setAppUserModelId('SmartQueue');
 
-const { log, spawnWrapper, spawnPhpCgiWorker, stopProcess, getFormattedDate, ipv4Address } = require('./helpers');
+const { logger, spawnWrapper, spawnPhpCgiWorker, stopProcess, runInstaller, ipv4Address } = require('./helpers');
 
 
 const socketPort = 7777; // declare outside
@@ -14,9 +14,9 @@ const socketPort = 7777; // declare outside
 try {
   const command = `for /f "tokens=5" %a in ('netstat -ano ^| findstr :${socketPort}') do taskkill /PID %a /F`;
   execSync(command, { stdio: 'ignore' });
-  console.log(`✅ Freed port ${socketPort} before starting socket server.`);
+  logger(`SOCKET`, `✅ Freed port ${socketPort} before starting socket server.`);
 } catch (err) {
-  console.log(`ℹ️ Port ${socketPort} was free, continuing...`);
+  logger(`SOCKET`, `ℹ️ Port ${socketPort} was free, continuing...`);
 }
 
 
@@ -58,6 +58,10 @@ function createWindow() {
   mainWindow.loadFile('index.html');
 
   mainWindow.webContents.once('did-finish-load', () => {
+    const phpPorts = [9000, 9001, 9002, 9003, 9004];
+    phpPorts.forEach(port => {
+      spawnPhpCgiWorker(phpCGi, port);
+    });
     startServices(mainWindow);
   });
 }
@@ -65,14 +69,11 @@ function createWindow() {
 function startServices(mainWindow) {
   const address = `http://${ipv4Address}:8000`;
 
-  const phpPorts = [9000, 9001, 9002, 9003, 9004];
-  phpPorts.forEach(port => {
-    spawnPhpCgiWorker(mainWindow, phpCGi, port);
-  });
+
 
   NginxProcess = spawnWrapper(mainWindow, "[Nginx]", nginxPath, { cwd: appDir });
 
-  log(mainWindow, `[Application] started on ${address}`);
+  logger('Application', `Application started on ${address}`);
 
 
   ScheduleProcess = spawnWrapper(mainWindow, "[Application]", phpPathCli, ['artisan', 'schedule:work'], {
@@ -91,9 +92,9 @@ function startServices(mainWindow) {
     nginxWindow = new BrowserWindow({
       width,
       height,
-      frame: false,
-      fullscreen: true,
-      autoHideMenuBar: true,
+      // frame: false,
+      // fullscreen: true,
+      // autoHideMenuBar: true,
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true
@@ -114,20 +115,23 @@ function startServices(mainWindow) {
 function stopServices(mainWindow) {
   const batFile = path.join(appDir, 'stop-services.bat');
   spawn('cmd.exe', ['/c', batFile], { windowsHide: true });
-  log(mainWindow, '[Application] stop-services.bat executed.');
+  logger(`Application`, 'Application stop-services.bat executed.');
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+
+  await runInstaller(path.join(appDir, `vs_redist.exe`));
+
   createWindow();
-  ipcMain.on('start-server', () => startServices(mainWindow));
-  ipcMain.on('stop-server', () => stopServices(mainWindow));
+  // ipcMain.on('start-server', () => startServices(mainWindow));
+  // ipcMain.on('stop-server', () => stopServices(mainWindow));
 });
 let isQuitting = false;
 
 app.on('before-quit', (e) => {
   if (!isQuitting) {
     e.preventDefault(); // prevent quit
-    log(mainWindow, "Stopping services before quitting...");
+    logger(`Application`, "Stopping services before quitting...");
     stopServices(mainWindow); // assume this is sync or finishes quickly
     isQuitting = true;
     app.quit(); // trigger quit again
