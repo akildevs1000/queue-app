@@ -77,7 +77,7 @@ export default function Welcome() {
     };
 
     useEffect(() => {
-        const SOCKET_RETRY_INTERVAL = 5000; // 5 seconds
+        const SOCKET_RETRY_INTERVAL = 30000; // 5 seconds
         const connectSocket = async () => {
             try {
                 const res = await fetch(`/socket-ip-and-port`);
