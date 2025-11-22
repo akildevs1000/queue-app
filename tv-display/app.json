@@ -7,22 +7,28 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.francisgill.tvdisplay"
+      "package": "com.francisgill.tvdisplay",
+
+      "usesCleartextTraffic": true
     },
+
     "web": {
       "favicon": "./assets/favicon.png"
     },
+
     "plugins": [
       [
         "expo-build-properties",
@@ -32,15 +38,6 @@
           }
         }
       ]
-    ],
-    "extra": {
-      "eas": {
-        "projectId": "c14f90f1-8a35-4784-9b79-a253efc7c396"
-      }
-    },
-    "owner": "francisgill",
-    "ios": {
-      "bundleIdentifier": "com.francisgill.tvdisplay"
-    }
+    ]
   }
 }
