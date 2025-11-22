@@ -33,10 +33,12 @@ export default function Welcome() {
 
   const shouldAnnounceOnConnectRef = useRef(false);
   const tokenSound = useRef(null);
+  const ttsWarmedRef = useRef(false);
+  const [audioReady, setAudioReady] = useState(false);
   const cachedVoices = useRef({ ar: null, en: null, fr: null, es: null });
 
   useEffect(() => {
-    const preloadTTS = async () => {
+    const preloadAudioAndTTS = async () => {
       try {
         // 1) Preload beep sound
         const { sound } = await Audio.Sound.createAsync(
@@ -44,59 +46,28 @@ export default function Welcome() {
         );
         tokenSound.current = sound;
 
-        // 2) Preload voices
-        const voices = await Speech.getAvailableVoicesAsync();
+        // 2) Warm up TTS engine (silent-ish calls)
+        // These are very short and usually not noticeable,
+        // but they force the engine to initialize.
+        Speech.speak(" ", { language: "en-US", rate: 1.0 });
+        Speech.speak(" ", { language: "ar", rate: 1.0 });
+        Speech.speak(" ", { language: "fr", rate: 1.0 });
+        Speech.speak(" ", { language: "es", rate: 1.0 });
 
-        const findVoice = (langPrefix) =>
-          voices.find((v) =>
-            v.language.toLowerCase().startsWith(langPrefix.toLowerCase())
-          );
-
-        // Arabic
-        const arVoice = findVoice("ar");
-        if (arVoice) {
-          cachedVoices.current.ar = {
-            language: arVoice.language,
-            voice: arVoice.identifier,
-          };
-        }
-
-        // English
-        const enVoice = findVoice("en");
-        if (enVoice) {
-          cachedVoices.current.en = {
-            language: enVoice.language,
-            voice: enVoice.identifier,
-          };
-        }
-
-        // French
-        const frVoice = findVoice("fr");
-        if (frVoice) {
-          cachedVoices.current.fr = {
-            language: frVoice.language,
-            voice: frVoice.identifier,
-          };
-        }
-
-        // Spanish
-        const esVoice = findVoice("es");
-        if (esVoice) {
-          cachedVoices.current.es = {
-            language: esVoice.language,
-            voice: esVoice.identifier,
-          };
-        }
-
+        ttsWarmedRef.current = true;
+        setAudioReady(true);
       } catch (err) {
-        console.log("Error preloading TTS:", err);
+        console.log("Preload error:", err);
+        setAudioReady(true); // still allow announcements
       }
     };
 
-    preloadTTS();
+    preloadAudioAndTTS();
 
     return () => {
-      if (tokenSound.current) tokenSound.current.unloadAsync();
+      if (tokenSound.current) {
+        tokenSound.current.unloadAsync();
+      }
     };
   }, []);
 
@@ -279,10 +250,9 @@ export default function Welcome() {
   };
 
 
-  const announceTheToken = async (token = null, counter = null, language = "en") => {
-    if (!token || counter === null) return;
+  const announceTheToken = (token = null, counter = null, language = "en") => {
+    if (!token || counter == null) return;
 
-    // Multi-language message
     const messages = {
       ar: `الرقم ${token}، يرجى التوجه إلى ${counter}.`,
       en: `Token ${token}, please proceed to the ${counter}.`,
@@ -292,39 +262,33 @@ export default function Welcome() {
 
     const message = messages[language] || messages["en"];
 
+    const langOptions = {
+      ar: { language: "ar" },
+      en: { language: "en-US" },
+      fr: { language: "fr" },
+      es: { language: "es" },
+    };
+
+    const speakOptions = langOptions[language] || langOptions["en"];
+
+    // If audio preload not fully ready yet, don't wait for beep → speak directly
+    if (!audioReady || !tokenSound.current) {
+      Speech.speak(message, speakOptions);
+      return;
+    }
+
     try {
       // Play preloaded beep sound
-      if (tokenSound.current) {
-        await tokenSound.current.replayAsync();
-      }
+      tokenSound.current.replayAsync();
 
-      // After beep finishes → speak
-      tokenSound.current?.setOnPlaybackStatusUpdate(async (status) => {
+      tokenSound.current.setOnPlaybackStatusUpdate((status) => {
         if (status.didJustFinish) {
-
-          let voiceOptions =
-            cachedVoices.current[language] ||
-            cachedVoices.current["en"] ||
-            { language: "en-US" };
-
-          Speech.speak(message, voiceOptions);
+          Speech.speak(message, speakOptions);
         }
       });
-
     } catch (error) {
-      console.error("Error playing sound or speaking:", error);
-
-      // fallback
-      Speech.speak(message, {
-        language:
-          language === "ar"
-            ? "ar"
-            : language === "fr"
-              ? "fr"
-              : language === "es"
-                ? "es"
-                : "en-US",
-      });
+      console.error("announceTheToken error:", error);
+      Speech.speak(message, speakOptions); // fallback
     }
   };
 
