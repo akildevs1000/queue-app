@@ -30,6 +30,81 @@ const videoHeight = screenHeight;
 const videoWidth = screenWidth;
 
 export default function Welcome() {
+
+  const tokenSound = useRef(null);
+  const cachedVoices = useRef({
+    ar: null,
+    en: null,
+    fr: null,
+    es: null,
+  });
+
+  useEffect(() => {
+    const preloadTTS = async () => {
+      try {
+        // 1) Preload beep sound
+        const { sound } = await Audio.Sound.createAsync(
+          require('./assets/1.wav')
+        );
+        tokenSound.current = sound;
+
+        // 2) Preload voices
+        const voices = await Speech.getAvailableVoicesAsync();
+
+        const findVoice = (langPrefix) =>
+          voices.find((v) =>
+            v.language.toLowerCase().startsWith(langPrefix.toLowerCase())
+          );
+
+        // Arabic
+        const arVoice = findVoice("ar");
+        if (arVoice) {
+          cachedVoices.current.ar = {
+            language: arVoice.language,
+            voice: arVoice.identifier,
+          };
+        }
+
+        // English
+        const enVoice = findVoice("en");
+        if (enVoice) {
+          cachedVoices.current.en = {
+            language: enVoice.language,
+            voice: enVoice.identifier,
+          };
+        }
+
+        // French
+        const frVoice = findVoice("fr");
+        if (frVoice) {
+          cachedVoices.current.fr = {
+            language: frVoice.language,
+            voice: frVoice.identifier,
+          };
+        }
+
+        // Spanish
+        const esVoice = findVoice("es");
+        if (esVoice) {
+          cachedVoices.current.es = {
+            language: esVoice.language,
+            voice: esVoice.identifier,
+          };
+        }
+
+      } catch (err) {
+        console.log("Error preloading TTS:", err);
+      }
+    };
+
+    preloadTTS();
+
+    return () => {
+      if (tokenSound.current) tokenSound.current.unloadAsync();
+    };
+  }, []);
+
+
   const [showReloadBar, setShowReloadBar] = useState(false);
   // Reconnect control
   const reconnectAttemptsRef = useRef(0);
@@ -158,49 +233,55 @@ export default function Welcome() {
     }
   };
 
-  const announceTheToken = async (token = null, counter = null, language = "ar") => {
+  const announceTheToken = async (token = null, counter = null, language = "en") => {
+    if (!token || counter === null) return;
 
-    // const availableVoices = await Speech.getAvailableVoicesAsync();
-    // Log all available voices
-    // console.log(availableVoices);
+    // Multi-language message
+    const messages = {
+      ar: `الرقم ${token}، يرجى التوجه إلى ${counter}.`,
+      en: `Token ${token}, please proceed to the ${counter}.`,
+      fr: `Numéro ${token}, veuillez vous diriger vers le ${counter}.`,
+      es: `Turno ${token}, por favor diríjase al ${counter}.`,
+    };
 
-    const message = language === "ar"
-      ? `الرقم ${token}، يرجى التوجه إلى ${counter}.`
-      : `Token ${token}, please proceed to the ${counter}.`;
+    const message = messages[language] || messages["en"];
 
     try {
-      const { sound } = await Audio.Sound.createAsync(require('./assets/1.wav'));
+      // Play preloaded beep sound
+      if (tokenSound.current) {
+        await tokenSound.current.replayAsync();
+      }
 
-      await sound.playAsync();
-
-      sound.setOnPlaybackStatusUpdate(async (status) => {
+      // After beep finishes → speak
+      tokenSound.current?.setOnPlaybackStatusUpdate(async (status) => {
         if (status.didJustFinish) {
-          await sound.unloadAsync();
 
-          let voiceOptions = { language: "en-US", voice: "en-us-x-sfg-network" };
-
-          if (language === "ar") {
-            const voices = await Speech.getAvailableVoicesAsync();
-            const arabicVoice = voices.find(v => v.language.startsWith('ar'));
-
-            if (arabicVoice) {
-              voiceOptions = {
-                language: "ar",
-                voice: arabicVoice.identifier,
-              };
-            }
-          }
+          let voiceOptions =
+            cachedVoices.current[language] ||
+            cachedVoices.current["en"] ||
+            { language: "en-US" };
 
           Speech.speak(message, voiceOptions);
         }
       });
 
     } catch (error) {
-      console.error('Error playing sound or speaking:', error);
-      // Fallback to speech directly
-      Speech.speak(message, { language: language === "ar" ? "ar" : "en-US" });
+      console.error("Error playing sound or speaking:", error);
+
+      // fallback
+      Speech.speak(message, {
+        language:
+          language === "ar"
+            ? "ar"
+            : language === "fr"
+              ? "fr"
+              : language === "es"
+                ? "es"
+                : "en-US",
+      });
     }
   };
+
 
   // Safe reconnect function
   const safeReconnect = ({ ip, port }) => {
