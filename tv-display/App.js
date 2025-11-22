@@ -31,13 +31,9 @@ const videoWidth = screenWidth;
 
 export default function Welcome() {
 
+  const shouldAnnounceOnConnectRef = useRef(false);
   const tokenSound = useRef(null);
-  const cachedVoices = useRef({
-    ar: null,
-    en: null,
-    fr: null,
-    es: null,
-  });
+  const cachedVoices = useRef({ ar: null, en: null, fr: null, es: null });
 
   useEffect(() => {
     const preloadTTS = async () => {
@@ -194,15 +190,22 @@ export default function Welcome() {
       setIp(ip);
       setPort(port);
       setShowModal(false);
+
+      // Fetch settings & data
       fetchTvSettings(ip, port);
       fetchServingItems(ip, port);
+
+      // ✅ User explicitly pressed Save → announce on next successful connect
+      shouldAnnounceOnConnectRef.current = true;
       getSocketConnection({ ip, port });
+
     } catch (e) {
       console.error('Error saving IP and port', e);
     } finally {
       setLoading(false);
     }
   };
+
 
   const fetchServingItems = async (ip, port) => {
     try {
@@ -232,6 +235,49 @@ export default function Welcome() {
       setLoading(false);
     }
   };
+
+  const playConnectAnnouncement = async (language = "en") => {
+    const messages = {
+      ar: "تم الاتصال بالخادم.",
+      en: "Connected to the server.",
+      fr: "Connecté au serveur.",
+      es: "Conectado al servidor.",
+    };
+
+    const message = messages[language] || messages["en"];
+
+    try {
+      // Play the same beep sound as token
+      if (tokenSound.current) {
+        await tokenSound.current.replayAsync();
+      }
+
+      tokenSound.current?.setOnPlaybackStatusUpdate(async (status) => {
+        if (status.didJustFinish) {
+          let voiceOptions =
+            cachedVoices.current[language] ||
+            cachedVoices.current["en"] ||
+            { language: "en-US" };
+
+          Speech.speak(message, voiceOptions);
+        }
+      });
+    } catch (error) {
+      console.error("Error in playConnectAnnouncement:", error);
+      // Fallback: speak directly if sound failed
+      Speech.speak(message, {
+        language:
+          language === "ar"
+            ? "ar"
+            : language === "fr"
+              ? "fr"
+              : language === "es"
+                ? "es"
+                : "en-US",
+      });
+    }
+  };
+
 
   const announceTheToken = async (token = null, counter = null, language = "en") => {
     if (!token || counter === null) return;
@@ -312,23 +358,31 @@ export default function Welcome() {
     // Create WebSocket
     ws.current = new WebSocket(`ws://${ip}:${7777}?clientId=tv_display`);
 
-    // On Open
     ws.current.onopen = () => {
       console.log('✅ Connected to WS server');
       setWsStatus('Connected to WS server');
+
+      // ✅ Only speak if this connect comes from a user Save action
+      if (shouldAnnounceOnConnectRef.current) {
+        playConnectAnnouncement("en"); // or "ar"/"fr"/"es" based on your TV language
+        shouldAnnounceOnConnectRef.current = false; // reset so auto-reconnects stay silent
+      }
+
       // Hide success after 2 seconds
       if (wsStatusTimeoutRef.current) clearTimeout(wsStatusTimeoutRef.current);
       wsStatusTimeoutRef.current = setTimeout(() => {
         setWsStatus('');
       }, 2000);
+
       // Start ping interval
       if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
       pingIntervalRef.current = setInterval(() => {
         if (ws.current && ws.current.readyState === 1) {
           ws.current.send(JSON.stringify({ type: 'ping' }));
         }
-      }, 30000); // every 30 seconds
+      }, 30000);
     };
+
 
     // On Message
     ws.current.onmessage = (event) => {
@@ -338,9 +392,6 @@ export default function Welcome() {
         console.log('📩 Parsed Data:', parsed);
 
         const { event: eventType, data: tokenData } = parsed;
-
-
-
 
         if (tokenData?.token && tokenData?.counter !== undefined && eventType === 'token-serving') {
           setTokens(prevTokens => {
