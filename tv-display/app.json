@@ -28,13 +28,15 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-
     "plugins": [
       [
         "expo-build-properties",
         {
           "android": {
-            "allowCleartextTraffic": true
+            "allowCleartextTraffic": true,
+            "manifestApplicationAttributes": {
+              "android:usesCleartextTraffic": "true"
+            }
           }
         }
       ]
