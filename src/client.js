@@ -1,89 +1,52 @@
-const WebSocket = require('ws');
+const WebSocket = require("ws");
 
-// Get IP and port from command-line args or use defaults
-const IP = process.argv[2] || '192.168.2.79';
-const PORT = process.argv[3] || 7777;
+// Replace with your server IP and port
+const WS_URL = "ws://192.168.2.88:7777?clientId=test_client";
 
-let ws;
-let reconnectTimer;
-let heartbeatInterval;
-let currentTokenNumber = 1;
+const ws = new WebSocket(WS_URL);
 
-function connect() {
-  ws = new WebSocket(`ws://${IP}:${PORT}`, {
-    rejectUnauthorized: false // ⚠️ Only for development
-  });
+// Set of prefixes
+const PREFIXES = ["LQ", "AO", "DM", "RC", "VC"];
 
-  ws.on('open', function open() {
-    console.log(`✅ Connected to WebSocket server at ws://${IP}:${PORT}`);
-
-    // Reset reconnect attempts
-    if (reconnectTimer) clearTimeout(reconnectTimer);
-
-    // Send heartbeat every 25s
-    heartbeatInterval = setInterval(() => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ event: 'ping' }));
-        // console.log('📡 Sent heartbeat');
-      }
-    }, 25000);
-
-    // Send first token message
-    sendToken();
-
-    setInterval(() => {
-      sendToken();
-    }, 1 * 5 * 1000); // 30 minutes in ms
-  });
-
-  ws.on('message', (message) => {
-    try {
-      const parsed = JSON.parse(message);
-
-      // Handle heartbeat
-      if (parsed.event === 'ping') {
-        console.log(`📡 Heartbeat received at ${(new Date()).toLocaleString()}`);
-      } else {
-        console.log('📩 Message:', parsed);
-      }
-    } catch (err) {
-      console.error('❌ Error parsing message:', err);
-    }
-  });
-
-  ws.on('error', function error(err) {
-    console.error('❌ WebSocket error:', err.message);
-  });
-
-  ws.on('close', () => {
-    console.log('🔌 Disconnected from server');
-    if (heartbeatInterval) clearInterval(heartbeatInterval);
-    // Try reconnect after 5s
-    reconnectTimer = setTimeout(connect, 5000);
-  });
+// Helper to generate random token like "LQ123"
+function randomToken() {
+  const prefix = PREFIXES[Math.floor(Math.random() * PREFIXES.length)];
+  const number = Math.floor(100 + Math.random() * 900); // 100-999
+  return `${prefix}${number}`;
 }
 
-function getNextToken() {
-  // Pad the number to 4 digits (e.g., 1 -> 0001)
-  const paddedNumber = String(currentTokenNumber).padStart(4, '0');
-  const token = `LQ${paddedNumber}`;
-  currentTokenNumber++;
-  return token;
+// Helper to generate random counter 1-20
+function randomCounter() {
+  return Math.floor(1 + Math.random() * 20);
 }
 
-function sendToken() {
-  if (ws.readyState === WebSocket.OPEN) {
-    const message = {
-      event: 'token-serving',
+ws.on("open", () => {
+  console.log("✅ Connected to WebSocket server");
+
+  // Send a random token-serving event every 10 seconds
+  setInterval(() => {
+    const testToken = {
+      event: "token-serving",
       data: {
-        token: getNextToken(),
-        counter: 'Counter 1'
+        token: randomToken(),
+        counter: randomCounter(),
+        language: "en"
       }
     };
 
-    ws.send(JSON.stringify(message));
-    console.log('📤 Sent:', message);
-  }
-}
+    console.log("💡 Sending test token:", testToken.data);
+    ws.send(JSON.stringify(testToken));
+  }, 1000 * 10);
+});
 
-connect();
+ws.on("message", (data) => {
+  try {
+    const parsed = JSON.parse(data);
+    console.log("📨 Message from server:", parsed);
+  } catch {
+    console.log("📨 Raw message:", data.toString());
+  }
+});
+
+ws.on("close", () => console.log("❌ Connection closed"));
+ws.on("error", (err) => console.log("⚠️ WebSocket error:", err.message));

@@ -1,235 +1,60 @@
 import { StyleSheet } from 'react-native';
 
+// THEME CONSTANTS
+const COLORS = {
+    navyDeep: '#0A1024',
+    navyMid: '#101836',
+    cyan: '#67E8F9',
+    cyanLow: 'rgba(103, 232, 249, 0.1)',
+    cyanBorder: 'rgba(103, 232, 249, 0.4)',
+    silver: '#C0C0C0',
+    white: '#FFFFFF',
+    glassBorder: 'rgba(255, 255, 255, 0.1)',
+    cardBg: 'rgba(16, 24, 54, 0.5)',
+};
+
 const styles = StyleSheet.create({
-
-    reloadBar: {
-        marginTop: 10,
-        backgroundColor: '#f59e42',
-        paddingVertical: 8,
-        paddingHorizontal: 24,
-        borderRadius: 8,
-        alignItems: 'center',
-        alignSelf: 'center',
-        shadowColor: '#f59e42',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-        elevation: 4,
-    },
-    reloadBarText: {
-        color: '#fff',
-        fontWeight: 'bold',
-        fontSize: 18,
-    },
-    wsStatusBanner: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: '#3b82f6',
-        padding: 10,
-        zIndex: 999,
-        alignItems: 'center',
-    },
-    wsStatusText: {
-        color: '#fff',
-        fontWeight: 'bold',
-        fontSize: 16,
-    },
-    buttonActive: {
-        borderWidth: 3,
-        borderColor: '#3b82f6',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.5,
-        shadowRadius: 8,
-        elevation: 8,
-    },
-    buttonTextActive: {
-        color: '#3b82f6',
-        fontWeight: 'bold',
-        textShadowColor: '#fff',
-        textShadowOffset: { width: 1, height: 1 },
-        textShadowRadius: 2,
-    },
-
-    container: {
-        marginTop: 30,
-
-        flexDirection: "row",
+    mainContainer: {
         flex: 1,
-        backgroundColor: "#1a202c", // dark background
+        backgroundColor: COLORS.navyDeep,
     },
-    borderWrapper: {
-        position: "absolute",
-        padding: 2,
-        borderRadius: 20,
-        overflow: "hidden",
-        backgroundColor: "none",
-    },
-    animatedBorder: {
-        ...StyleSheet.absoluteFillObject,
-        borderRadius: 10,
-        border: 1,
-        height: "100%",
-        width: "200%",
-    },
-    gradient: {
+    gridContainer: {
         flex: 1,
-        height: 10,
-    },
-    leftSection: {
-        width: "50%",
-        backgroundColor: "#111827",
-    },
-    header: {
-        backgroundColor: "#6366f1",
-        padding: 16,
-    },
-    headerText: {
-        marginLeft: 10,
-        fontSize: 20,
-        fontWeight: "bold",
-        color: "#ffffff",
-    },
-    buttonWrapper: {
-        padding: 16,
-    },
-    buttonRow: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        marginBottom: 12,
-    },
-    button: {
-        width: "48%",
-        borderRadius: 10,
-        padding: 20,
-        alignItems: "center",
-    },
-    buttonLight: {
-        backgroundColor: "#3b82f6",
-    },
-    buttonDark: {
-        backgroundColor: "#1e3a8a",
-    },
-    buttonText: {
-        fontSize: 20,
-        fontWeight: "bold",
-        color: "#ffffff",
-    },
-    divider: {
-        width: 1,
-        backgroundColor: "#ccc",
-    },
-    rightSection: {
-        width: "50%",
-        backgroundColor: "#1e40af",
-        alignItems: "center",
-        justifyContent: "center",
+        flexDirection: 'row',
+        padding: 30,
+        gap: 30, // Gap between columns
+        backgroundColor: COLORS.navyDeep
     },
 
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: "rgba(0,0,0,0.5)",
-        justifyContent: "center",
-        alignItems: "center",
+    // --- LEFT COLUMN ---
+    leftColumn: {
+        flex: 2, // 8 out of 12 columns approx
+        flexDirection: 'column',
+        gap: 30,
     },
-    modalBox: {
-        width: "50%",
-        backgroundColor: "#fff",
-        borderRadius: 16,
-        padding: 20,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 5,
-    },
-    modalTitle: {
-        fontSize: 20,
-        fontWeight: "bold",
-        marginBottom: 16,
-        textAlign: "center",
-        color: "#333",
-    },
-    modalInput: {
+
+    // --- RIGHT COLUMN ---
+    rightColumn: {
+        flex: 1, // 4 out of 12 columns
+        borderRadius: 24,
+        overflow: 'hidden',
+        backgroundColor: COLORS.cardBg,
         borderWidth: 1,
-        borderColor: "#ccc",
-        borderRadius: 8,
-        padding: 12,
-        marginBottom: 16,
-        fontSize: 16,
-        color: "#333",
-    },
-    modalButtonContainer: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        gap: 12,
-    },
-    fullWidth: {
-        width: "100%",
-    },
-    buttonClose: {
-        backgroundColor: "#aaa",
-    },
-    buttonSave: {
-        backgroundColor: "#4287f5",
-    },
-    textStyle: {
-        color: "white",
-        fontWeight: "bold",
-    },
-    rightSection: {
-        position: "relative",
-        justifyContent: "center",
-        alignItems: "center",
+        borderColor: COLORS.glassBorder,
     },
 
-    image: {
-        width: "100%",
-        height: "100%",
-    },
-    ticketBox: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        backgroundColor: "#1e1e1e",
-        width: 300,
-        height: 200,
-        padding: 1,
-        zIndex: 1,
-        backgroundColor: "none",
-    },
-    leftTicket: {
-        backgroundColor: "#fff",
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    rightTicket: {
-        backgroundColor: "#3b82f6",
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    numberTitle: {
-        fontSize: 16,
-        fontWeight: "bold",
-        color: "#3b82f6",
-    },
-    numberValue: {
-        fontSize: 28,
-        fontWeight: "bold",
-        color: "#3b82f6",
-    },
-    proceedText: {
-        fontSize: 20,
-        textAlign: "center",
-        color: "#fff",
-    },
-    counterNumber: {
-        fontSize: 28,
-        fontWeight: "bold",
-        color: "#fff",
-    },
+    // --- MODAL & UTILS ---
+    modalOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    modalBox: { width: 400, backgroundColor: COLORS.navyMid, borderRadius: 16, padding: 30, borderWidth: 1, borderColor: COLORS.glassBorder },
+    modalTitle: { color: COLORS.white, fontSize: 20, marginBottom: 20, textAlign: 'center' },
+    modalInput: { backgroundColor: COLORS.navyDeep, color: COLORS.white, padding: 15, borderRadius: 8, borderWidth: 1, borderColor: COLORS.glassBorder, marginBottom: 15 },
+    modalButtons: { flexDirection: 'row', gap: 10 },
+    btnCancel: { flex: 1, padding: 15, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center' },
+    btnSave: { flex: 1, padding: 15, borderRadius: 8, backgroundColor: COLORS.cyan, alignItems: 'center' },
+    btnText: { color: COLORS.white },
+    btnTextBold: { color: COLORS.navyDeep, fontWeight: 'bold' },
+    toast: { position: 'absolute', bottom: 30, alignSelf: 'center', backgroundColor: COLORS.cyan, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 50 },
+    toastText: { color: COLORS.navyDeep, fontWeight: 'bold' },
 });
 
 export default styles;
