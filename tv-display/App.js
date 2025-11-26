@@ -1,39 +1,48 @@
 import React, { useEffect, useState, useRef } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  Modal,
-  Pressable,
-  BackHandler,
-  StyleSheet,
-  StatusBar,
-  Animated, Easing
-} from 'react-native';
-import * as Speech from 'expo-speech';
-import { Audio } from 'expo-av';
-import * as ScreenOrientation from 'expo-screen-orientation';
+import { View, Text, TextInput, Modal, Pressable, StatusBar, AppState } from 'react-native';
 import { useKeepAwake } from 'expo-keep-awake';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+import * as ScreenOrientation from 'expo-screen-orientation';
+
+// HOOKS
+import { announceTheToken } from './hooks/tts';
+import useMultiBackPress from './hooks/useMultiBackPress';
+import useSound from "./hooks/useSound";
+
+// STYLES
 import styles from './styles';
 
-
-// IMPORT YOUR HEADER
+// COMPONENTS
 import Header from './components/Header';
 import LiveToken from './components/LiveToken';
 import ServingList from './components/ServingList';
+import InitialLoader from './components/InitialLoader';
+import { Audio } from 'expo-av';
 
 
 export default function Welcome() {
 
-  // --- EXISTING LOGIC ---
+  // --- 1. REFS ---
+  const ws = useRef(null);
+  const { soundRef, audioReady } = useSound();
+  const reconnectTimeoutRef = useRef(null);
+  const pingIntervalRef = useRef(null);     // Fixed: Was missing
+  const wsStatusTimeoutRef = useRef(null);  // Fixed: Was missing
   const shouldAnnounceOnConnectRef = useRef(false);
+  const isIntentionalClose = useRef(false);
   const tokenSound = useRef(null);
-  const ttsWarmedRef = useRef(false);
-  const [audioReady, setAudioReady] = useState(false);
-  const cachedVoices = useRef({ ar: null, en: null, fr: null, es: null });
+
+  // --- 2. STATE ---
+  const [ip, setIp] = useState("192.168.2.88");
+  // const [port, setPort] = useState("7777"); // REMOVED: Port is now static 7777
+  const [loading, setLoading] = useState(false);
+  const [tokens, setTokens] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [wsStatus, setWsStatus] = useState('');
+  const [initialize, setInitialize] = useState(true);
+
+  useKeepAwake();
 
   // Audio Preload
   useEffect(() => {
@@ -49,151 +58,216 @@ export default function Welcome() {
     return () => { if (tokenSound.current) tokenSound.current.unloadAsync(); };
   }, []);
 
-  const reconnectTimeoutRef = useRef("");
-  useKeepAwake();
-  const ws = useRef("");
-  const [ip, setIp] = useState("192.168.2.88");
-  const [port, setPort] = useState("8000");
-  const [loading, setLoading] = useState(false);
-  // Initialize with dummy data to visualize the design
-  const [tokens, setTokens] = useState([]);
-  const [showModal, setShowModal] = useState(false);
-  const [wsStatus, setWsStatus] = useState('');
-  const [currenToken, setCurrenToken] = useState('');
-
-
-  // Back Handler
+  // --- 3. LIFECYCLE: Orientation ---
   useEffect(() => {
-    const backPressCountRef = { count: 0 };
-    let timeoutId = null;
-    const handleBackPress = () => {
-      backPressCountRef.count += 1;
-      if (timeoutId) clearTimeout(timeoutId);
-      if (backPressCountRef.count >= 3) {
-        setShowModal(true);
-        backPressCountRef.count = 0;
-        return true;
-      }
-      timeoutId = setTimeout(() => { backPressCountRef.count = 0; }, 2000);
-      return true;
-    };
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
-    return () => backHandler.remove();
+    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
   }, []);
 
-  // IP/Port Logic
-  const loadIpPort = async () => {
-    const sIp = await AsyncStorage.getItem('ip');
-    const sPort = await AsyncStorage.getItem('port');
-    if (sIp) setIp(sIp);
-    if (sPort) setPort(sPort);
-    if (!sIp) setShowModal(true);
-    else getSocketConnection({ ip: sIp, port: sPort });
+  // --- 4. LIFECYCLE: AppState (Reconnect on Foreground) ---
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') {
+        console.log('📱 App is active, checking WS...');
+        if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
+          safeReconnect(ip);
+        }
+      }
+    });
+    return () => subscription.remove();
+  }, [ip]);
+
+  // --- 5. LIFECYCLE: Initial Load ---
+  useEffect(() => {
+    loadIp();
+    return () => {
+      if (ws.current) ws.current.close();
+      cleanupTimers();
+    };
+  }, []);
+
+  // --- 6. LOGIC: Hidden Menu ---
+  useMultiBackPress({
+    pressCount: 3,
+    timeout: 2000,
+    onReached: () => setShowModal(true),
+  });
+
+  const cleanupTimers = () => {
+    if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
+    if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+    if (wsStatusTimeoutRef.current) clearTimeout(wsStatusTimeoutRef.current);
   };
 
-  const saveIpPort = async () => {
-    if (!ip || !port) return;
+  // --- 7. LOGIC: Storage & IP ---
+  const loadIp = async () => {
+    const sIp = await AsyncStorage.getItem('ip');
+    if (sIp) {
+      setIp(sIp);
+      getSocketConnection(sIp);
+      fetchServingItems(sIp);
+    } else {
+      setShowModal(true); // Force user to enter IP if none exists
+    }
+  };
+
+  const saveIp = async () => {
+    if (!ip) return;
     setLoading(true);
     try {
       await AsyncStorage.setItem('ip', ip);
-      await AsyncStorage.setItem('port', port);
       setShowModal(false);
       shouldAnnounceOnConnectRef.current = true;
-      getSocketConnection({ ip, port });
-    } catch (e) { console.error(e); } finally { setLoading(false); }
+      getSocketConnection(ip);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const announceTheToken = (token, counter, language = "en") => {
-    if (!token) return;
-    const messages = {
-      ar: `الرقم ${token}، يرجى التوجه إلى ${counter}.`,
-      en: `Token ${token}, please proceed to the ${counter}.`,
-    };
-    const message = messages[language] || messages["en"];
-    const speak = () => Speech.speak(message, { language: language === 'ar' ? 'ar' : 'en-US' });
-
-    if (tokenSound.current) {
-      tokenSound.current.replayAsync();
-      setTimeout(() => speak(), 1000);
-    } else { speak(); }
-  };
-
-  const safeReconnect = ({ ip, port }) => {
+  // --- 8. LOGIC: WebSocket ---
+  const safeReconnect = (targetIp) => {
     if (reconnectTimeoutRef.current) return;
+
+    console.log("🔄 Scheduling reconnect...");
     reconnectTimeoutRef.current = setTimeout(() => {
       setWsStatus('🔄 Reconnecting...');
-      getSocketConnection({ ip, port });
+      getSocketConnection(targetIp);
       reconnectTimeoutRef.current = null;
     }, 5000);
   };
 
-  const getSocketConnection = ({ ip, port }) => {
-    if (ws.current) ws.current.close();
-    ws.current = new WebSocket(`ws://${ip}:7777?clientId=tv_display`);
+
+  const getSocketConnection = (targetIp) => {
+    // 1. Clean up existing socket
+    if (ws.current) {
+      // ✅ FLAG THIS AS INTENTIONAL
+      isIntentionalClose.current = true;
+      ws.current.close();
+      ws.current = null;
+    }
+
+    cleanupTimers();
+
+    const url = `ws://${targetIp}:7777?clientId=tv_display`;
+    console.log(`🔌 Connecting to: ${url}`);
+
+    ws.current = new WebSocket(url);
 
     ws.current.onopen = () => {
-      setWsStatus('Connected');
+      console.log('✅ Connected to WS server');
+      setWsStatus('Connected to WS server');
+
+      // Reset the flag once connected
+      isIntentionalClose.current = false;
+
       if (shouldAnnounceOnConnectRef.current) {
-        Speech.speak("Connected", { language: 'en-US' });
         shouldAnnounceOnConnectRef.current = false;
       }
-      setTimeout(() => setWsStatus(''), 2000);
+
+      wsStatusTimeoutRef.current = setTimeout(() => {
+        setWsStatus('');
+      }, 2000);
+
+      pingIntervalRef.current = setInterval(() => {
+        if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+          ws.current.send(JSON.stringify({ type: 'ping' }));
+        }
+      }, 30000);
     };
 
     ws.current.onmessage = (event) => {
+      // ... your existing message logic ...
       try {
         const parsed = JSON.parse(event.data);
         const { event: eventType, data: tokenData } = parsed;
 
-        if (eventType === 'token-serving' && tokenData) {
-
-          setCurrenToken(parsed.data)
-
-          setTokens(prev => {
-            const clean = prev.filter(t => t.token !== tokenData.token);
-            return [tokenData, ...clean].slice(0, 10); // Keep last 10
+        if (tokenData?.token && eventType === 'token-serving') {
+          setTokens(prevTokens => {
+            const isDuplicate = prevTokens.some(item => item.token === tokenData.token);
+            if (isDuplicate) return prevTokens;
+            return [tokenData, ...prevTokens];
           });
-          announceTheToken(tokenData.token, tokenData.counter, tokenData.language);
+
+
+          const playBeep = async () => {
+            if (audioReady && soundRef.current) {
+              await soundRef.current.replayAsync();
+
+              setTimeout(() => {
+                announceTheToken(tokenData.token, tokenData.counter, tokenData.language);
+              }, 1000);
+            }
+          };
+
+          playBeep();
+
+
+        } else if (tokenData?.token && eventType === 'token-serving-end') {
+          setTokens(prevTokens => prevTokens.filter(item => item.token !== tokenData.token));
         }
-      } catch (e) { console.log(e); }
+      } catch (e) { console.error(e); }
     };
 
-    ws.current.onerror = () => safeReconnect({ ip, port });
-    ws.current.onclose = () => safeReconnect({ ip, port });
+    ws.current.onerror = (e) => {
+      console.log("❌ WS Error");
+      // Only reconnect if it wasn't us closing it
+      if (!isIntentionalClose.current) {
+        safeReconnect(targetIp);
+      }
+    };
+
+    ws.current.onclose = () => {
+      // ✅ CHECK THE FLAG
+      if (isIntentionalClose.current) {
+        console.log("🔒 WS Closed intentionally (switching or restarting)");
+        isIntentionalClose.current = false; // Reset for next time
+        return; // STOP HERE, DO NOT RECONNECT
+      }
+
+      console.log("🔒 WS Closed unexpectedly");
+      safeReconnect(targetIp);
+    };
   };
 
-  useEffect(() => {
-    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
-    loadIpPort();
-    return () => { if (ws.current) ws.current.close(); }
-  }, []);
+  const fetchServingItems = async (ip, port = 8000) => {
+    try {
+      const res = await fetch(`http://${ip}:${port}/api/serving_list`);
+      const json = await res.json();
+      setTokens(json);
+    } catch (e) {
+      // console.error('Error saving IP and port', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- 9. RENDER ---
+  if (initialize) return <InitialLoader onFinish={() => setInitialize(false)} />;
 
   return (
     <View style={styles.mainContainer}>
       <StatusBar hidden />
 
-      {/* 2. HEADER */}
+      {/* HEADER */}
       <View style={{ zIndex: 10 }}>
         <Header />
       </View>
 
-      {/* 3. MAIN CONTENT GRID */}
+      {/* MAIN CONTENT GRID */}
       <View style={styles.gridContainer}>
-
-        {/* === LEFT COLUMN (8/12) === */}
+        {/* LEFT COLUMN (8/12) */}
         <View style={styles.leftColumn}>
-          <LiveToken currentToken={tokens[0]} nextToken={tokens[1]}></LiveToken>
+          <LiveToken currentToken={tokens[0]} nextToken={tokens[1]} />
         </View>
 
-        {/* === RIGHT COLUMN (4/12) - SERVING LIST === */}
+        {/* RIGHT COLUMN (4/12) - SERVING LIST */}
         <View style={styles.rightColumn}>
           <ServingList tokens={tokens} />
         </View>
-
       </View>
 
-
-      {/* 4. SETTINGS MODAL */}
+      {/* CONFIGURATION MODAL */}
       <Modal
         animationType="fade"
         transparent={true}
@@ -203,11 +277,28 @@ export default function Welcome() {
         <BlurView intensity={90} tint="dark" style={styles.modalOverlay}>
           <View style={styles.modalBox}>
             <Text style={styles.modalTitle}>Configuration</Text>
-            <TextInput value={ip} onChangeText={setIp} style={styles.modalInput} placeholder="IP Address" placeholderTextColor="#666" />
-            <TextInput value={port} onChangeText={setPort} style={styles.modalInput} placeholder="Port" placeholderTextColor="#666" />
+
+            <Text style={{ color: '#ccc', marginBottom: 5 }}>Server IP Address</Text>
+            <TextInput
+              value={ip}
+              onChangeText={setIp}
+              style={styles.modalInput}
+              placeholder="192.168.X.X"
+              placeholderTextColor="#666"
+              keyboardType="numeric"
+            />
+
+            <Text style={{ color: '#666', fontSize: 12, marginTop: 5 }}>
+              Port is set to static: 7777
+            </Text>
+
             <View style={styles.modalButtons}>
-              <Pressable style={styles.btnCancel} onPress={() => setShowModal(false)}><Text style={styles.btnText}>Cancel</Text></Pressable>
-              <Pressable style={styles.btnSave} onPress={saveIpPort}><Text style={styles.btnTextBold}>Save</Text></Pressable>
+              <Pressable style={styles.btnCancel} onPress={() => setShowModal(false)}>
+                <Text style={styles.btnText}>Cancel</Text>
+              </Pressable>
+              <Pressable style={styles.btnSave} onPress={saveIp}>
+                <Text style={styles.btnTextBold}>Save & Connect</Text>
+              </Pressable>
             </View>
           </View>
         </BlurView>
