@@ -155,6 +155,6 @@ class CreateTokenJob implements ShouldQueue
 
         info($status);
 
-        return 0;
+        return;
     }
 }
