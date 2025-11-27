@@ -17,7 +17,7 @@ function randomToken() {
 
 // Helper to generate random counter 1-20
 function randomCounter() {
-  return Math.floor(1 + Math.random() * 20);
+  return "Counter " + Math.floor(1 + Math.random() * 20);
 }
 
 ws.on("open", () => {

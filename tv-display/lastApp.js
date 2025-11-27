@@ -4,9 +4,6 @@ import { useKeepAwake } from 'expo-keep-awake';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BlurView } from 'expo-blur';
 import * as ScreenOrientation from 'expo-screen-orientation';
-import { WebView } from 'react-native-webview';
-import * as Speech from 'expo-speech';
-
 
 // HOOKS
 import { announceTheToken } from './hooks/tts';
@@ -17,13 +14,14 @@ import useSound from "./hooks/useSound";
 import styles from './styles';
 
 // COMPONENTS
+import Header from './components/Header';
+import LiveToken from './components/LiveToken';
+import ServingList from './components/ServingList';
 import InitialLoader from './components/InitialLoader';
 import { Audio } from 'expo-av';
 
 
 export default function Welcome() {
-
-  const webviewRef = useRef(null);
 
   // --- 1. REFS ---
   const ws = useRef(null);
@@ -39,6 +37,7 @@ export default function Welcome() {
   const [ip, setIp] = useState("192.168.2.88");
   // const [port, setPort] = useState("7777"); // REMOVED: Port is now static 7777
   const [loading, setLoading] = useState(false);
+  const [tokens, setTokens] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [wsStatus, setWsStatus] = useState('');
   const [initialize, setInitialize] = useState(true);
@@ -52,6 +51,7 @@ export default function Welcome() {
         const { sound } = await Audio.Sound.createAsync(require('./assets/1.wav'));
         tokenSound.current = sound;
         Speech.speak(" ", { language: "en-US", rate: 1.0 });
+        setAudioReady(true);
       } catch (err) { console.log(err); }
     };
     preloadAudioAndTTS();
@@ -78,6 +78,7 @@ export default function Welcome() {
 
   // --- 5. LIFECYCLE: Initial Load ---
   useEffect(() => {
+    loadIp();
     return () => {
       if (ws.current) ws.current.close();
       cleanupTimers();
@@ -88,9 +89,7 @@ export default function Welcome() {
   useMultiBackPress({
     pressCount: 3,
     timeout: 2000,
-    onReached: () => {
-      loadIp();
-    },
+    onReached: () => setShowModal(true),
   });
 
   const cleanupTimers = () => {
@@ -99,15 +98,19 @@ export default function Welcome() {
     if (wsStatusTimeoutRef.current) clearTimeout(wsStatusTimeoutRef.current);
   };
 
+  // --- 7. LOGIC: Storage & IP ---
   const loadIp = async () => {
     const sIp = await AsyncStorage.getItem('ip');
     if (sIp) {
       setIp(sIp);
+      getSocketConnection(sIp);
+      fetchServingItems(sIp);
+    } else {
+      setShowModal(true); // Force user to enter IP if none exists
     }
-    setShowModal(true);
   };
 
-  const submit = async () => {
+  const saveIp = async () => {
     if (!ip) return;
     setLoading(true);
     try {
@@ -115,7 +118,6 @@ export default function Welcome() {
       setShowModal(false);
       shouldAnnounceOnConnectRef.current = true;
       getSocketConnection(ip);
-      sendIpToChild(ip);
     } catch (e) {
       console.error(e);
     } finally {
@@ -166,10 +168,14 @@ export default function Welcome() {
           catch (error) {
             console.log('Error loading or playing sound:', error);
           }
+          
+          setTokens(prevTokens => {
+            const isDuplicate = prevTokens.some(item => item.token === tokenData.token);
+            if (isDuplicate) return prevTokens;
+            return [tokenData, ...prevTokens];
+          });
 
           announceTheToken(tokenData.token, tokenData.counter, tokenData.language);
-
-          sendTokenInfoToChild(tokenData);
         }
       } catch (e) { console.log(e); }
     };
@@ -178,26 +184,16 @@ export default function Welcome() {
     ws.current.onclose = () => safeReconnect(ip);
   };
 
-  const sendIpToChild = (ipUrl) => {
 
-    if (webviewRef.current) {
-      let payload = { ipUrl: ipUrl }
-      console.log(payload);
-      webviewRef.current.injectJavaScript(`
-  window.dispatchEvent(new MessageEvent("message", { data: '${JSON.stringify(payload)}' }));
-`);
-    }
-  };
-
-
-  const sendTokenInfoToChild = (tokenData) => {
-
-    if (webviewRef.current) {
-      let payload = { tokenInfo: tokenData }
-      console.log(payload);
-      webviewRef.current.injectJavaScript(`
-  window.dispatchEvent(new MessageEvent("message", { data: '${JSON.stringify(payload)}' }));
-`);
+  const fetchServingItems = async (ip, port = 8000) => {
+    try {
+      const res = await fetch(`http://${ip}:${port}/api/serving_list`);
+      const json = await res.json();
+      setTokens(json);
+    } catch (e) {
+      // console.error('Error saving IP and port', e);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -207,6 +203,24 @@ export default function Welcome() {
   return (
     <View style={styles.mainContainer}>
       <StatusBar hidden />
+
+      {/* HEADER */}
+      <View style={{ zIndex: 10 }}>
+        <Header />
+      </View>
+
+      {/* MAIN CONTENT GRID */}
+      <View style={styles.gridContainer}>
+        {/* LEFT COLUMN (8/12) */}
+        <View style={styles.leftColumn}>
+          <LiveToken currentToken={tokens[0]} nextToken={tokens[1]} />
+        </View>
+
+        {/* RIGHT COLUMN (4/12) - SERVING LIST */}
+        <View style={styles.rightColumn}>
+          <ServingList tokens={tokens} />
+        </View>
+      </View>
 
       {/* CONFIGURATION MODAL */}
       <Modal
@@ -219,6 +233,7 @@ export default function Welcome() {
           <View style={styles.modalBox}>
             <Text style={styles.modalTitle}>Configuration</Text>
 
+            <Text style={{ color: '#ccc', marginBottom: 5 }}>Server IP Address</Text>
             <TextInput
               value={ip}
               onChangeText={setIp}
@@ -228,11 +243,15 @@ export default function Welcome() {
               keyboardType="numeric"
             />
 
+            <Text style={{ color: '#666', fontSize: 12, marginTop: 5 }}>
+              Port is set to static: 7777
+            </Text>
+
             <View style={styles.modalButtons}>
               <Pressable style={styles.btnCancel} onPress={() => setShowModal(false)}>
                 <Text style={styles.btnText}>Cancel</Text>
               </Pressable>
-              <Pressable style={styles.btnSave} onPress={submit}>
+              <Pressable style={styles.btnSave} onPress={saveIp}>
                 <Text style={styles.btnTextBold}>Save & Connect</Text>
               </Pressable>
             </View>
@@ -240,13 +259,13 @@ export default function Welcome() {
         </BlurView>
       </Modal>
 
-      <WebView
-        ref={webviewRef}
-        source={{ uri: `http://${ip}:5173` }} // replace with your local IP
-        style={{ flex: 1 }}
-        originWhitelist={['*']}
-        javaScriptEnabled={true}
-      />
+      {/* Status Toast */}
+      {wsStatus ? (
+        <View style={styles.toast}>
+          <Text style={styles.toastText}>{wsStatus}</Text>
+        </View>
+      ) : null}
+
     </View>
   );
 }
