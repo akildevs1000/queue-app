@@ -63,16 +63,29 @@ export default function Welcome() {
     ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
   }, []);
 
+  const lastReconnect = useRef(0);
+
+  const tryReconnect = (ip) => {
+    const now = Date.now();
+    if (now - lastReconnect.current > 5000) {
+      lastReconnect.current = now;
+      safeReconnect(ip);
+    }
+  };
+
   // --- 4. LIFECYCLE: AppState (Reconnect on Foreground) ---
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextAppState) => {
       if (nextAppState === 'active') {
         console.log('📱 App is active, checking WS...');
-        if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
-          safeReconnect(ip);
+
+        // Only reconnect if there's no WS or it's closed
+        if (!ws.current || ws.current.readyState === WebSocket.CLOSED) {
+          tryReconnect(ip);
         }
       }
     });
+
     return () => subscription.remove();
   }, [ip]);
 
@@ -167,9 +180,12 @@ export default function Welcome() {
             console.log('Error loading or playing sound:', error);
           }
 
-          announceTheToken(tokenData.token, tokenData.counter, tokenData.language);
+          // delay 1 second (1000ms) before announcing and sending
+          setTimeout(() => {
+            announceTheToken(tokenData.token, tokenData.counter, tokenData.language);
+            sendTokenInfoToChild(tokenData);
+          }, 1000);
 
-          sendTokenInfoToChild(tokenData);
         }
       } catch (e) { console.log(e); }
     };
