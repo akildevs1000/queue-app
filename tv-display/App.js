@@ -4,6 +4,8 @@ import { useKeepAwake } from 'expo-keep-awake';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BlurView } from 'expo-blur';
 import * as ScreenOrientation from 'expo-screen-orientation';
+import { WebView } from 'react-native-webview';
+
 
 // HOOKS
 import { announceTheToken } from './hooks/tts';
@@ -14,14 +16,13 @@ import useSound from "./hooks/useSound";
 import styles from './styles';
 
 // COMPONENTS
-import Header from './components/Header';
-import LiveToken from './components/LiveToken';
-import ServingList from './components/ServingList';
 import InitialLoader from './components/InitialLoader';
 import { Audio } from 'expo-av';
 
 
 export default function Welcome() {
+
+  const webviewRef = useRef(null);
 
   // --- 1. REFS ---
   const ws = useRef(null);
@@ -125,114 +126,71 @@ export default function Welcome() {
     }
   };
 
-  // --- 8. LOGIC: WebSocket ---
-  const safeReconnect = (targetIp) => {
+  const safeReconnect = (ip) => {
     if (reconnectTimeoutRef.current) return;
-
-    console.log("🔄 Scheduling reconnect...");
     reconnectTimeoutRef.current = setTimeout(() => {
       setWsStatus('🔄 Reconnecting...');
-      getSocketConnection(targetIp);
+      getSocketConnection(ip);
       reconnectTimeoutRef.current = null;
     }, 5000);
   };
 
-
-  const getSocketConnection = (targetIp) => {
-    // 1. Clean up existing socket
-    if (ws.current) {
-      // ✅ FLAG THIS AS INTENTIONAL
-      isIntentionalClose.current = true;
-      ws.current.close();
-      ws.current = null;
-    }
-
-    cleanupTimers();
-
-    const url = `ws://${targetIp}:7777?clientId=tv_display`;
-    console.log(`🔌 Connecting to: ${url}`);
-
-    ws.current = new WebSocket(url);
+  const getSocketConnection = (ip) => {
+    if (ws.current) ws.current.close();
+    ws.current = new WebSocket(`ws://${ip}:7777?clientId=tv_display`);
 
     ws.current.onopen = () => {
-      console.log('✅ Connected to WS server');
-      setWsStatus('Connected to WS server');
-
-      // Reset the flag once connected
-      isIntentionalClose.current = false;
-
+      setWsStatus('Connected');
       if (shouldAnnounceOnConnectRef.current) {
+        announceTheToken("", "", "en");
         shouldAnnounceOnConnectRef.current = false;
       }
-
-      wsStatusTimeoutRef.current = setTimeout(() => {
-        setWsStatus('');
-      }, 2000);
-
-      pingIntervalRef.current = setInterval(() => {
-        if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-          ws.current.send(JSON.stringify({ type: 'ping' }));
-        }
-      }, 30000);
+      setTimeout(() => setWsStatus(''), 2000);
     };
 
     ws.current.onmessage = (event) => {
-      // ... your existing message logic ...
       try {
         const parsed = JSON.parse(event.data);
         const { event: eventType, data: tokenData } = parsed;
 
-        if (tokenData?.token && eventType === 'token-serving') {
+        if (eventType === 'token-serving' && tokenData) {
+          try {
+            const makeBeepSound = async () => {
+              const { sound } = await Audio.Sound.createAsync(
+                require("./assets/1.wav")
+              );
+
+              await sound.playAsync();
+            }
+
+            makeBeepSound();
+
+          }
+          catch (error) {
+            console.log('Error loading or playing sound:', error);
+          }
+
           setTokens(prevTokens => {
             const isDuplicate = prevTokens.some(item => item.token === tokenData.token);
             if (isDuplicate) return prevTokens;
             return [tokenData, ...prevTokens];
           });
 
+          announceTheToken(tokenData.token, tokenData.counter, tokenData.language);
 
-          const playBeep = async () => {
-            if (audioReady && soundRef.current) {
-              await soundRef.current.replayAsync();
-
-              setTimeout(() => {
-                announceTheToken(tokenData.token, tokenData.counter, tokenData.language);
-              }, 1000);
-            }
-          };
-
-          playBeep();
-
-
-        } else if (tokenData?.token && eventType === 'token-serving-end') {
-          setTokens(prevTokens => prevTokens.filter(item => item.token !== tokenData.token));
+          sendTokenInfoToChild(tokenData);
         }
-      } catch (e) { console.error(e); }
+      } catch (e) { console.log(e); }
     };
 
-    ws.current.onerror = (e) => {
-      console.log("❌ WS Error");
-      // Only reconnect if it wasn't us closing it
-      if (!isIntentionalClose.current) {
-        safeReconnect(targetIp);
-      }
-    };
-
-    ws.current.onclose = () => {
-      // ✅ CHECK THE FLAG
-      if (isIntentionalClose.current) {
-        console.log("🔒 WS Closed intentionally (switching or restarting)");
-        isIntentionalClose.current = false; // Reset for next time
-        return; // STOP HERE, DO NOT RECONNECT
-      }
-
-      console.log("🔒 WS Closed unexpectedly");
-      safeReconnect(targetIp);
-    };
+    ws.current.onerror = () => safeReconnect(ip);
+    ws.current.onclose = () => safeReconnect(ip);
   };
 
-  const fetchServingItems = async (ip, port = 8000) => {
+
+  const fetchServingItems = async (ip) => {
     try {
-      const res = await fetch(`http://${ip}:${port}/api/serving_list`);
+      const res = await fetch(`http://${ip}:8000/api/serving_list`);
       const json = await res.json();
       setTokens(json);
     } catch (e) {
@@ -242,30 +200,18 @@ export default function Welcome() {
     }
   };
 
+  const sendTokenInfoToChild = (tokenInfo) => {
+    if (webviewRef.current) {
+      webviewRef.current.postMessage(JSON.stringify({ tokenInfo }));
+    }
+  };
+
   // --- 9. RENDER ---
   if (initialize) return <InitialLoader onFinish={() => setInitialize(false)} />;
 
   return (
     <View style={styles.mainContainer}>
       <StatusBar hidden />
-
-      {/* HEADER */}
-      <View style={{ zIndex: 10 }}>
-        <Header />
-      </View>
-
-      {/* MAIN CONTENT GRID */}
-      <View style={styles.gridContainer}>
-        {/* LEFT COLUMN (8/12) */}
-        <View style={styles.leftColumn}>
-          <LiveToken currentToken={tokens[0]} nextToken={tokens[1]} />
-        </View>
-
-        {/* RIGHT COLUMN (4/12) - SERVING LIST */}
-        <View style={styles.rightColumn}>
-          <ServingList tokens={tokens} />
-        </View>
-      </View>
 
       {/* CONFIGURATION MODAL */}
       <Modal
@@ -278,7 +224,6 @@ export default function Welcome() {
           <View style={styles.modalBox}>
             <Text style={styles.modalTitle}>Configuration</Text>
 
-            <Text style={{ color: '#ccc', marginBottom: 5 }}>Server IP Address</Text>
             <TextInput
               value={ip}
               onChangeText={setIp}
@@ -287,10 +232,6 @@ export default function Welcome() {
               placeholderTextColor="#666"
               keyboardType="numeric"
             />
-
-            <Text style={{ color: '#666', fontSize: 12, marginTop: 5 }}>
-              Port is set to static: 7777
-            </Text>
 
             <View style={styles.modalButtons}>
               <Pressable style={styles.btnCancel} onPress={() => setShowModal(false)}>
@@ -304,13 +245,12 @@ export default function Welcome() {
         </BlurView>
       </Modal>
 
-      {/* Status Toast */}
-      {wsStatus ? (
-        <View style={styles.toast}>
-          <Text style={styles.toastText}>{wsStatus}</Text>
-        </View>
-      ) : null}
-
+      <WebView
+        key={`${ip}`}
+        ref={webviewRef}
+        originWhitelist={['*']}
+        source={{ uri: `http://192.168.2.88:5500` }}
+      />
     </View>
   );
 }
