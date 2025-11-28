@@ -19,10 +19,10 @@ const ServingList = ({tokens = []}) => {
                             {
                                 tokens.map((item) => (
                                     <li
-                                        className="grid grid-cols-2 items-center justify-between p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-all duration-300 transform hover:scale-105 border border-transparent hover:border-brand-cyan/20"
+                                        className="grid grid-cols-2 items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-all duration-300 transform hover:scale-105 border border-transparent hover:border-brand-cyan/20"
                                     >
-                                        <span className="font-semibold text-4xl">{item.token}</span>
-                                        <span className="text-right text-gray-400">{item.counter}</span>
+                                        <span className="text-3xl">{item.token}</span>
+                                        <span className="text-right text-[20px] text-gray-400">{item.counter}</span>
                                     </li>
                                 ))
                             }
