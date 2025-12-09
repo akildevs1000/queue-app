@@ -101,7 +101,7 @@ function startServices(mainWindow) {
       }
     });
 
-    nginxWindow.loadURL(`http://${ipv4Address}:8000/guest`);
+    nginxWindow.loadURL(`http://${ipv4Address}:8000`);
     nginxWindow.maximize();
 
     nginxWindow.on('closed', () => {

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\TokenController;
+use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -8,6 +9,14 @@ use Illuminate\Support\Facades\Route;
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
+
+Route::get('/app-details', function (Request $request) {
+    $found = User::where("type", "master")->first();
+    return response()->json($found);
+});
+
+
+
 
 Route::get('/serving_list', [TokenController::class, "servingList"]);
 Route::get('/send-token', [TokenController::class, 'sendToken']);
@@ -61,8 +70,6 @@ Route::get('/ticket/view', function () {
 
     return $pdf->stream('ticket.pdf');
 });
-
-
 
 Route::get('/ticket/print', function () {
     // Static data for testing

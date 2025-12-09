@@ -114,7 +114,7 @@
 }
 
 .dark {
-    --background: rgb(5 10 20/var(--tw-bg-opacity,1));
+    --background: rgb(5 10 20 / var(--tw-bg-opacity, 1));
     --foreground: oklch(0.985 0 0);
     --card: oklch(0.145 0 0);
     --card-foreground: oklch(0.985 0 0);
@@ -138,7 +138,7 @@
     --chart-3: oklch(0.769 0.188 70.08);
     --chart-4: oklch(0.627 0.265 303.9);
     --chart-5: oklch(0.645 0.246 16.439);
-    --sidebar: rgb(5 10 20/var(--tw-bg-opacity,1));
+    --sidebar: rgb(5 10 20 / var(--tw-bg-opacity, 1));
     --sidebar-foreground: oklch(0.985 0 0);
     --sidebar-primary: oklch(0.985 0 0);
     --sidebar-primary-foreground: oklch(0.985 0 0);
@@ -172,4 +172,16 @@
             transform: scale(1);
         }
     }
+}
+
+/* 1. For Chrome, Safari, Edge, and Opera (WebKit browsers) */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none; /* Hide the default WebKit spinner */
+    margin: 0; /* Remove extra margin/padding */
+}
+
+/* 2. For Firefox */
+input[type='number'] {
+    -moz-appearance: textfield; /* Remove the default Firefox spinner */
 }

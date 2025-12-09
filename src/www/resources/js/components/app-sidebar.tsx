@@ -1,7 +1,7 @@
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BadgeDollarSign, Gem, LayoutDashboard, Monitor, Users } from 'lucide-react';
+import { ChartArea, Gem, LayoutDashboard, Monitor } from 'lucide-react';
 import AppLogo from './app-logo';
 import LastLogin from './LoginLog/LastLogin';
 import { NavMain } from './nav-main';
@@ -18,24 +18,29 @@ const mainNavItems: NavItem[] = [
         icon: Gem,
     },
     {
-        title: 'Users',
-        href: '/users',
-        icon: Users,
-    },
-    {
-        title: 'Service',
-        href: '/services',
-        icon: BadgeDollarSign,
-    },
-    {
-        title: 'Counters',
-        href: '/counters',
+        title: 'Setup',
+        href: '/setup',
         icon: Monitor,
     },
+    // {
+    //     title: 'Users',
+    //     href: '/users',
+    //     icon: Users,
+    // },
+    // {
+    //     title: 'Service',
+    //     href: '/services',
+    //     icon: BadgeDollarSign,
+    // },
+    // {
+    //     title: 'Counters',
+    //     href: '/counters',
+    //     icon: Monitor,
+    // },
     {
         title: 'report',
         href: '/report',
-        icon: Monitor,
+        icon: ChartArea,
     },
 ];
 

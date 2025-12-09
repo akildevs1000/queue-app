@@ -42,7 +42,7 @@ class ServiceController extends Controller
 
         Service::create($data);
 
-        return redirect()->route("services.index");
+        return redirect()->route("setup");
     }
 
     /**
@@ -52,7 +52,7 @@ class ServiceController extends Controller
     {
         $Service->update($request->validated());
 
-        return redirect()->route("services.index");
+        return redirect()->route("setup");
     }
 
     /**
@@ -62,6 +62,6 @@ class ServiceController extends Controller
     {
         $Service->delete();
 
-        return redirect()->route("services.index");
+        return redirect()->route("setup");
     }
 }

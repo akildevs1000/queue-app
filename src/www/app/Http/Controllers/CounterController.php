@@ -46,7 +46,7 @@ class CounterController extends Controller
 
         Counter::create($data);
 
-        return redirect()->route("counters.index");
+        return redirect()->route("setup");
     }
 
     /**
@@ -56,7 +56,7 @@ class CounterController extends Controller
     {
         $Counter->update($request->validated());
 
-        return redirect()->route("counters.index");
+        return redirect()->route("setup");
     }
 
     /**
@@ -66,6 +66,6 @@ class CounterController extends Controller
     {
         $Counter->delete();
 
-        return redirect()->route("counters.index");
+        return redirect()->route("setup");
     }
 }

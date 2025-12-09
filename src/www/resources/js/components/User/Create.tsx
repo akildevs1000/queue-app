@@ -47,10 +47,8 @@ export default function Create({ title, endpoint }: { title: any; endpoint: any 
     };
 
     useEffect(() => {
-        if (open) {
-            fetchServices();
-        }
-    }, [open]);
+        fetchServices();
+    }, []);
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         console.log(data);
@@ -65,15 +63,14 @@ export default function Create({ title, endpoint }: { title: any; endpoint: any 
 
     const handleServiceChange = async (service_id: string) => {
         setData('service_id', parseInt(service_id));
-
-        try {
-            const res = await fetch(`/counter-list-by-service-id/${service_id}`);
-            const json = await res.json();
-            console.log('🚀 ~ handleServiceChange ~ json:', json);
-            setCounters(json);
-        } catch (err) {
-            console.error('Failed to fetch services', err);
-        }
+        // try {
+        //     const res = await fetch(`/counter-list-by-service-id/${service_id}`);
+        //     const json = await res.json();
+        //     console.log('🚀 ~ handleServiceChange ~ json:', json);
+        //     setCounters(json);
+        // } catch (err) {
+        //     console.error('Failed to fetch services', err);
+        // }
     };
 
     const handleCounterChange = async (service_id: string) => {
@@ -106,7 +103,7 @@ export default function Create({ title, endpoint }: { title: any; endpoint: any 
                         {errors.service_id && <p className="pt-1 pl-1 text-sm text-red-400">{errors.service_id}</p>}
                     </div>
 
-                    <div className="max-w-md">
+                    {/* <div className="max-w-md">
                         <Select onValueChange={handleCounterChange} value={data.counter_id ? String(data.counter_id) : ''}>
                             <SelectTrigger className="w-full">
                                 <SelectValue />
@@ -121,7 +118,7 @@ export default function Create({ title, endpoint }: { title: any; endpoint: any 
                         </Select>
 
                         {errors.counter_id && <p className="pt-1 pl-1 text-sm text-red-400">{errors.counter_id}</p>}
-                    </div>
+                    </div> */}
 
                     <div className="max-w-md">
                         <Label htmlFor="name">Name</Label>

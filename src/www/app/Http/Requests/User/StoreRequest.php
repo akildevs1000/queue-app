@@ -17,7 +17,7 @@ class StoreRequest extends FormRequest
     {
         return [
             'service_id' => 'required|min:1|numeric',
-            'counter_id' => 'required|min:1|numeric',
+            // 'counter_id' => 'nullable|min:1|numeric',
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:' . User::class,
             'number' => 'required|string|max:255|unique:' . User::class,

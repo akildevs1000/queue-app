@@ -16,7 +16,7 @@ export default function Welcome() {
 
     const [step, setStep] = useState<'language' | 'service' | 'thankyou'>('language');
     const [services, setServices] = useState<Service[]>([]);
-    const [appDetails, setAppDetails] = useState<any>({ name: 'Emirate Islamic Bank' });
+    const [appDetails, setAppDetails] = useState<any>({ name: null });
 
     const socketRef = useRef<WebSocket | null>(null);
     const [retrying, setRetrying] = useState(false);
@@ -42,7 +42,7 @@ export default function Welcome() {
 
     const fetchAppDetails = async () => {
         try {
-            const res = await fetch(`/app-details`);
+            const res = await fetch(`/api/app-details`);
             const json = await res.json();
             setAppDetails(json);
         } catch (err) {
@@ -186,7 +186,7 @@ export default function Welcome() {
             <Head title="Guest" />
 
             <header className="absolute top-0 left-0 w-full py-2 text-2xl text-gray-700 dark:bg-gray-800 dark:text-gray-200">
-                Welcome to <span className="text-purple-600">{appDetails?.name}</span>
+                <span className="text-purple-600">{appDetails?.name ? 'Welcome to ' + appDetails?.name : 'Loading...'}</span>
             </header>
 
             <div>

@@ -15,8 +15,8 @@ class ValidationRequest extends FormRequest
     {
         return [
             'service_id' => 'required|min:1|numeric',
-            'name' => 'required|string|min:5|max:255',
-            'description' => 'nullable|string|min:5|max:255',
+            'name' => 'required|string|min:3|max:255',
+            'description' => 'nullable|string|min:3|max:255',
         ];
     }
 }

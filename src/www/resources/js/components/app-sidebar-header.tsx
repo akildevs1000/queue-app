@@ -8,25 +8,25 @@ import ServiceByUser from './User/ServiceByUser';
 export function AppSidebarHeader() {
     const page = usePage();
 
-    const user = page.props.auth?.user;
+    // const user = page.props.auth?.user;
 
-    let isMaster = user.type == 'master';
+    // let isMaster = user.type == 'master';
 
     const [counter, setCounter] = useState(null);
 
-    useEffect(() => {
-        const getCounter = async () => {
-            try {
-                const res = await fetch(`/counter-by-user`);
-                const json = await res.json();
-                setCounter(json);
-            } catch (err) {
-                console.error('Failed to counter-by-user', err);
-            }
-        };
+    // useEffect(() => {
+    //     const getCounter = async () => {
+    //         try {
+    //             const res = await fetch(`/counter-by-user`);
+    //             const json = await res.json();
+    //             setCounter(json);
+    //         } catch (err) {
+    //             console.error('Failed to counter-by-user', err);
+    //         }
+    //     };
 
-        getCounter();
-    }, []);
+    //     getCounter();
+    // }, []);
     return (
         <header className=" dark:bg-gray-800 border-sidebar-border/50 flex h-16 shrink-0 items-center justify-between border-b px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-4">
             {/* Left side: Sidebar trigger + Breadcrumbs */}
@@ -34,7 +34,7 @@ export function AppSidebarHeader() {
                 <SidebarTrigger className="-ml-1" />
                 {/* <Breadcrumbs breadcrumbs={breadcrumbs} />  */}
 
-                {isMaster ? null : (
+                {/* {isMaster ? null : (
                     <>
                         {counter && (
                             <div className="flex items-center gap-1 text-gray-500">
@@ -48,7 +48,7 @@ export function AppSidebarHeader() {
                             </span>
                         </div>
                     </>
-                )}
+                )} */}
             </div>
 
             {/* Right side: UiMode toggle */}

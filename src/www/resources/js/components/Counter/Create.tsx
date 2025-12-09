@@ -38,10 +38,8 @@ export default function Item({ title, endpoint }: { title: any; endpoint: any })
     };
 
     useEffect(() => {
-        if (open) {
-            fetchServices();
-        }
-    }, [open]);
+        fetchServices();
+    }, []);
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();

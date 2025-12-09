@@ -25,7 +25,7 @@ class UserController extends Controller
     public function index()
     {
         return Inertia::render("User/Index", [
-            'items' => User::with("service", "counter")->latest()->where("type", "user")->paginate(request("per_page", 10)),
+            'items' => User::with("service")->latest()->where("type", "user")->paginate(request("per_page", 10)),
         ]);
     }
 
@@ -40,7 +40,7 @@ class UserController extends Controller
 
         User::create($data);
 
-        return redirect()->route("users.index");
+        return redirect()->route("setup");
     }
 
     /**
@@ -52,7 +52,7 @@ class UserController extends Controller
 
         $User->update($data);
 
-        return redirect()->route("users.index");
+        return redirect()->route("setup");
     }
 
     public function updatePassword(PasswordRequest $request, $id)
@@ -63,7 +63,7 @@ class UserController extends Controller
 
         User::whereId($id)->update($data);
 
-        return redirect()->route("users.index");
+        return redirect()->route("setup");
     }
 
     /**
@@ -73,7 +73,7 @@ class UserController extends Controller
     {
         $User->delete();
 
-        return redirect()->route("users.index");
+        return redirect()->route("setup");
     }
 
     public function serviceByUser()

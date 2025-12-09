@@ -9,12 +9,23 @@ use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\UserController;
+use App\Models\Counter;
+use App\Models\Service;
 use App\Models\Token;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
+Route::get('/setup', function () {
+    return Inertia::render('Setup/Index', [
+        'services'  =>  Service::latest()->paginate(request("per_page", 10)),
+        'counters'  =>  Counter::latest()->with('service')->paginate(request("per_page", 10)),
+        'users'     =>  User::with("service", "counter")->latest()->where("type", "user")->paginate(request("per_page", 10)),
+    ]);
+})->name('setup');
 
 Route::get('/guest', function () {
     return Inertia::render('guest', [

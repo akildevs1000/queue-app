@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Helpers\Translator;
+use App\Models\Service;
 use App\Models\Token;
 use App\Models\User;
 use Carbon\Carbon;
@@ -22,13 +23,26 @@ class CreateTokenJob implements ShouldQueue
         $this->data = $data;
     }
 
-    public function handle(): void
+    public function handle()
     {
         $validatedData = $this->data;
 
+        $service = Service::find($validatedData['service_id']);
+        
+        $startingNumber = $service ? (int) $service->starting_number : 0;
+
         // Generate token number
-        $lastTokenNumber       = Token::latest('token_number')->whereDate('created_at', Carbon::today())->value('token_number') ?? 0;
-        $predictedTokenNumber  = (int) $lastTokenNumber + 1;
+        $lastTokenNumber       = Token::latest('token_number')
+            ->whereDate('created_at', Carbon::today())
+            ->where('service_id', $validatedData['service_id'])
+            ->value('token_number') ?? 0;
+
+        if ($lastTokenNumber) {
+            $predictedTokenNumber = (int) $lastTokenNumber + 1;
+        } else {
+            $predictedTokenNumber = (int) $startingNumber + 1;
+        }
+
         $predictedTokenDisplay = $validatedData['code'] . str_pad($predictedTokenNumber, 4, '0', STR_PAD_LEFT);
 
         $tokenData = [
