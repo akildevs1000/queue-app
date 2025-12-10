@@ -320,42 +320,69 @@ class ReportController extends Controller
 
     public function peakDayReport()
     {
+        // return $this->testPeakDayDummy();
+
         $startDate = now()->subDays(6)->startOfDay(); // last 7 days including today
         $endDate   = now()->endOfDay();
 
         $service_id = request("service_id");
 
-        $services = Service::when($service_id, fn($q) => $q->where("id", $service_id))->pluck('name', 'id'); // id => name
+        $services = Service::when($service_id, fn($q) => $q->where("id", $service_id))
+            ->pluck('name', 'id'); // id => name
 
-        $tokens   = Token::whereBetween('created_at', [$startDate, $endDate])
+        $tokens = Token::whereBetween('created_at', [$startDate, $endDate])
             ->get(['created_at', 'service_id']);
 
         $dateRange = collect();
         for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
-            $dateRange->push($date->format('d-M-Y'));
+            $dateRange->push($date->copy()); // store Carbon instances
         }
 
         $result = [];
 
         // Step 1: Initialize each day with zero counts for all services
         foreach ($dateRange as $date) {
-            $row = ['date' => $date];
+            $dayLabel = $date->format('D'); // Mon, Tue, Wed...
+            $row = ['day' => $dayLabel];
             foreach ($services as $serviceName) {
-                $row[$serviceName] = rand(15, 100);
+                $row[$serviceName] = rand(15, 100); // default count
             }
-            $result[$date] = $row;
+            $result[$date->format('Y-m-d')] = $row; // use Y-m-d for easy increment
         }
 
         // Step 2: Populate actual token counts
         foreach ($tokens as $token) {
-            $date        = $token->created_at->copy()->timezone(config('app.timezone'))->format('Y-m-d');
+            $dateKey     = $token->created_at->copy()->timezone(config('app.timezone'))->format('Y-m-d');
             $serviceName = $services[$token->service_id] ?? null;
 
-            if ($serviceName && isset($result[$date])) {
-                $result[$date][$serviceName]++;
+            if ($serviceName && isset($result[$dateKey])) {
+                $result[$dateKey][$serviceName]++;
             }
         }
 
-        return array_values($result); // Reset keys to get clean array
+        return array_values($result); // Reset keys
+    }
+
+    public function testPeakDayDummy()
+    {
+        $services = [
+            1 => 'Service A',
+            2 => 'Service B',
+            3 => 'Service C',
+        ];
+
+        $days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+        $result = [];
+
+        foreach ($days as $day) {
+            $row = ['day' => $day];
+            foreach ($services as $serviceName) {
+                $row[$serviceName] = rand(10, 100); // random count
+            }
+            $result[] = $row;
+        }
+
+        return $result;
     }
 }
