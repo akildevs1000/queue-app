@@ -9,7 +9,6 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Mpdf\Mpdf;
 
 class CreateTokenJob implements ShouldQueue
@@ -28,7 +27,7 @@ class CreateTokenJob implements ShouldQueue
         $validatedData = $this->data;
 
         $service = Service::find($validatedData['service_id']);
-        
+
         $startingNumber = $service ? (int) $service->starting_number : 0;
 
         // Generate token number
@@ -153,21 +152,31 @@ class CreateTokenJob implements ShouldQueue
             ];
         }
 
-        $tempPdf = storage_path('app/temp_ticket.pdf'); // will be saved in storage/app/temp/ticket.pdf
+        $folder = now()->format('Y-m-d'); // e.g., 2025-12-10
+        $dirPath = storage_path("app/tickets/$folder");
+
+        // Ensure folder exists
+        if (!file_exists($dirPath)) {
+            mkdir($dirPath, 0777, true);
+        }
+
+        $fileName = $predictedTokenNumber . ".pdf"; // directly use token number
+        $tempPdf = $dirPath . DIRECTORY_SEPARATOR . $fileName;
 
         $mpdf->SetFont($font, '', 16);
         $mpdf->WriteHTML($html);
         $mpdf->Output($tempPdf);
 
-        $printExe = base_path('print.exe');
 
-        $command = "\"$printExe\" -print-to-default \"$tempPdf\"";
+        // $printExe = base_path('print.exe');
 
-        exec($command, $output, $status);
+        // $command = "\"$printExe\" -print-to-default \"$tempPdf\"";
 
-        $status === 0 ? "Ticket printed successfully" : "Failed to print ticket.";
+        // exec($command, $output, $status);
 
-        info($status);
+        // $status === 0 ? "Ticket printed successfully" : "Failed to print ticket.";
+
+        // info($status);
 
         return;
     }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\TicketController;
 use App\Http\Controllers\TokenController;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -120,6 +121,8 @@ Route::get('/ticket/print', function () {
 
     return $pdf->download('ticket.pdf');
 });
+
+Route::get('/electron/next-ticket', [TicketController::class, 'nextForElectron']);
 
 function generateTicketHtml($response)
 {
