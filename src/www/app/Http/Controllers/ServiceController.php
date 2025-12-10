@@ -20,7 +20,7 @@ class ServiceController extends Controller
             return Translator::translateModel($service, $language, ['name', 'code']);
         });
 
-        return response()->json($services);
+        return response()->json([["id" => null, "name" => "All Services"], ...$services]);
     }
 
     /**

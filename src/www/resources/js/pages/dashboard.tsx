@@ -7,8 +7,8 @@ import CallerScreen from '@/components/Dashboard/CallerScreen';
 
 import PeakDay from '@/components/Dashboard/PeakDay';
 import PeakHour from '@/components/Dashboard/PeakHour';
-import Tickets from '@/components/Dashboard/Tickets';
-
+import Report from '@/components/Reports/Index';
+import LoginLogs from '@/components/LoginLog/Index';
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Dashboard',
@@ -17,7 +17,6 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Dashboard({ items }: any) {
-   
     const { auth } = usePage<SharedData>().props;
 
     const stats = [
@@ -80,7 +79,7 @@ export default function Dashboard({ items }: any) {
                     </div>
 
                     {/* Tables Section */}
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    {/* <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <div
                             className="rounded-xl bg-[var(--background)] p-4 text-[var(--foreground)] shadow-md dark:border-gray-700 dark:bg-gray-800"
                             style={{ borderBottom: `2px solid #6366f1` }}
@@ -94,13 +93,17 @@ export default function Dashboard({ items }: any) {
                         >
                             <PeakHour />
                         </div>
-                    </div>
-                    <div className="rounded-xl bg-[var(--background)] p-4 text-[var(--foreground)] shadow-md dark:border-gray-700 dark:bg-gray-800">
-                        <Tickets />
-                    </div>
-                    {/* <div className="w-full rounded-lg border border-gray-100 bg-[var(--background)] p-4 p-6 text-[var(--foreground)] shadow dark:border-gray-700 dark:bg-gray-900">
-                        <LoginLogs />
                     </div> */}
+
+                    <div className="rounded-xl bg-[var(--background)] p-4 text-[var(--foreground)] shadow-md dark:border-gray-700 dark:bg-gray-800">
+                        <PeakHour />
+                    </div>
+                     <div className="rounded-xl bg-[var(--background)] p-4 text-[var(--foreground)] shadow-md dark:border-gray-700 dark:bg-gray-800">
+                        <Report />
+                    </div>
+                    <div className="w-full rounded-lg border border-gray-100 bg-[var(--background)] p-4 p-6 text-[var(--foreground)] shadow dark:border-gray-700 dark:bg-gray-900">
+                        <LoginLogs />
+                    </div>
                 </div>
             )}
 

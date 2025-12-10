@@ -14,10 +14,10 @@ class ValidationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name'          => 'required|string|min:3|max:255',
-            'code'          => 'required|string|min:1|max:255|unique:services,code,' . $this->service?->id,
-            'description'   => 'nullable|string|min:3|max:255',
-            'starting_number'   => 'nullable|integer|min:0',
+            'name'              => 'required|string|min:3|max:255',
+            'code'              => 'required|string|min:1|max:255|unique:services,code,' . $this->service?->id,
+            'description'       => 'nullable|string|min:3|max:255',
+            'starting_number'   => 'required|integer|unique:services,starting_number,' . $this->service?->id,
         ];
     }
 }

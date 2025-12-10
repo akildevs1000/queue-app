@@ -15,16 +15,17 @@ interface NavLinkProps {
     onClick: () => void;
 }
 
-const NavLink = ({ active, children, onClick }: NavLinkProps) => (
-    <button
-        onClick={onClick}
-        className={`w-full rounded-xl px-6 py-3 text-left text-sm font-semibold transition duration-200 ease-in-out ${
-            active ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-xl' : 'hover:bg-gray-700'
-        }`}
-    >
-        {children}
-    </button>
-);
+const NavLink = ({ active = false, onClick, children }: NavLinkProps) => {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            className={`flex w-full items-center rounded-xl px-4 py-2 text-left text-sm font-semibold transition duration-200 ease-in-out ${active ? 'bg-gray-100 dark:bg-gray-800' : ''} border-b border-gray-200 shadow-sm hover:bg-gray-200 focus:ring-2 focus:ring-white/30 focus:outline-none dark:border-gray-700 dark:shadow-sm dark:hover:bg-gray-700`}
+        >
+            {children}
+        </button>
+    );
+};
 
 export default function Setup({ counters, services, users }: any) {
     const [activeSection, setActiveSection] = useState<ActiveSection>('service');
@@ -45,20 +46,20 @@ export default function Setup({ counters, services, users }: any) {
     return (
         <AppLayout>
             <Head title="Setup" />
-            <div className="relative flex min-h-screen flex-col items-center p-4">
+            <div className="relative flex min-h-screen flex-col p-4">
+                <h2 className="mb-6 text-2xl font-bold">Initial Setup</h2>
                 <div className="w-full">
-                    <div className="flex min-h-[70vh] overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-800">
-                        <aside className="w-64 bg-gray-900 p-6 text-white">
-                            <h2 className="mb-6 text-2xl font-bold">Configuration</h2>
+                    <div className="flex min-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-800">
+                        <aside className="w-64 border-r p-6 dark:bg-gray-900 dark:text-white">
                             <nav className="space-y-3">
                                 <NavLink active={activeSection === 'service'} onClick={() => setActiveSection('service')}>
-                                    Service Management
+                                    Service
                                 </NavLink>
                                 <NavLink active={activeSection === 'counter'} onClick={() => setActiveSection('counter')}>
-                                    Counter Management
+                                    Counter
                                 </NavLink>
                                 <NavLink active={activeSection === 'user'} onClick={() => setActiveSection('user')}>
-                                    User Management
+                                    User
                                 </NavLink>
                             </nav>
                         </aside>

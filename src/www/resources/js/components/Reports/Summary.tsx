@@ -228,7 +228,7 @@ export default function App({ services }: { services: any }) {
         if (dateRange?.from) params.append('start_date', format(dateRange.from, 'yyyy-MM-dd'));
         if (dateRange?.to) params.append('end_date', format(dateRange.to, 'yyyy-MM-dd'));
 
-        const downloadUrl = `/report/download?${params.toString()}`;
+        const downloadUrl = `/summary/download?${params.toString()}`;
         window.open(downloadUrl, '_blank');
     };
 

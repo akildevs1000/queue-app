@@ -170,13 +170,13 @@ export default function ServiceTable({ items }: ServiceTableProps) {
                         placeholder="Filter names..."
                         value={(table.getColumn('name')?.getFilterValue() as string) ?? ''}
                         onChange={(event) => table.getColumn('name')?.setFilterValue(event.target.value)}
-                        className="mr-1 max-w-sm"
+                        className="mr-1 max-w-sm border border-white/20"
                     />
 
                     {/* Column Visibility Dropdown */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline">
+                            <Button className="ml-2 bg-gray-900 text-white hover:bg-gray-700">
                                 Columns <ChevronDown className="ml-2 h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>

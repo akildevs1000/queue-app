@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Token\StoreRequest;
@@ -48,7 +49,7 @@ class TokenController extends Controller
     {
         $counts = Token::select('status', DB::raw('count(*) as total'))
             ->where('service_id', Auth::user()->service_id)
-            ->where('counter_id', Auth::user()->counter_id)
+            ->where('counter_id', request("counter_id",0))
             ->whereDate('created_at', Carbon::today())
             ->groupBy('status')
             ->pluck('total', 'status');
@@ -102,7 +103,7 @@ class TokenController extends Controller
 
         $token->start_serving = now();
         $token->status        = Token::SERVING;
-        $token->counter_id    = Auth::user()->counter_id;
+        $token->counter_id    = request("counter_id", 0);
         $token->user_id       = Auth::user()->id;
         $token->save();
 
@@ -161,7 +162,7 @@ class TokenController extends Controller
         $token->pause_time_display         = $pauseTimeDisplay;
         $token->status                     = Token::SERVED;
         $token->vip_serving                = 0;
-        $token->counter_id                 = Auth::user()->counter_id;
+        $token->counter_id                 = request("counter_id",0);
         $token->save();
 
         return response()->json($token);
@@ -180,7 +181,7 @@ class TokenController extends Controller
             return response()->json(['error' => 'Start serving time not set'], 400);
         }
         $token->status     = Token::NOT_SHOW;
-        $token->counter_id = Auth::user()->counter_id;
+        $token->counter_id = request("counter_id",0);
         $token->save();
 
         return response()->json($token);

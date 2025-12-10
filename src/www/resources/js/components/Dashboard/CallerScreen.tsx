@@ -1,8 +1,9 @@
 import { SharedData, TokenCounts } from '@/types';
-import { router, usePage } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '../ui/button';
 
+import { MandatorySelectDialog } from '../MandatorySelectDialog';
 import { GradientButton } from '../ui/GradientButton';
 import ManualCall from './ManualCall';
 
@@ -39,53 +40,24 @@ const TokenDisplay = () => {
     const [displayTime, setDisplayTime] = useState<number>(0);
     const [announcerPayload, setAnnouncerPayload] = useState<AnnouncerPayload | null>(null);
     const socketRef = useRef<WebSocket | null>(null);
+    const [isDialogOpen, setIsDialogOpen] = useState(true);
+    const [finalCounterId, setFinalCounterId] = useState<string | null>(null);
+    const finalCounterIdRef = useRef<string | null>(null);
 
-    //Inactivity detection
-    // const INACTIVITY_LIMIT = 5256000 * 60 * 1000; // 1 year in ms
+    useEffect(() => {
+        finalCounterIdRef.current = finalCounterId;
+    }, [finalCounterId]);
 
-    // const lastActivityRef = useRef(Date.now());
+    // Function to handle the successful selection from the dialog
+    const handleCounterSelected = (counterId: string) => {
+        setFinalCounterId(counterId);
+        console.log(`Counter selected: ${counterId}. Proceeding with application logic.`);
+    };
 
-    // useEffect(() => {
-    //     const updateActivity = () => {
-    //         lastActivityRef.current = Date.now();
-    //     };
-    //     window.addEventListener('mousemove', updateActivity);
-    //     window.addEventListener('keydown', updateActivity);
-    //     window.addEventListener('mousedown', updateActivity);
-    //     window.addEventListener('touchstart', updateActivity);
-
-    //     const interval = setInterval(() => {
-    //         console.log('Checking inactivity...');
-    //         if (Date.now() - lastActivityRef.current > INACTIVITY_LIMIT) {
-    //             console.log('Logging out due to 10 seconds of inactivity');
-    //             handleTestLogout();
-    //         }
-    //     }, 10000); // check every 10 seconds for faster response
-
-    //     return () => {
-    //         window.removeEventListener('mousemove', updateActivity);
-    //         window.removeEventListener('keydown', updateActivity);
-    //         window.removeEventListener('mousedown', updateActivity);
-    //         window.removeEventListener('touchstart', updateActivity);
-    //         clearInterval(interval);
-    //     };
-    // }, []);
-
-    // Test logout function
-    // const handleTestLogout = () => {
-    //     console.log('Test logout function called');
-    //     router.post(route('logout'));
-    // };
-
-    // Assuming you have `auth.user` available like:
-    // const user = auth.user || {
-    //     name: 'John Doe',
-    //     email: 'john@example.com',
-    // };
-
-    const fetchTokenCounts = async () => {
+    const fetchTokenCounts = async (counterId?: string | null) => {
+        if (!counterId) return; // guard clause
         try {
-            const res = await fetch('/token-counts');
+            const res = await fetch(`/token-counts?counter_id=${counterId}`);
             const json = await res.json();
             setTokenCounts(json);
         } catch (err) {
@@ -95,7 +67,7 @@ const TokenDisplay = () => {
 
     const handleDataFromManualCall = async (token_number_display: string) => {
         try {
-            const nextToken = await fetch(`/manual-call/${token_number_display}`);
+            const nextToken = await fetch(`/manual-call/${token_number_display}?counter_id=${finalCounterId}`);
 
             let ticketInfo = await nextToken.json();
 
@@ -106,7 +78,7 @@ const TokenDisplay = () => {
             setStartTime(Date.now()); // timer doest not start sometime
             setIsServing(true);
 
-            const res = await fetch(`/start-serving/${ticketInfo.id}`);
+            const res = await fetch(`/start-serving/${ticketInfo.id}?counter_id=${finalCounterId}`);
             const json = await res.json();
             if (json && json.counter) {
                 const socket = socketRef.current;
@@ -121,7 +93,7 @@ const TokenDisplay = () => {
                     socket.send(
                         JSON.stringify({
                             event: 'feedback',
-                            data: { counter_id: counter?.id || 0, token_id: ticketInfo.id, ...json },
+                            data: { counter_id: finalCounterId || 0, token_id: ticketInfo.id, ...json },
                         }),
                     );
                 } else {
@@ -195,7 +167,7 @@ const TokenDisplay = () => {
         console.log('Total time served:', formatTime(finalElapsed));
 
         try {
-            await fetch(`/end-serving/${tokenInfo?.id}?total_serving_time_display=${formatTime(finalElapsed)}`);
+            await fetch(`/end-serving/${tokenInfo?.id}?total_serving_time_display=${formatTime(finalElapsed)}&counter_id=${finalCounterId}`);
 
             setTotalElapsed(0);
             setStartTime(null);
@@ -215,7 +187,7 @@ const TokenDisplay = () => {
 
                 console.log('🚀 Sending token-serving-end event:', endServingSocket);
                 socket.send(JSON.stringify(endServingSocket));
-                fetchTokenCounts();
+                fetchTokenCounts(finalCounterId);
             } else {
                 console.warn('⚠️ WebSocket is not open.');
             }
@@ -247,7 +219,7 @@ const TokenDisplay = () => {
         }
 
         try {
-            await fetch(`/no-show-serving/${tokenInfo?.id}`);
+            await fetch(`/no-show-serving/${tokenInfo?.id}?counter_id=${finalCounterId}`);
 
             setTotalElapsed(0);
             setStartTime(null);
@@ -277,7 +249,7 @@ const TokenDisplay = () => {
             setStartTime(Date.now()); // timer doest not start sometime
             setIsServing(true);
 
-            const res = await fetch(`/start-serving/${ticketInfo.id}`);
+            const res = await fetch(`/start-serving/${ticketInfo.id}?counter_id=${finalCounterId}`);
             const json = await res.json();
             if (json && json.counter) {
                 const socket = socketRef.current;
@@ -293,7 +265,7 @@ const TokenDisplay = () => {
                     socket.send(
                         JSON.stringify({
                             event: 'feedback',
-                            data: { counter_id: counter?.id || 0, token_id: ticketInfo.id, ...json },
+                            data: { counter_id: finalCounterId || 0, token_id: ticketInfo.id, ...json },
                         }),
                     );
                 } else {
@@ -350,7 +322,10 @@ const TokenDisplay = () => {
                     const data = JSON.parse(event.data);
                     if (data.event === 'new-ticket') {
                         console.log('Received new-ticket event:', data);
-                        fetchTokenCounts();
+                        console.log('Latest counter ID:', finalCounterIdRef.current);
+                        if (finalCounterIdRef.current) {
+                            fetchTokenCounts(finalCounterIdRef.current);
+                        }
                     } else {
                         // console.log('Received other event:', data);
                     }
@@ -373,14 +348,17 @@ const TokenDisplay = () => {
 
     useEffect(() => {
         handleSocketConnect();
-
-        fetchTokenCounts();
     }, []);
+
+    useEffect(() => {
+        if (!finalCounterId) return;
+        fetchTokenCounts(finalCounterId);
+    }, [finalCounterId]);
 
     useEffect(() => {
         // Function to run every 30 seconds
         const interval = setInterval(() => {
-            fetchTokenCounts();
+            fetchTokenCounts(finalCounterId);
         }, 30000); // 30000 ms = 30 seconds
 
         // Cleanup interval on component unmount
@@ -406,6 +384,13 @@ const TokenDisplay = () => {
 
     return (
         <div className="flex h-full w-full px-15 text-gray-800 dark:bg-gray-900 dark:text-gray-900">
+            <MandatorySelectDialog
+                // Initial state set by the parent component
+                initialOpen={isDialogOpen}
+                // Callback function when a valid selection is made
+                onCounterSelected={handleCounterSelected}
+            />
+
             {/* Left Section - Token Display */}
             <div className="mt-10 flex w-1/2 flex-col">
                 <div>
@@ -418,14 +403,6 @@ const TokenDisplay = () => {
                         <div className="mt-6 text-center">
                             <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">Serving Time</p>
                             <p className="text-3xl font-bold text-blue-900 dark:text-blue-300"> {formatTime(displayTime)}</p>
-                            {/* Test Logout Button */}
-                            {/* <button
-                                type="button"
-                                className="mt-4 px-4 py-2 rounded bg-red-600 text-white font-bold hover:bg-red-700"
-                                onClick={handleTestLogout}
-                            >
-                                Test Logout
-                            </button> */}
                         </div>
                     </div>
                 </div>

@@ -1,6 +1,6 @@
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useEffect, useState } from 'react';
 import { Area, AreaChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function App() {
     const [data, setData] = useState([]);
@@ -17,6 +17,22 @@ export default function App() {
         '#3B82F6', // Blue
         '#F97316', // Orange
     ];
+
+    useEffect(() => {
+        const fetchServices = async () => {
+            try {
+                const res = await fetch(`/service-list`);
+                let services = await res.json();
+                console.log(services[services.length - 1]?.name)
+                 setSelectedService(services[services.length - 1]?.name);
+            } catch (err) {
+                console.error('Failed to fetch counters', err);
+            }
+        };
+
+        fetchServices();
+       
+    }, []);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -48,7 +64,7 @@ export default function App() {
                 <div className="mb-4 flex items-center justify-between">
                     <h2 className="text-lg font-semibold">Peak Hours (Yesterday)</h2>
                     <Select value={selectedService} onValueChange={setSelectedService}>
-                        <SelectTrigger  className="w-[180px] bg-white dark:bg-gray-900">
+                        <SelectTrigger className="w-[180px] bg-white dark:bg-gray-900">
                             <SelectValue placeholder="Select Service" />
                         </SelectTrigger>
                         <SelectContent>
@@ -78,7 +94,7 @@ export default function App() {
                             <Tooltip />
                             <Legend />
 
-                           {filteredServices.map((service) => {
+                            {filteredServices.map((service) => {
                                 // get original index from full services array
                                 const originalIndex = services.indexOf(service);
                                 return (

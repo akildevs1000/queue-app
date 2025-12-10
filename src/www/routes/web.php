@@ -57,6 +57,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/report', [ReportController::class, 'index'])->name('report.index');
+    Route::get('/summary/download', [ReportController::class, 'summaryDownload'])->name('summary.download');
     Route::get('/report/download', [ReportController::class, 'download'])->name('report.download');
     Route::get('/peak-hour-report', [ReportController::class, 'peakHourReport'])->name('report.peak_hour_report');
     Route::get('/peak-day-report', [ReportController::class, 'peakDayReport'])->name('report.peak_day_report');
@@ -81,7 +82,7 @@ Route::resource("counters", CounterController::class)->middleware("auth");
 Route::get("counter-list", [CounterController::class, 'dropDown'])->middleware("auth");
 Route::get("counter-list-by-service-id/{id}", [CounterController::class, 'counterListByServiceId'])->middleware("auth");
 
-
+Route::get("user-list", [UserController::class, 'dropDown'])->middleware("auth");
 
 Route::get("contacts/chat/{id}", [ContactController::class, 'show'])->middleware("auth");
 

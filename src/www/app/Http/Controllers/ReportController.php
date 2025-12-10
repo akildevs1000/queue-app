@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\Counter;
@@ -24,26 +25,56 @@ class ReportController extends Controller
 
     public function getReportData()
     {
-        $stats = [];
-
         $filters = [
             'service_id' => request('service_id', -1),
             'counter_id' => request('counter_id', -1),
+            'user_id' => request('user_id', -1),
+            'token_number' => request('token_number', -1),
             'status'     => request('status', -1),
             'language'   => request('language', -1),
+            'start_date' => request('start_date') ?? date("Y-m-d"),
+            'end_date'   => request('end_date') ?? date("Y-m-d"),
         ];
-
-        $this->filters = $filters;
 
         $perPage = request('per_page', 15);
 
-        // $cacheKey = 'tokens_' . md5(json_encode($filters) . '_' . $perPage);
+        $query = Token::query();
 
-        // $tokens = Cache::remember($cacheKey, now()->addMinutes(60 * 24), function () use ($filters, $perPage) {
-        //     return Token::getFilteredTokens($filters, $perPage);
-        // });
+        if (!empty($filters['service_id']) && $filters['service_id'] != -1) {
+            $query->where('service_id', $filters['service_id']);
+        }
 
-        return response()->json(Token::getFilteredTokens($filters, $perPage));
+        if (!empty($filters['counter_id']) && $filters['counter_id'] != -1) {
+            $query->where('counter_id', $filters['counter_id']);
+        }
+
+        if (isset($filters['user_id']) && $filters['user_id'] != -1) {
+            $query->where('user_id', $filters['user_id']);
+        }
+
+        if (isset($filters['status']) && $filters['status'] != -1) {
+            $query->where('status', $filters['status']);
+        }
+
+        if (isset($filters['language']) && $filters['language'] != -1) {
+            $query->where('language', $filters['language']);
+        }
+
+        if (isset($filters['token_number']) && $filters['token_number'] != -1) {
+            $query->where('token_number', $filters['token_number']);
+        }
+
+        if (!empty($filters['start_date']) && !empty($filters['end_date'])) {
+            $query->whereBetween('created_at', [
+                $filters['start_date'] . ' 00:00:00',
+                $filters['end_date'] . ' 23:59:59',
+            ]);
+        }
+
+        return $query->with(['service', 'counter', 'user'])
+            ->latest()
+            ->filter($filters)
+            ->paginate($perPage);
     }
 
     public function getSummaryReportData()
@@ -51,11 +82,75 @@ class ReportController extends Controller
         return response()->json($this->processData());
     }
 
-    public function download()
+    public function summaryDownload()
     {
         // return $this->processData();
 
         $pdf = Pdf::loadView('reports.token-pdf', $this->processData())->setPaper('a4', 'landscape');
+
+        return $pdf->stream('report.pdf');
+    }
+
+    public function download()
+    {
+        // return $this->processData();
+
+
+        $filters = [
+            'service_id' => request('service_id', -1),
+            'counter_id' => request('counter_id', -1),
+            'user_id' => request('user_id', -1),
+            'token_number' => request('token_number', -1),
+            'status'     => request('status', -1),
+            'language'   => request('language', -1),
+            'start_date' => request('start_date') ?? date("Y-m-d"),
+            'end_date'   => request('end_date') ?? date("Y-m-d"),
+        ];
+
+        $query = Token::query();
+
+        if (!empty($filters['service_id']) && $filters['service_id'] != -1) {
+            $query->where('service_id', $filters['service_id']);
+        }
+
+        if (!empty($filters['counter_id']) && $filters['counter_id'] != -1) {
+            $query->where('counter_id', $filters['counter_id']);
+        }
+
+        if (isset($filters['user_id']) && $filters['user_id'] != -1) {
+            $query->where('user_id', $filters['user_id']);
+        }
+
+        if (isset($filters['status']) && $filters['status'] != -1) {
+            $query->where('status', $filters['status']);
+        }
+
+        if (isset($filters['language']) && $filters['language'] != -1) {
+            $query->where('language', $filters['language']);
+        }
+
+        if (isset($filters['token_number']) && $filters['token_number'] != -1) {
+            $query->where('token_number', $filters['token_number']);
+        }
+
+        if (!empty($filters['start_date']) && !empty($filters['end_date'])) {
+            $query->whereBetween('created_at', [
+                $filters['start_date'] . ' 00:00:00',
+                $filters['end_date'] . ' 23:59:59',
+            ]);
+        }
+
+        $records = $query->with(['service', 'counter', 'user'])
+            ->latest()
+            ->filter($filters)
+            ->get();
+
+        $pdf = Pdf::loadView('reports.report-pdf', [
+            'name'                => Auth::user()->name ?? "Anonymous",
+            'records'             => $records,
+            'dates'               => Carbon::parse($filters['start_date'])->format('M d, Y') . " - " .
+                Carbon::parse($filters['end_date'])->format('M d, Y'),
+        ])->setPaper('a4', 'landscape');
 
         return $pdf->stream('report.pdf');
     }
@@ -115,11 +210,11 @@ class ReportController extends Controller
                     }
                 },
             ])
-        // ->with(['tokens' => function ($q) {
-        //     if (!empty($this->filters['start_date']) && !empty($this->filters['end_date'])) {
-        //         $q->whereBetween('created_at', $this->filters);
-        //     }
-        // }])
+            // ->with(['tokens' => function ($q) {
+            //     if (!empty($this->filters['start_date']) && !empty($this->filters['end_date'])) {
+            //         $q->whereBetween('created_at', $this->filters);
+            //     }
+            // }])
             ->get()
             ->map(function ($counter) {
                 $timeStrings       = $counter->tokens->pluck('total_serving_time_display')->toArray();
@@ -180,7 +275,7 @@ class ReportController extends Controller
             'records'             => $counters,
             "selectedServiceName" => $selectedServiceName,
             'dates'               => Carbon::parse($filters['start_date'])->format('M d, Y') . " - " .
-            Carbon::parse($filters['end_date'])->format('M d, Y'),
+                Carbon::parse($filters['end_date'])->format('M d, Y'),
         ];
     }
     public function peakHourReport()
@@ -231,7 +326,7 @@ class ReportController extends Controller
         $service_id = request("service_id");
 
         $services = Service::when($service_id, fn($q) => $q->where("id", $service_id))->pluck('name', 'id'); // id => name
-        
+
         $tokens   = Token::whereBetween('created_at', [$startDate, $endDate])
             ->get(['created_at', 'service_id']);
 

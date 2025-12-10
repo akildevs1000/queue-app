@@ -34,6 +34,7 @@ export default function Welcome() {
         try {
             const res = await fetch(`/service-list?language=${lang}`);
             const json = await res.json();
+            json.shift();
             setServices(json);
         } catch (err) {
             console.error('Failed to fetch services', err);

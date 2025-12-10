@@ -10,7 +10,8 @@ class CounterController extends Controller
 {
     public function dropDown()
     {
-        return response()->json(Counter::get(["id", "name"]));
+        $counters = Counter::get(["id", "name"]);
+        return response()->json([["id" => null, "name" => "All Counters"], ...$counters]);
     }
 
     public function counterListByServiceId($serviceId)

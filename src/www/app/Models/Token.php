@@ -24,10 +24,10 @@ class Token extends Model
 
     public function getCreatedAtFormattedAttribute()
     {
-        return $this->created_at;
-        return $this->created_at->format('d M Y, h:i A');
+        return $this->created_at
+            ? $this->created_at->format('d M Y, h:i A')
+            : null;
     }
-
 
     public function service()
     {
@@ -49,30 +49,30 @@ class Token extends Model
     }
 
 
-public function getAverageServingTime($service_id)
-{
-    $cacheKey = 'avg_serving_time_' . $service_id . '_' . now()->toDateString();
+    public function getAverageServingTime($service_id)
+    {
+        $cacheKey = 'avg_serving_time_' . $service_id . '_' . now()->toDateString();
 
-    return Cache::remember($cacheKey, 3600, function () use ($service_id) {
-        // Use DB to calculate average directly
-        $avgSeconds = self::where('service_id', $service_id)
-            ->whereDate('created_at', Carbon::today())
-            ->where('status', self::SERVED)
-            ->whereNotNull('total_serving_time')
-            ->avg('total_serving_time'); // DB calculates average
+        return Cache::remember($cacheKey, 3600, function () use ($service_id) {
+            // Use DB to calculate average directly
+            $avgSeconds = self::where('service_id', $service_id)
+                ->whereDate('created_at', Carbon::today())
+                ->where('status', self::SERVED)
+                ->whereNotNull('total_serving_time')
+                ->avg('total_serving_time'); // DB calculates average
 
-        if (!$avgSeconds) {
-            $avgSeconds = 0;
-        }
+            if (!$avgSeconds) {
+                $avgSeconds = 0;
+            }
 
-        // Convert seconds to HH:MM:SS
-        $hours = floor($avgSeconds / 3600);
-        $minutes = floor(($avgSeconds % 3600) / 60);
-        $seconds = $avgSeconds % 60;
+            // Convert seconds to HH:MM:SS
+            $hours = floor($avgSeconds / 3600);
+            $minutes = floor(($avgSeconds % 3600) / 60);
+            $seconds = $avgSeconds % 60;
 
-        return sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
-    });
-}
+            return sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
+        });
+    }
 
     protected static function booted()
     {

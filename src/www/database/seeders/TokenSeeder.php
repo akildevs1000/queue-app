@@ -34,6 +34,7 @@ class TokenSeeder extends Seeder
         $lastTokenNumber = Token::max('token_number') ?? 0;
 
         foreach ($services as $service) {
+            $lastTokenNumber = $lastTokenNumber + $service->starting_number ?? 0;
             foreach (range(1, $count) as $i) {
                 $lastTokenNumber++; // Increment for each token
 

@@ -41,7 +41,7 @@ export default function ItemEdit({
             name: item?.name || '',
             code: item?.code || '',
             description: item?.description || '',
-            starting_number: item?.starting_number && null,
+            starting_number: item?.starting_number,
         });
     }, [item]);
 
@@ -67,10 +67,10 @@ export default function ItemEdit({
                             placeholder="Starting Number (e.g., 1000)"
                             // Use 'number' type for mobile keyboards and basic validation
                             type="number"
-                            value={data.starting_number && ''}
+                            value={data.starting_number || ''}
                             onChange={(e) =>
                                 // Convert value to a number for the state
-                                setData('starting_number', Number(e.target.value || 0))
+                                setData('starting_number', Number(e.target.value))
                             }
                         />
                         {errors.starting_number && <p className="pt-1 pl-1 text-sm text-red-400">{errors.starting_number}</p>}

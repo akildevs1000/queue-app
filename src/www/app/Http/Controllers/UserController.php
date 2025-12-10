@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Http\Requests\User\PasswordRequest;
@@ -16,7 +17,7 @@ class UserController extends Controller
 {
     public function dropDown()
     {
-        return response()->json(User::get(["id", "name"]));
+        return response()->json([["id" => null, "name" => "All Users"], ...User::where("type", "user")->get(["id", "name"])]);
     }
 
     /**
@@ -88,10 +89,9 @@ class UserController extends Controller
 
     public function socketIpAndPort()
     {
-        $found = User::whereNotNull(["ip", "port"])->where("type", "master")->first();
-
-        $found->ip = gethostbyname(gethostname());
-
-        return $found;
+        return (object) [
+            'ip'   => gethostbyname(gethostname()),
+            'port' => 7777,
+        ];
     }
 }
