@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, globalShortcut } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
+const { exec } = require("child_process");
 
 let win;
 // const logDir = path.join(__dirname, 'logs');
@@ -23,7 +24,7 @@ function createWindow() {
         fullscreen: true,
         frame: false,
         autoHideMenuBar: true,
-        kiosk: true,
+        kiosk: false,
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
@@ -58,32 +59,38 @@ async function startAutoTicketPolling(serverIp) {
     const pollInterval = 3000; // 2 seconds
 
     const fetchAndPrint = async () => {
+
+        const tempFile = app.isPackaged
+            ? path.join(app.getPath("temp"), "ticket.pdf") // production
+            : path.join(__dirname, "ticket.pdf");          // development
+
+        const sumatraPath = app.isPackaged
+            ? path.join(process.resourcesPath, "print.exe")
+            : path.join(__dirname, "print.exe");
+
         try {
-            let url = `http://${serverIp}:8000/api/electron/next-ticket`;
-            console.log(url);
-            
-            const response = await axios.get(url);
-            if(response.data.status) {
-                const pdfBase64 = response.data.message;
-                const tempPath = path.join(__dirname, 'temp_ticket.pdf');
+            const url = `http://${serverIp}:8000/api/electron/next-ticket`;
 
-                fs.writeFileSync(tempPath, Buffer.from(pdfBase64, 'base64'));
+            console.log("Fetching:", url);
 
-                const printWin = new BrowserWindow({ show: false });
-                await printWin.loadFile(tempPath);
+            const response = await axios.get(url, { responseType: "arraybuffer" });
 
-                printWin.webContents.print({
-                    silent: true,
-                    printBackground: true
-                }, (success, errorType) => {
-                    if (!success) console.log("Print failed:", errorType);
-                    printWin.close();
-                    fs.unlinkSync(tempPath);
-                });
-            }
-        } catch (err) {
-            console.error("Error fetching ticket:", err.message);
+            fs.writeFileSync(tempFile, response.data);
+
+            const command = `"${sumatraPath}" -print-to-default -silent "${tempFile}"`;
+
+            exec(command, (error, stdout, stderr) => {
+                if (error) {
+                    console.error("Error printing:", error);
+                    return;
+                }
+                console.log("Printed using Sumatra successfully.");
+            });
+
+        } catch (error) {
+            console.error("Print error:", error.message);
         }
+
         // Schedule next poll
         setTimeout(fetchAndPrint, pollInterval);
     };
