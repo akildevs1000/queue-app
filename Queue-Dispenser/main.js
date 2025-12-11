@@ -49,7 +49,11 @@ ipcMain.on('load-guest', (event, ip) => {
     win.setFullScreen(true);
     win.setResizable(false);
     win.setMenuBarVisibility(false);
-    win.loadURL(`http://${ip}:8000/guest`);
+    win.loadURL(`http://${ip}:5174`);
+
+    win.webContents.on("did-finish-load", () => {
+        win.webContents.send("guest-ip", ip);
+    });
 
     // Start auto ticket polling
     startAutoTicketPolling(ip);
