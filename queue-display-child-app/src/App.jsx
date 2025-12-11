@@ -6,8 +6,36 @@ const BOOT_DURATION = 2500; // 2.5 seconds
 
 function App() {
   const [isAppLoaded, setIsAppLoaded] = useState(false);
-  const [title, setTitle] = useState("EMIRATES ISLAMIC BANK");
   const [bootProgress, setBootProgress] = useState(0);
+
+  const [title, setTitle] = useState("App Name");
+  const [ip, setIp] = useState("");
+
+  useEffect(() => {
+    if (window.API_URL) {
+      try {
+        setIp(new URL(window.API_URL).hostname);
+      } catch (e) {
+        console.error("Invalid API_URL", e);
+      }
+    }
+  }, []);
+
+  const fetchAppDetails = async () => {
+    try {
+      const res = await fetch(`http://${ip}:8000/api/app-details`);
+      const json = await res.json();
+      setTitle(json?.name);
+    } catch (err) {
+      console.error("Failed to fetch services", err);
+    }
+  };
+
+  useEffect(() => {
+    if (ip) {
+      fetchAppDetails();
+    }
+  }, [ip]);
 
   useEffect(() => {
     // Increment the boot progress smoothly
@@ -26,7 +54,6 @@ function App() {
 
     return () => clearInterval(interval);
   }, []);
-
 
   // BOOT SCREEN
   // if (!isAppLoaded) {
@@ -94,7 +121,3 @@ const styles = {
 };
 
 export default App;
-
-
-
-
