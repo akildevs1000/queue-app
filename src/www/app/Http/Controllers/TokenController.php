@@ -199,6 +199,17 @@ class TokenController extends Controller
         return redirect()->route('guest');
     }
 
+    public function apiStore(StoreRequest $request)
+    {
+        $validatedData = $request->validated();
+        // Token::create($tokenData);
+        CreateTokenJob::dispatch($validatedData);
+
+        return response()->json(["status" => true, "message" => "token dispatched"]);
+    }
+
+    
+
     /**
      * Update the specified resource in storage.
      */

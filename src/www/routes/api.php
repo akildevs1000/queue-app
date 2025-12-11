@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\TokenController;
+use App\Http\Controllers\UserController;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -16,7 +18,9 @@ Route::get('/app-details', function (Request $request) {
     return response()->json($found);
 });
 
-
+Route::get("service-list", [ServiceController::class, 'dropDown']);
+Route::post("tokens", [TokenController::class,"apiStore"]);
+Route::get("socket-ip-and-port", [UserController::class, 'socketIpAndPort']);
 
 
 Route::get('/serving_list', [TokenController::class, "servingList"]);
