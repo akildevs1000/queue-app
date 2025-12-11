@@ -36,9 +36,10 @@ class TicketController extends Controller
 
         $ticket->update(["is_printed" => true]);
 
-        return response()->json([
-            'status' => true,
-            'message' => $pdfContent
+        // Return the PDF file directly
+        return response()->file($pdfPath, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $fileName . '"'
         ]);
     }
 }
