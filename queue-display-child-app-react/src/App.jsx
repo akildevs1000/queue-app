@@ -1,11 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 import Header from "./components/Header";
+import LanguageCard from "./components/Language";
 
 // Boot sequence duration
 const BOOT_DURATION = 2500; // 2.5 seconds
 
 function App() {
   const isElectron = !!window.electronAPI;
+
+  const [darkMode, setDarkMode] = useState(true);
+
+  // Apply dark class to <html>
+  useEffect(() => {
+    const root = document.documentElement;
+    if (darkMode) root.classList.add("dark");
+    else root.classList.remove("dark");
+  }, [darkMode]);
 
   const [isAppLoaded, setIsAppLoaded] = useState(false);
   const [bootProgress, setBootProgress] = useState(0);
@@ -331,8 +341,7 @@ function App() {
           </div>
         )}
 
-        {/* Header */}
-        <Header title={title} />
+         <Header title={title} darkMode={darkMode} setDarkMode={setDarkMode} />
 
         {/* ✅ Added Hidden QR Input — DOES NOT change layout */}
         <div className="absolute left-[-5000px]">
@@ -348,49 +357,30 @@ function App() {
         {step === "language" && (
           <main className="flex-1 px-10 py-8 flex items-center justify-center">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-5xl">
-              {/* English */}
-              <div
-                onClick={() => handleLanguageSelect("en")}
-                className="relative flex flex-col items-center justify-center rounded-2xl p-8 md:p-7 lg:p-16 xl:p-20 border border-brand-cyan/40 text-white animate-update-highlight overflow-hidden bg-gradient-to-br from-brand-cyan/10 via-transparent to-transparent"
-              >
-                <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] bg-gradient-to-br from-brand-cyan/20 via-transparent to-transparent -z-10"></div>
-                <h2 className="text-2xl lg:text-5xl xl:text-6xl font-light tracking-widest text-brand-cyan/80 mb-4 md:mb-6 lg:mb-8">
-                  English
-                </h2>
-              </div>
-
-              {/* Arabic */}
-              <div
-                onClick={() => handleLanguageSelect("ar")}
-                className="relative flex flex-col items-center justify-center rounded-2xl p-8 md:p-7 lg:p-16 xl:p-20 border border-brand-cyan/40 text-white animate-update-highlight overflow-hidden bg-gradient-to-br from-brand-cyan/10 via-transparent to-transparent"
-              >
-                <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] bg-gradient-to-br from-brand-cyan/20 via-transparent to-transparent -z-10"></div>
-                <h2 className="text-2xl lg:text-5xl xl:text-6xl font-light tracking-widest text-brand-cyan/80 mb-4 md:mb-6 lg:mb-8">
-                  العربية
-                </h2>
-              </div>
-
-              {/* French */}
-              <div
-                onClick={() => handleLanguageSelect("fr")}
-                className="relative flex flex-col items-center justify-center rounded-2xl p-8 md:p-7 lg:p-16 xl:p-20 border border-brand-cyan/40 text-white animate-update-highlight overflow-hidden bg-gradient-to-br from-brand-cyan/10 via-transparent to-transparent"
-              >
-                <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] bg-gradient-to-br from-brand-cyan/20 via-transparent to-transparent -z-10"></div>
-                <h2 className="text-2xl lg:text-5xl xl:text-6xl font-light tracking-widest text-brand-cyan/80 mb-4 md:mb-6 lg:mb-8">
-                  Français
-                </h2>
-              </div>
-
-              {/* Spanish */}
-              <div
-                onClick={() => handleLanguageSelect("es")}
-                className="relative flex flex-col items-center justify-center rounded-2xl p-8 md:p-7 lg:p-16 xl:p-20 border border-brand-cyan/40 text-white animate-update-highlight overflow-hidden bg-gradient-to-br from-brand-cyan/10 via-transparent to-transparent"
-              >
-                <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] bg-gradient-to-br from-brand-cyan/20 via-transparent to-transparent -z-10"></div>
-                <h2 className="text-2xl lg:text-5xl xl:text-6xl font-light tracking-widest text-brand-cyan/80 mb-4 md:mb-6 lg:mb-8">
-                  Español
-                </h2>
-              </div>
+              <LanguageCard
+                lang="en"
+                label="English"
+                darkMode={darkMode}
+                handleLanguageSelect={handleLanguageSelect}
+              />
+              <LanguageCard
+                lang="ar"
+                label="العربية"
+                darkMode={darkMode}
+                handleLanguageSelect={handleLanguageSelect}
+              />
+              <LanguageCard
+                lang="fr"
+                label="Français"
+                darkMode={darkMode}
+                handleLanguageSelect={handleLanguageSelect}
+              />
+              <LanguageCard
+                lang="es"
+                label="Español"
+                darkMode={darkMode}
+                handleLanguageSelect={handleLanguageSelect}
+              />
             </div>
           </main>
         )}
