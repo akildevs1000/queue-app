@@ -7,7 +7,6 @@ const { exec } = require('child_process');
 let win;
 let pollingActive = false;
 let pollingTimeout = null;
-let guestLoaded = false;
 
 function writeLog(ip) {
   const timestamp = new Date().toISOString();
@@ -37,9 +36,9 @@ app.whenReady().then(() => {
   createWindow();
 
   // Shortcut to return to IP entry screen
-  globalShortcut.register('CommandOrControl+I', () => {
-    if (win) win.loadFile('index.html');
-  });
+  // globalShortcut.register('CommandOrControl+I', () => {
+  //   if (win) win.loadFile('index.html');
+  // });
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
@@ -56,7 +55,7 @@ ipcMain.on('load-guest', (event, ip) => {
     // always STOP polling BEFORE trying to load anything new
     stopAutoTicketPolling();
 
-    const targetUrl = `http://${ip}:5174`;
+    const targetUrl = `http://${ip}:5175`;
     console.log("Loading guest URL:", targetUrl);
 
     win.loadURL(targetUrl);
