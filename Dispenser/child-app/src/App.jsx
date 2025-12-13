@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import Header from "./components/Header";
 import LanguageCard from "./components/Language";
+import ServiceCard from "./components/ServiceCard";
+import SocketIndicator from "./components/SocketIndicator";
+import IpDialog from "./components/IpDialog";
+import BootScreen from "./components/BootScreen";
+import TicketPrintingIndicator from "./components/TicketPrintingIndicator";
 
 // Boot sequence duration
 const BOOT_DURATION = 2500; // 2.5 seconds
@@ -9,6 +14,7 @@ function App() {
   const isElectron = !!window.electronAPI;
 
   const [darkMode, setDarkMode] = useState(true);
+  const [isPrinting, setIsPrinting] = useState(false);
 
   // Apply dark class to <html>
   useEffect(() => {
@@ -16,6 +22,8 @@ function App() {
     if (darkMode) root.classList.add("dark");
     else root.classList.remove("dark");
   }, [darkMode]);
+
+  const [selectedLanguages, setSelectedLanguages] = useState([]);
 
   const [isAppLoaded, setIsAppLoaded] = useState(false);
   const [bootProgress, setBootProgress] = useState(0);
@@ -34,15 +42,16 @@ function App() {
   const socketRetryTimeout = useRef(null);
 
   useEffect(() => {
-    if (isElectron && window.electronAPI?.onGuestIP) {
+    if (isElectron && window.electronAPI?.onGuest) {
       // Running inside Electron
-      window.electronAPI.onGuestIP((ip) => {
-        console.log("Received IP from Electron:", ip);
-        setIp(ip);
+      window.electronAPI.onGuest((data) => {
+        console.log("Received IP from Electron:", data);
+        setIp(data.ip);
+        setSelectedLanguages(data.languages);
       });
     } else {
       // Running in Browser
-      setIp("192.168.x.x");
+      setIp("192.168.2.46");
       setShowIpDialog(true);
     }
   }, []);
@@ -182,8 +191,7 @@ function App() {
           return res.json();
         })
         .then((responseData) => {
-          // Success
-          setStep("thankyou");
+          setIsPrinting(true);
 
           const socket = socketRef.current;
           if (socket && socket.readyState === WebSocket.OPEN) {
@@ -192,16 +200,27 @@ function App() {
             console.warn("WebSocket is not open.");
           }
 
-          // Reset form and QR code
-          setQrCode(null);
-          setStep("language");
-          setData({
-            language: "",
-            service_id: 0,
-            service_name: "",
-            code: "",
-            vip_number: null,
-          });
+          // 2. Set the 3-second timer
+          setTimeout(() => {
+            // 3. Logic executed after 3 seconds (Closing/Reset)
+
+            // A. Hide the printing indicator
+            setIsPrinting(false);
+
+            // B. Reset form and return to the starting screen
+            setQrCode(null);
+            setStep("language");
+            setData({
+              language: "",
+              service_id: 0,
+              service_name: "",
+              code: "",
+              vip_number: null,
+            });
+
+            // NOTE: If you need to physically close the browser window or kiosk app:
+            // window.close(); // Use with caution, browser permissions apply
+          }, 2000); // 3000 milliseconds = 3 seconds
         })
         .catch((err) => {
           console.error("Form submission failed", err);
@@ -241,24 +260,10 @@ function App() {
   }, []);
 
   // BOOT SCREEN
-  if (!isAppLoaded) {
-    return (
-      <div
-        style={styles.bootContainer}
-        className="
-      bg-gradient-to-tr from-brand-navy-deep via-brand-navy-mid to-brand-navy-deep bg-[length:200%_200%] animate-gradient-bg
-      "
-      >
-        <h1 style={styles.title}>{title}</h1>
-        <div style={styles.progressBar}>
-          <div style={{ ...styles.progressFill, width: `${bootProgress}%` }} />
-        </div>
-        <p style={styles.progressText}>
-          Loading... {Math.floor(bootProgress)}%
-        </p>
-      </div>
-    );
-  }
+  if (!isAppLoaded)
+    return <BootScreen title={title} bootProgress={bootProgress} />;
+
+  if (isPrinting) return <TicketPrintingIndicator isPrinting={isPrinting} />;
 
   const handleQrCodeChange = async (e) => {
     const newValue = e.target.value;
@@ -269,79 +274,24 @@ function App() {
   return (
     <div style={styles.appContainer}>
       <div className="relative flex h-screen w-full flex-col group/design-root overflow-hidden">
-        {/* Background Gradient & Texture */}
-        <div className="absolute inset-0 -z-10 h-full w-full bg-gradient-to-tr from-brand-navy-deep via-brand-navy-mid to-brand-navy-deep bg-[length:200%_200%] animate-gradient-bg"></div>
-        <div className="absolute inset-0 -z-20 h-full w-full bg-[url('https://www.transparenttextures.com/patterns/arabesque.png')] opacity-[0.02]"></div>
-
-        {showIpDialog && (
-          <div
-            className="
-      fixed inset-0 
-      bg-black/40 backdrop-blur-sm
-      flex items-center justify-center
-      z-50
-    "
-          >
-            <div
-              className="
-        bg-brand-navy-mid/40 
-        backdrop-blur-xl
-        border border-white/10 
-        shadow-2xl
-        rounded-2xl
-        px-6 py-8
-        w-[90%] max-w-md
-      "
-            >
-              {/* Title */}
-              <h2
-                className="
-          text-white text-2xl sm:text-3xl 
-          font-light tracking-wider 
-          mb-6 text-center
-        "
-              >
-                Enter Server IP
-              </h2>
-
-              {/* Input */}
-              <input
-                type="text"
-                value={ip}
-                onChange={(e) => setIp(e.target.value)}
-                placeholder="192.168.x.x"
-                className="
-          w-full 
-          px-4 py-3
-          rounded-xl
-          bg-white/10 
-          text-white
-          placeholder-white/40
-          border border-white/20
-          focus:outline-none focus:ring-2 focus:ring-white/40
-          mb-6
-        "
-              />
-
-              {/* Button */}
-              <button
-                onClick={() => setShowIpDialog(false)}
-                className="
-          w-full 
-          bg-white/20 hover:bg-white/30
-          text-white
-          font-medium tracking-wide
-          py-3 rounded-xl
-          transition
-        "
-              >
-                Continue
-              </button>
-            </div>
-          </div>
+        {darkMode && (
+          <>
+            {/* Background Gradient & Texture */}
+            <div className="absolute inset-0 -z-10 h-full w-full bg-gradient-to-tr from-brand-navy-deep via-brand-navy-mid to-brand-navy-deep bg-[length:200%_200%] animate-gradient-bg"></div>
+            <div className="absolute inset-0 -z-20 h-full w-full bg-[url('https://www.transparenttextures.com/patterns/arabesque.png')] opacity-[0.02]"></div>
+          </>
         )}
 
-         <Header title={title} darkMode={darkMode} setDarkMode={setDarkMode} />
+        <IpDialog
+          darkMode={darkMode}
+          open={showIpDialog}
+          ip={ip}
+          setIp={setIp}
+          onClose={() => setShowIpDialog(false)}
+          onLanguagesChange={(langs) => setSelectedLanguages(langs)}
+        />
+
+        <Header title={title} darkMode={darkMode} setDarkMode={setDarkMode} />
 
         {/* ✅ Added Hidden QR Input — DOES NOT change layout */}
         <div className="absolute left-[-5000px]">
@@ -353,115 +303,47 @@ function App() {
             className="border-none outline-none"
           />
         </div>
-        {/* Main Content */}
-        {step === "language" && (
-          <main className="flex-1 px-10 py-8 flex items-center justify-center">
+        <main
+          className={`flex-1 px-10 py-8 flex items-center justify-center ${
+            darkMode ? "" : "bg-white"
+          }`}
+        >
+          {step === "language" && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-5xl">
-              <LanguageCard
-                lang="en"
-                label="English"
-                darkMode={darkMode}
-                handleLanguageSelect={handleLanguageSelect}
-              />
-              <LanguageCard
-                lang="ar"
-                label="العربية"
-                darkMode={darkMode}
-                handleLanguageSelect={handleLanguageSelect}
-              />
-              <LanguageCard
-                lang="fr"
-                label="Français"
-                darkMode={darkMode}
-                handleLanguageSelect={handleLanguageSelect}
-              />
-              <LanguageCard
-                lang="es"
-                label="Español"
-                darkMode={darkMode}
-                handleLanguageSelect={handleLanguageSelect}
-              />
-            </div>
-          </main>
-        )}
-
-        {step === "service" && (
-          <main className="flex-1 px-10 py-8 flex items-center justify-center">
-            <div
-              className={`
-              grid gap-8 w-full
-              ${
-                services.length === 1
-                  ? "grid-cols-1 max-w-xl justify-items-center"
-                  : "grid-cols-1 md:grid-cols-2 max-w-5xl"
-              }
-            `}
-            >
-              {services.map((service) => (
-                <div
-                  key={service.id}
-                  onClick={() => handleServiceSelect(service)}
-                  className="relative flex flex-col items-center justify-center rounded-2xl p-8 md:p-7 lg:p-16 xl:p-20 border border-brand-cyan/40 text-white animate-update-highlight overflow-hidden bg-gradient-to-br from-brand-cyan/10 via-transparent to-transparent cursor-pointer"
-                >
-                  <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] bg-gradient-to-br from-brand-cyan/20 via-transparent to-transparent -z-10"></div>
-                  <h2 className="text-2xl lg:text-5xl xl:text-6xl font-light tracking-widest text-brand-cyan/80 mb-4 md:mb-6 lg:mb-8">
-                    {service.name}
-                  </h2>
-                </div>
+              {selectedLanguages.map((item) => (
+                <LanguageCard
+                  key={item.lang}
+                  lang={item.lang}
+                  label={item.label}
+                  darkMode={darkMode}
+                  handleLanguageSelect={handleLanguageSelect}
+                />
               ))}
             </div>
-          </main>
-        )}
+          )}
+
+          {step === "service" && (
+            <div className="flex flex-wrap justify-center gap-6 items-stretch">
+              {services.map((service) => (
+                <ServiceCard
+                  key={service.id}
+                  service={service}
+                  darkMode={darkMode}
+                  onSelect={handleServiceSelect}
+                  className="flex-1 min-w-[250px] max-w-[350px]"
+                />
+              ))}
+            </div>
+          )}
+        </main>
       </div>
 
-      {/* WebSocket Status Indicator - Bottom Left */}
-      <div className="absolute bottom-4 left-4 flex items-center gap-2">
-        <span
-          className={`w-3 h-3 rounded-full ${
-            retrying ? "bg-red-500 animate-pulse" : "bg-green-500"
-          }`}
-        ></span>
-        <span className="text-white text-sm">
-          {retrying ? "Reconnecting..." : "Connected"}
-        </span>
-      </div>
+      <SocketIndicator retrying={retrying} />
     </div>
   );
 }
 
 const styles = {
-  bootContainer: {
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-    height: "100vh",
-    backgroundColor: "#0A0A0A",
-    color: "white",
-    fontFamily: "Arial, sans-serif",
-  },
-  title: {
-    fontSize: "28px",
-    marginBottom: "20px",
-    letterSpacing: "2px",
-  },
-  progressBar: {
-    width: "300px",
-    height: "10px",
-    backgroundColor: "#333",
-    borderRadius: "5px",
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    backgroundColor: "#6ea8fe",
-    transition: "width 0.1s linear",
-  },
-  progressText: {
-    marginTop: "10px",
-    fontSize: "14px",
-    color: "#bbb",
-  },
   appContainer: {
     height: "100vh",
   },

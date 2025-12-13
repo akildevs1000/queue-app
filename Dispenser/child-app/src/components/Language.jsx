@@ -1,15 +1,12 @@
-import { useState, useEffect } from "react";
-
 const LanguageCard = ({ lang, label, darkMode, handleLanguageSelect }) => {
-  console.log(darkMode);
   return (
     <div
       onClick={() => handleLanguageSelect(lang)}
       className={`relative flex flex-col items-center justify-center rounded-2xl p-8 md:p-7 lg:p-16 xl:p-20
-                  text-white animate-update-highlight overflow-hidden
+                  text-white overflow-hidden
                   ${
                     darkMode
-                      ? "bg-gradient-to-br from-brand-cyan/10 via-transparent to-transparent border border-brand-cyan/40"
+                      ? "animate-update-highlight bg-gradient-to-br from-brand-cyan/10 via-transparent to-transparent border border-brand-cyan/40"
                       : "bg-blue-500"
                   }
                   transition-colors cursor-pointer`}

@@ -1,7 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
-    loadGuest: (ip) => ipcRenderer.send('load-guest', ip),
+    loadGuest: (data) => ipcRenderer.send('load-guest', data),
     printTicket: (pdfBase64) => ipcRenderer.send('print-ticket', pdfBase64),
-    onGuestIP: (callback) => ipcRenderer.on('guest-ip', (_, data) => callback(data))
+    onGuest: (callback) => ipcRenderer.on('guest-data', (_, data) => callback(data))
 });

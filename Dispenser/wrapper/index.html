@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Enter Server IP</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: #fff;
+        flex-direction: column;
+      }
+
+      h1 {
+        font-size: 48px;
+        margin-bottom: 40px;
+        text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.3);
+      }
+
+      input {
+        width: 350px;
+        padding: 15px;
+        font-size: 20px;
+        border: none;
+        border-bottom: 2px solid #fff;
+        background: transparent;
+        color: #fff;
+        margin-bottom: 20px;
+        outline: none;
+        text-align: center;
+        transition: 0.3s;
+      }
+
+      input:focus {
+        border-bottom: 2px solid #ff7e5f;
+      }
+
+      input::placeholder {
+        color: rgba(255, 255, 255, 0.7);
+      }
+
+      /* Go Button Style */
+      #goBtn {
+        position: relative;
+        overflow: hidden;
+        padding: 10px 30px;
+        font-size: 20px;
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        background: #ff7e5f;
+        color: #fff;
+        transition: 0.4s;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        margin-top: 20px;
+      }
+
+      #goBtn::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.2);
+        transition: 0.5s;
+      }
+
+      #goBtn:hover::after {
+        left: 0;
+      }
+
+      #goBtn:hover {
+        background: #feb47b;
+      }
+
+      #goBtn:active {
+        transform: scale(0.98);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      }
+
+      /* Language Buttons Container */
+      #languageContainer {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-bottom: 20px;
+      }
+
+      /* Language Button Style */
+      .lang-btn {
+        padding: 8px 20px;
+        font-size: 18px;
+        border: 2px solid #fff;
+        border-radius: 25px;
+        background: transparent;
+        color: #fff;
+        cursor: pointer;
+        transition: 0.3s;
+      }
+
+      .lang-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      .lang-btn.active {
+        background: #fff;
+        color: #667eea;
+        border-color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Enter Server IP</h1>
+    <input
+      type="text"
+      id="ip"
+      placeholder="e.g. 192.168.2.43"
+      value="192.168.2.46"
+    />
+
+    <div id="languageContainer"></div>
+
+    <button id="goBtn" onclick="saveAndOpen()">Go</button>
+
+    <script>
+      const ipInput = document.getElementById("ip");
+      const container = document.getElementById("languageContainer");
+
+      // Languages array
+      const languages = [
+        { lang: "en", label: "English" },
+        { lang: "ar", label: "العربية" },
+        { lang: "fr", label: "Français" },
+        { lang: "es", label: "Español" },
+      ];
+
+      // Load saved languages (array of lang codes)
+      const savedLangs = JSON.parse(
+        localStorage.getItem("selectedLanguages") || "[]"
+      );
+
+      // Map saved language codes to objects
+      const selectedLangObjects = savedLangs
+        .map((code) => languages.find((l) => l.lang === code))
+        .filter(Boolean); // remove undefined if code doesn't exist
+
+      console.log(selectedLangObjects);
+      // Example output: [{ lang: "en", label: "English" }]
+
+      // Create language buttons
+      languages.forEach((lang) => {
+        const btn = document.createElement("button");
+        btn.innerText = lang.label;
+        btn.classList.add("lang-btn");
+
+        if (savedLangs.includes(lang.lang)) btn.classList.add("active");
+
+        btn.addEventListener("click", () => {
+          btn.classList.toggle("active");
+        });
+
+        btn.dataset.lang = lang.lang;
+        container.appendChild(btn);
+      });
+
+      function saveAndOpen() {
+        const selected = Array.from(
+          document.querySelectorAll(".lang-btn.active")
+        ).map((btn) => btn.dataset.lang);
+
+        localStorage.setItem("selectedLanguages", JSON.stringify(selected));
+
+        // Convert to objects
+        const selectedObjects = selected
+          .map((code) => languages.find((l) => l.lang === code))
+          .filter(Boolean);
+
+        console.log("Selected languages:", selectedObjects);
+
+        window.electronAPI.loadGuest({ ip: ipInput.value, languages: selectedObjects });
+      }
+    </script>
+  </body>
+</html>

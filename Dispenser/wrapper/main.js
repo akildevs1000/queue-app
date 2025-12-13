@@ -45,44 +45,45 @@ app.whenReady().then(() => {
   });
 });
 
-ipcMain.on('load-guest', (event, ip) => {
-    writeLog(ip);
+ipcMain.on('load-guest', (event, { ip, languages }) => {
+  console.log({ ip, languages });
+  writeLog(ip);
 
-    win.setFullScreen(true);
-    win.setResizable(false);
-    win.setMenuBarVisibility(false);
+  win.setFullScreen(true);
+  win.setResizable(false);
+  win.setMenuBarVisibility(false);
 
-    // always STOP polling BEFORE trying to load anything new
-    stopAutoTicketPolling();
+  // always STOP polling BEFORE trying to load anything new
+  stopAutoTicketPolling();
 
-    const targetUrl = `http://${ip}:5175`;
-    console.log("Loading guest URL:", targetUrl);
+  const targetUrl = `http://${ip}:5174`;
+  console.log("Loading guest URL:", targetUrl);
 
-    win.loadURL(targetUrl);
+  win.loadURL(targetUrl);
 
-    const onFinish = () => {
-        console.log("Guest page loaded");
-        win.webContents.send("guest-ip", ip);
-        startAutoTicketPolling(ip);
+  const onFinish = () => {
+    console.log("Guest page loaded");
+    win.webContents.send("guest-data", { ip, languages });
+    startAutoTicketPolling(ip);
 
-        cleanup();
-    };
+    cleanup();
+  };
 
-    const onFail = (e, code, desc) => {
-        console.log("Guest page failed:", code, desc);
-        stopAutoTicketPolling();       // <-- HARD STOP
-        win.loadFile(path.join(__dirname, "offline.html"));
+  const onFail = (e, code, desc) => {
+    console.log("Guest page failed:", code, desc);
+    stopAutoTicketPolling();       // <-- HARD STOP
+    win.loadFile(path.join(__dirname, "offline.html"));
 
-        cleanup();
-    };
+    cleanup();
+  };
 
-    function cleanup() {
-        win.webContents.removeListener("did-finish-load", onFinish);
-        win.webContents.removeListener("did-fail-load", onFail);
-    }
+  function cleanup() {
+    win.webContents.removeListener("did-finish-load", onFinish);
+    win.webContents.removeListener("did-fail-load", onFail);
+  }
 
-    win.webContents.once("did-finish-load", onFinish);
-    win.webContents.once("did-fail-load", onFail);
+  win.webContents.once("did-finish-load", onFinish);
+  win.webContents.once("did-fail-load", onFail);
 });
 
 
@@ -120,13 +121,13 @@ async function startAutoTicketPolling(serverIp) {
         fs.writeFileSync(tempFile, response.data);
 
         const command = `"${sumatraPath}" -print-to-default -silent "${tempFile}"`;
-        exec(command, (error, stdout, stderr) => {
-          if (error) {
-            console.error('Error printing:', error.message);
-            return;
-          }
-          console.log('Printed using Sumatra successfully.');
-        });
+        // exec(command, (error, stdout, stderr) => {
+        //   if (error) {
+        //     console.error('Error printing:', error.message);
+        //     return;
+        //   }
+        //   console.log('Printed using Sumatra successfully.');
+        // });
 
       } else {
         // Log status and message for debugging

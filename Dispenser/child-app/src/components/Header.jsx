@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import { SunIcon, MoonIcon } from "@heroicons/react/24/solid";
 
-const Header = ({ title = "Your Organization",darkMode, setDarkMode }) => {
+const Header = ({ title = "Your Organization", darkMode, setDarkMode }) => {
   const [now, setNow] = useState(() => new Date());
 
   // Update time every second
@@ -24,14 +25,14 @@ const Header = ({ title = "Your Organization",darkMode, setDarkMode }) => {
 
   return (
     <header
-      className="
-        flex items-center justify-between
-        bg-blue-500 dark:bg-brand-navy-deep/80
-        backdrop-blur-lg
+      className={`flex items-center justify-between
         px-4 sm:px-8 lg:px-12 py-4
-        border-b border-white/10 dark:border-base-100/10
-        shadow-lg whitespace-nowrap
-      "
+         whitespace-nowrap
+  ${
+    darkMode
+      ? "dark:bg-brand-navy-deep/80 backdrop-blur-lg border-b border-white/10 dark:border-base-100/10 shadow-lg"
+      : "bg-blue-500"
+  }`}
     >
       {/* Title */}
       <h1
@@ -61,15 +62,16 @@ const Header = ({ title = "Your Organization",darkMode, setDarkMode }) => {
           onClick={() => setDarkMode(!darkMode)}
           className="
             px-3 py-1 rounded-xl
-            bg-gray-200 dark:bg-gray-700
-            text-black dark:text-white
+            text-white
             text-sm md:text-base
-            shadow-md
-            hover:bg-gray-300 dark:hover:bg-gray-600
             transition
           "
         >
-          {darkMode ? "Light" : "Dark"}
+          {darkMode ? (
+            <SunIcon className="h-5 w-5" />
+          ) : (
+            <MoonIcon className="h-5 w-5" />
+          )}
         </button>
       </div>
     </header>
