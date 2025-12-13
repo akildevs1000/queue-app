@@ -1,0 +1,101 @@
+{
+  "name": "smart-queue-desktop-app",
+  "version": "2.0.0",
+  "description": "smart-queue-desktop-app",
+  "main": "main.js",
+  "scripts": {
+    "dev": "electron .",
+    "build": "electron-builder"
+  },
+  "build": {
+    "publish": {
+      "provider": "generic",
+      "url": "https://backend.smart-queue.com/desktop_updates/"
+    },
+    "appId": "desktop.smart-queue",
+    "files": [
+      "assets/**/*",
+      "helpers.js",
+      "socket.js",
+      "index.html",
+      "main.js",
+      "www/**/*",
+      "!www/node_modules/**"
+    ],
+    "extraResources": [
+      {
+        "from": "kill-processes.bat",
+        "to": "kill-processes.bat"
+      },
+      {
+        "from": "assets",
+        "to": "assets"
+      },
+      {
+        "from": "conf",
+        "to": "conf"
+      },
+      {
+        "from": "logs",
+        "to": "logs"
+      },
+      {
+        "from": "temp",
+        "to": "temp"
+      },
+      {
+        "from": "nginx.exe",
+        "to": "nginx.exe"
+      },
+      {
+        "from": "vs_redist.exe",
+        "to": "vs_redist.exe"
+      },
+      {
+        "from": "www",
+        "to": "www",
+        "filter": [
+          "**/*",
+          "!node_modules/**",
+          "!package.json"
+        ]
+      },
+      {
+        "from": "tv-display",
+        "to": "tv-display"
+      },
+      {
+        "from": "dispener",
+        "to": "dispener"
+      }
+    ],
+    "productName": "SmartQueue",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "artifactName": "${productName}-Setup-${version}.${ext}",
+      "icon": "favicon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "license": "license.txt",
+      "createDesktopShortcut": true
+    }
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "dependencies": {
+    "electron-updater": "^6.6.2",
+    "simple-git": "^3.28.0",
+    "ws": "^8.18.3"
+  }
+}
