@@ -10,16 +10,16 @@ const PinInputBox = React.forwardRef(({ value, isFocused, isError }, ref) => (
     type="password"
     maxLength="1"
     placeholder="•"
-    // Classes match the queue app's theme (using dark:bg-surface-dark variations)
+    // Updated classes to match the new theme's surfaces and borders
     className={`
-      w-14 h-16 text-center text-3xl font-bold rounded-lg transition-all shadow-sm
-      bg-slate-50 dark:bg-[#111922] 
+      w-14 h-16 text-center text-3xl font-bold rounded-xl transition-all shadow-md
+      bg-slate-50 dark:bg-slate-800 
       text-slate-900 dark:text-white 
       placeholder-slate-300 dark:placeholder-slate-600 
       focus:outline-none focus:ring-0
       ${
         isFocused
-          ? "border-2 border-primary focus:border-primary"
+          ? "border-2 border-indigo-500 focus:border-indigo-500 shadow-indigo-200 dark:shadow-indigo-900/50"
           : "border-2 border-slate-200 dark:border-slate-700"
       }
       ${isError ? "border-rose-500 dark:border-rose-400" : ""}
@@ -28,21 +28,22 @@ const PinInputBox = React.forwardRef(({ value, isFocused, isError }, ref) => (
 ));
 
 const NumpadButton = ({ value, isDelete, onClick }) => {
+  // Use a slightly softer shadow and scale on click to match theme feel
   const baseClasses =
-    "h-14 w-full rounded-lg transition-all shadow-sm active:scale-95 flex items-center justify-center";
+    "h-14 w-full rounded-xl transition-all shadow-sm active:scale-[0.98] flex items-center justify-center";
 
-  // Custom dark classes for numpad buttons from original HTML:
+  // Updated number classes to match the new theme's secondary buttons/surfaces
   const numberClasses = `
-    bg-slate-100 dark:bg-[#252D36] 
-    hover:bg-slate-200 dark:hover:bg-[#323D49] 
-    hover:text-primary dark:hover:text-primary 
+    bg-slate-100 dark:bg-slate-800 
+    hover:bg-indigo-50 dark:hover:bg-indigo-900/20 
+    hover:text-indigo-600 dark:hover:text-indigo-400 
     text-xl font-semibold text-slate-700 dark:text-slate-200
   `;
 
-  // Custom styles for backspace/delete key
+  // Updated styles for backspace/delete key
   const deleteClasses = `
-    bg-slate-100 dark:bg-[#252D36]
-    hover:bg-rose-100 dark:hover:bg-rose-900/30 
+    bg-slate-100 dark:bg-slate-800
+    hover:bg-rose-50 dark:hover:bg-rose-900/20 
     hover:text-rose-500 dark:hover:text-rose-400 
     text-slate-700 dark:text-slate-200
   `;
@@ -63,14 +64,15 @@ const NumpadButton = ({ value, isDelete, onClick }) => {
 
 // --- Main Page Component ---
 
-const StaffLoginPage = () => {
+const StaffLoginPage = ({onLoginSuccess}) => {
   const [pin, setPin] = useState(["", "", "", ""]);
   const [error, setError] = useState(false);
   const pinInputRefs = useRef([]);
 
   const PIN_LENGTH = 4;
+  const currentPinLength = pin.filter((val) => val !== "").length;
   const currentlyFocusedIndex = pin.findIndex((val) => val === "");
-  const isPinComplete = pin.every((val) => val !== "");
+  const isPinComplete = currentPinLength === PIN_LENGTH;
 
   // Effect to manage focus on the next available input box
   useEffect(() => {
@@ -88,8 +90,11 @@ const StaffLoginPage = () => {
     setError(false);
     if (!isPinComplete) {
       const newPin = [...pin];
-      newPin[currentlyFocusedIndex] = number;
-      setPin(newPin);
+      // Only update if the current position is empty
+      if (newPin[currentlyFocusedIndex] === "") {
+        newPin[currentlyFocusedIndex] = number;
+        setPin(newPin);
+      }
     }
   };
 
@@ -97,14 +102,18 @@ const StaffLoginPage = () => {
   const handleDelete = () => {
     setError(false);
     // Find the last filled index
-    let lastFilledIndex = PIN_LENGTH - 1;
-    while (lastFilledIndex >= 0 && pin[lastFilledIndex] === "") {
-      lastFilledIndex--;
+    let indexToClear = PIN_LENGTH - 1;
+    // If the PIN is complete, we clear the last one
+    if (isPinComplete) {
+      indexToClear = PIN_LENGTH - 1;
+    } else {
+      // If PIN is not complete, we clear the index right before the current focus/empty slot
+      indexToClear = currentlyFocusedIndex - 1;
     }
 
-    if (lastFilledIndex !== -1) {
+    if (indexToClear >= 0) {
       const newPin = [...pin];
-      newPin[lastFilledIndex] = "";
+      newPin[indexToClear] = "";
       setPin(newPin);
     }
   };
@@ -117,14 +126,16 @@ const StaffLoginPage = () => {
       console.log(`Attempting login with PIN: ${fullPin}`);
 
       // --- Simulated Authentication ---
-      if (fullPin === "1234") {
-        console.log("Login Successful!");
-        alert("Login Successful! You can now access the queue screen.");
-        // In a real app, this would trigger navigation
-      } else {
-        setError(true);
-        setPin(["", "", "", ""]); // Clear PIN on error
-      }
+      // Delay to simulate a network call
+      setTimeout(() => {
+        if (fullPin === "1234") {
+          console.log("Login Successful!");
+          onLoginSuccess();
+        } else {
+          setError(true);
+          setPin(["", "", "", ""]); // Clear PIN on error
+        }
+      }, 300); // Simulate network delay
       // ---------------------------------------------
     }
   };
@@ -133,16 +144,17 @@ const StaffLoginPage = () => {
   const numpadKeys = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
   return (
-    // Outer container matching the theme of the original queue screen
+    // Outer container matching the new theme's structure and background
     <div className="dark:bg-background-dark bg-background-light text-slate-700 dark:text-slate-200 font-display transition-colors duration-300 min-h-screen flex items-center justify-center p-4">
-      {/* Login Card */}
-      <div className="w-full max-w-[420px] bg-white dark:bg-surface-dark rounded-xl shadow-2xl overflow-hidden flex flex-col p-8 gap-8 border border-slate-200 dark:border-slate-800 relative z-10">
-        {/* Header Section: Profile & Station Info */}
+      {/* Login Card - Using the new theme's card styling (rounded-3xl, shadow, borders) */}
+      <div className="w-full max-w-[400px] bg-white dark:bg-slate-900 rounded-3xl shadow-xl overflow-hidden flex flex-col p-8 gap-8 border border-slate-200 dark:border-slate-800 relative z-10">
+        {/* Header Section: Profile & Info */}
         <div className="flex flex-col items-center gap-4">
           <div className="relative group">
+            {/* Profile Picture Styling with new theme colors */}
             <div
-              className="bg-center bg-no-repeat bg-cover rounded-full h-24 w-24 border-[3px] border-primary shadow-lg"
-              data-alt="Profile picture of the current staff member or generic avatar"
+              className="bg-center bg-no-repeat bg-cover rounded-full h-24 w-24 border-[4px] border-indigo-500 shadow-xl shadow-indigo-200/50 dark:shadow-indigo-900/50"
+              data-alt="Staff Profile Picture"
               style={{
                 backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuCsoZAOZZlo0GAobK6jgwgD9EnZ3S8jLvxnTQUBYoeFsFVduIMh89msfI3X8RXsME61Ms7Ybu4AhNtbquOp44Zyvo42KwGYfIhbs-P8vDziuTlpsHO0E25OL5_nWTN1LZXtv1InfcnKg1X35ryjJV0YJskeppi2iKOceUJi96phDdbx7U_p60JsBBEJCuBnhhEvvbqCXKtrlGdQ5UDZGzC_XiQqTxpoDOex6VPCpk70wpPcF2_lK-GG2l59MIzXAfGg59m5fydfOU0')`,
               }}
@@ -152,16 +164,16 @@ const StaffLoginPage = () => {
 
         {/* Instruction Text */}
         <div className="text-center">
-          <h1 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">
+          <h1 className="text-2xl font-black text-slate-800 dark:text-white mb-2 tracking-tight">
             Staff Access
           </h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm">
-            Enter your 4-digit security PIN to access
+            Enter your 4-digit security PIN to access the Queue.
           </p>
         </div>
 
         {/* PIN Input Display */}
-        <div className="flex gap-4 justify-center w-full px-4">
+        <div className="flex gap-3 justify-center w-full px-4">
           {pin.map((digit, index) => (
             <PinInputBox
               key={index}
@@ -180,7 +192,7 @@ const StaffLoginPage = () => {
         )}
 
         {/* Virtual Numpad */}
-        <div className="grid grid-cols-3 gap-3 w-full max-w-[280px] mx-auto">
+        <div className="grid grid-cols-3 gap-3 w-full max-w-[250px] mx-auto">
           {/* Numpad 1-9 */}
           {numpadKeys.map((num) => (
             <NumpadButton
@@ -190,7 +202,7 @@ const StaffLoginPage = () => {
             />
           ))}
           {/* Row 4: Spacer, 0, Backspace */}
-          <div className="h-14 w-full"></div> {/* Spacer */}
+          <div className="h-14 w-full"></div> {/* Spacer for alignment */}
           <NumpadButton value={0} onClick={() => handlePinEntry("0")} />
           <NumpadButton isDelete onClick={handleDelete} />
         </div>
@@ -200,13 +212,14 @@ const StaffLoginPage = () => {
           <button
             onClick={handleLogin}
             disabled={!isPinComplete}
+            // Button styling updated to match the primary button style of the new theme
             className={`
-              w-full h-12 text-white text-base font-bold rounded-lg transition-all shadow-md 
+              w-full h-12 text-white text-base font-bold rounded-xl transition-all shadow-lg
               flex items-center justify-center gap-2 active:scale-[0.99]
               ${
                 isPinComplete
-                  ? "bg-primary hover:bg-indigo-700 shadow-primary/30"
-                  : "bg-slate-400 dark:bg-slate-700 cursor-not-allowed shadow-none"
+                  ? "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-300/50 dark:shadow-indigo-900/50"
+                  : "bg-slate-300 dark:bg-slate-700 cursor-not-allowed shadow-none"
               }
             `}
           >
