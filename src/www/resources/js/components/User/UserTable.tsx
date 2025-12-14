@@ -48,18 +48,14 @@ export const columns: ColumnDef<User>[] = [
         header: 'Name',
     },
     {
-        accessorKey: 'email',
-        header: 'Email',
-    },
-    {
-        accessorKey: 'number',
-        header: 'Number',
-    },
-    {
         // Access nested property for Service Name
         accessorKey: 'service.name',
         header: 'Service',
         cell: (info) => info.getValue(),
+    },
+    {
+        accessorKey: 'login_pin',
+        header: 'Login Pin',
     },
     {
         id: 'actions',
@@ -82,7 +78,7 @@ export const columns: ColumnDef<User>[] = [
                 if (!confirm('Are you sure you want to delete this user?')) return;
 
                 destroy(`/users/${id}`, {
-                    onSuccess: () => {},
+                    onSuccess: () => { },
                 });
             };
 
@@ -180,35 +176,11 @@ export default function UserTable({ items }: UserTableProps) {
                 <div className="flex items-center">
                     {/* Filter Input */}
                     <Input
-                        placeholder="Filter names..."
+                        placeholder="Search..."
                         value={(table.getColumn('name')?.getFilterValue() as string) ?? ''}
                         onChange={(event) => table.getColumn('name')?.setFilterValue(event.target.value)}
                         className="mr-1 max-w-sm border border-white/20"
                     />
-
-                    {/* Column Visibility Dropdown */}
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button className="ml-2 bg-gray-900 text-white hover:bg-gray-700">
-                                Columns <ChevronDown className="ml-2 h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            {table
-                                .getAllColumns()
-                                .filter((column) => column.getCanHide())
-                                .map((column) => (
-                                    <DropdownMenuCheckboxItem
-                                        key={column.id}
-                                        className="capitalize"
-                                        checked={column.getIsVisible()}
-                                        onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                                    >
-                                        {column.id}
-                                    </DropdownMenuCheckboxItem>
-                                ))}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
                 </div>
 
                 {/* Create Button */}

@@ -4,7 +4,7 @@ namespace App\Http\Requests\User;
 
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rules;
+use Illuminate\Validation\Rule;
 
 class StoreRequest extends FormRequest
 {
@@ -16,12 +16,14 @@ class StoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'service_id' => 'required|min:1|numeric',
-            // 'counter_id' => 'nullable|min:1|numeric',
+            'service_id' => 'required|integer|min:1',
             'name' => 'required|string|max:255',
-            'email' => 'required|string|lowercase|email|max:255|unique:' . User::class,
-            'number' => 'required|string|max:255|unique:' . User::class,
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+
+            'login_pin' => [
+                'required',
+                'digits_between:4,6',
+                Rule::unique('users', 'login_pin')->ignore($this->user),
+            ],
         ];
     }
 }

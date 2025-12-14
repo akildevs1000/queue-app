@@ -171,35 +171,11 @@ export default function CounterTable({ items }: CounterTableProps) {
                 <div className="flex items-center">
                     {/* Filter Input */}
                     <Input
-                        placeholder="Filter names..." // Changed to 'names' as filter is on 'name' column
+                        placeholder="Search..." // Changed to 'names' as filter is on 'name' column
                         value={(table.getColumn('name')?.getFilterValue() as string) ?? ''}
                         onChange={(event) => table.getColumn('name')?.setFilterValue(event.target.value)}
                         className="mr-1 max-w-sm border border-white/20"
                     />
-
-                    {/* Column Visibility Dropdown */}
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button className="ml-2 bg-gray-900 text-white hover:bg-gray-700">
-                                Columns <ChevronDown className="ml-2 h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            {table
-                                .getAllColumns()
-                                .filter((column) => column.getCanHide())
-                                .map((column) => (
-                                    <DropdownMenuCheckboxItem
-                                        key={column.id}
-                                        className="capitalize"
-                                        checked={column.getIsVisible()}
-                                        onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                                    >
-                                        {column.id}
-                                    </DropdownMenuCheckboxItem>
-                                ))}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
                 </div>
 
                 {/* Create Button */}

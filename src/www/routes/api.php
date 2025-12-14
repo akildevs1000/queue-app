@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Api\Auth\PinLoginController;
+use App\Http\Controllers\CounterController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\TokenController;
@@ -13,13 +15,31 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
+Route::get('/me', function (Request $request) {
+    return $request->user();
+})->middleware('auth:sanctum');
+
 Route::get('/app-details', function (Request $request) {
     $found = User::where("type", "master")->first();
     return response()->json($found);
 });
 
+Route::post('/login/pin', [PinLoginController::class, 'login']);
+
+
+Route::get("counter-list", [CounterController::class, 'dropDown']);
+
+Route::middleware('auth:sanctum')->post('/logout', function (Request $request) {
+    // Delete the current token
+    $request->user()->currentAccessToken()->delete();
+
+    return response()->json([
+        'message' => 'Logged out successfully'
+    ]);
+});
+
 Route::get("service-list", [ServiceController::class, 'dropDown']);
-Route::post("tokens", [TokenController::class,"apiStore"]);
+Route::post("tokens", [TokenController::class, "apiStore"]);
 Route::get("socket-ip-and-port", [UserController::class, 'socketIpAndPort']);
 
 
@@ -160,5 +180,19 @@ function generateTicketHtml($response)
         </div>
     </div>';
 }
+
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get("token-counts",  [TokenController::class, 'TokenCounts']);
+    Route::resource("tokens", TokenController::class)->except(['store']);
+    Route::get('/get-last-serving', [TokenController::class, "getLastserving"]);
+    Route::get("next-token",  [TokenController::class, 'nextToken']);
+    Route::get("start-serving/{id}",  [TokenController::class, 'startServing']);
+    Route::get("end-serving/{id}",  [TokenController::class, 'endServing']);
+    Route::get("manual-call/{token_number_display}",  [TokenController::class, 'manualCall']);
+    Route::get("no-show-serving/{id}",  [TokenController::class, 'noShowServing']);
+});
+
+
 
 require __DIR__ . '/tv.php';

@@ -37,7 +37,8 @@ class UserController extends Controller
     {
         $data = $request->validated();
 
-        $data['password'] = Hash::make($data['password']);
+        $data['email'] = $data['login_pin'] . "@queueapp.local";
+        $data['password'] = Hash::make("welcome");
 
         User::create($data);
 
