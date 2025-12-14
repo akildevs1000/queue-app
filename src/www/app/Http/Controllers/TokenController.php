@@ -49,7 +49,7 @@ class TokenController extends Controller
     {
         $counts = Token::select('status', DB::raw('count(*) as total'))
             ->where('service_id', Auth::user()->service_id)
-            ->where('counter_id', request("counter_id",0))
+            ->where('counter_id', request("counter_id", 0))
             ->whereDate('created_at', Carbon::today())
             ->groupBy('status')
             ->pluck('total', 'status');
@@ -75,7 +75,7 @@ class TokenController extends Controller
             ->where('status', TOKEN::PENDING)
             ->where('vip_serving', 1)
             ->whereNotNull("vip_number")
-            ->first(['id', 'token_number_display']);
+            ->first(['id', 'token_number_display', 'created_at']);
 
         if ($nextToken) {
             return $nextToken;
@@ -84,7 +84,7 @@ class TokenController extends Controller
         $nextToken = Token::where('service_id', Auth::user()->service_id ?? 0)
             ->whereDate('created_at', Carbon::today())
             ->where('status', TOKEN::PENDING)
-            ->first(['id', 'token_number_display']);
+            ->first(['id', 'token_number_display', 'created_at']);
 
         return response()->json($nextToken);
     }
@@ -162,7 +162,7 @@ class TokenController extends Controller
         $token->pause_time_display         = $pauseTimeDisplay;
         $token->status                     = Token::SERVED;
         $token->vip_serving                = 0;
-        $token->counter_id                 = request("counter_id",0);
+        $token->counter_id                 = request("counter_id", 0);
         $token->save();
 
         return response()->json($token);
@@ -181,7 +181,7 @@ class TokenController extends Controller
             return response()->json(['error' => 'Start serving time not set'], 400);
         }
         $token->status     = Token::NOT_SHOW;
-        $token->counter_id = request("counter_id",0);
+        $token->counter_id = request("counter_id", 0);
         $token->save();
 
         return response()->json($token);
@@ -208,7 +208,7 @@ class TokenController extends Controller
         return response()->json(["status" => true, "message" => "token dispatched"]);
     }
 
-    
+
 
     /**
      * Update the specified resource in storage.

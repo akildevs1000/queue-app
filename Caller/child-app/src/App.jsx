@@ -1,30 +1,79 @@
-// src/App.jsx
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import CallerScreen from "./CallerScreen";
-import "./index.css"; // Make sure your main CSS is imported
 import StaffPinLogin from "./StaffPinLogin";
+import "./index.css";
+import { logout } from "./api/auth";
 
 function App() {
-  // 1. Create state to track authentication status
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // 2. Define the callback function to update the state
-  const handleLoginSuccess = useCallback(() => {
-    setIsLoggedIn(true);
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    // Sync React state with HTML class on initial load and change
+    if (isDark) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [isDark]);
+
+  const toggleDarkMode = () => {
+    setIsDark((prev) => !prev);
+  };
+
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // start as true
+
+  // Check if token exists on mount
+  useEffect(() => {
+    const token = localStorage.getItem("auth_token");
+    if (token) {
+      // Simulate token validation delay if needed
+      setTimeout(() => {
+        setIsLoggedIn(true);
+        setIsLoading(false);
+      }, 500); // optional delay
+    } else {
+      setIsLoading(false);
+    }
   }, []);
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
+  const handleLoginSuccess = useCallback(() => {
+    setIsLoading(true);
+    // small delay to simulate login process
+    setTimeout(() => {
+      setIsLoggedIn(true);
+      setIsLoading(false);
+    }, 300);
+  }, []);
+
+
+  const handleLogout = async () => {
+    await logout();
+    setIsLoading(true);
+    // small delay to simulate logout process
+    setTimeout(() => {
+      setIsLoggedIn(false);
+      setIsLoading(false);
+    }, 300);
   };
+
+  if (isLoading) {
+    // You can replace this with any loader/spinner component
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-900">
+        <div className="text-indigo-600 dark:text-indigo-400 font-bold text-xl">
+          Loading...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
-      {/* 3. Conditionally render components based on state */}
       {isLoggedIn ? (
-        // Show CallerScreen if logged in
-        <CallerScreen onLogout={handleLogout} />
+        <CallerScreen handleLogout={handleLogout} toggleDarkMode={toggleDarkMode} isDark={isDark} />
       ) : (
-        // Show StaffPinLogin if not logged in, passing the callback
         <StaffPinLogin onLoginSuccess={handleLoginSuccess} />
       )}
     </>
