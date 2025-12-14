@@ -50,8 +50,6 @@ function App() {
         setSelectedLanguages(data.languages);
       });
     } else {
-      // Running in Browser
-      setIp("192.168.2.46");
       setShowIpDialog(true);
     }
   }, []);
@@ -114,55 +112,57 @@ function App() {
     setData(updatedData);
   };
 
-  // WebSocket connection logic
-  useEffect(() => {
-    if (!ip) return; // only connect if IP is set
 
-    const SOCKET_RETRY_INTERVAL = 30000;
+  const connectSocket = (currentIp) => {
+    try {
+      setRetrying(false);
 
-    const connectSocket = () => {
-      try {
+      const socket = new WebSocket(`ws://${currentIp}:7777`);
+      socketRef.current = socket;
+
+      socket.addEventListener("open", () => {
+        console.log("✅ Connected to WS server:", currentIp);
         setRetrying(false);
-        const socket = new WebSocket(`ws://${ip}:7777`);
-        socketRef.current = socket;
 
-        socket.addEventListener("open", () => {
-          console.log("Connected to WS server");
-          setRetrying(false);
-          if (socketRetryTimeout.current) {
-            clearTimeout(socketRetryTimeout.current);
-            socketRetryTimeout.current = null;
-          }
-        });
+        if (socketRetryTimeout.current) {
+          clearTimeout(socketRetryTimeout.current);
+          socketRetryTimeout.current = null;
+        }
+      });
 
-        const retrySocket = () => {
-          setRetrying(true);
-          socketRetryTimeout.current = setTimeout(
-            connectSocket,
-            SOCKET_RETRY_INTERVAL
-          );
-        };
-
-        socket.addEventListener("close", retrySocket);
-        socket.addEventListener("error", retrySocket);
-      } catch (err) {
+      const retrySocket = () => {
         setRetrying(true);
         socketRetryTimeout.current = setTimeout(
-          connectSocket,
+          () => connectSocket(currentIp),
           SOCKET_RETRY_INTERVAL
         );
-        console.error("Failed to connect WebSocket", err);
-      }
-    };
+      };
 
-    connectSocket();
+      socket.addEventListener("close", retrySocket);
+      socket.addEventListener("error", retrySocket);
+    } catch (err) {
+      console.error("WS connect failed", err);
+    }
+  };
+
+  useEffect(() => {
+    if (!ip) return;
+
+    connectSocket(ip);
 
     return () => {
       if (socketRetryTimeout.current) {
         clearTimeout(socketRetryTimeout.current);
+        socketRetryTimeout.current = null;
+      }
+
+      if (socketRef.current) {
+        socketRef.current.close();
+        socketRef.current = null;
       }
     };
   }, [ip]);
+
 
   // Auto-submit when service selected
   useEffect(() => {
@@ -304,9 +304,8 @@ function App() {
           />
         </div>
         <main
-          className={`flex-1 px-10 py-8 flex items-center justify-center ${
-            darkMode ? "" : "bg-white"
-          }`}
+          className={`flex-1 px-10 py-8 flex items-center justify-center ${darkMode ? "" : "bg-white"
+            }`}
         >
           {step === "language" && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-5xl">
