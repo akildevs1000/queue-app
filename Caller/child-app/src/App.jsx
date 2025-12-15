@@ -1,11 +1,13 @@
 import React, { useState, useCallback, useEffect } from "react";
 import CallerScreen from "./CallerScreen";
 import StaffPinLogin from "./StaffPinLogin";
+import IpPromptModal from "./components/IpPromptModal";
 import "./index.css";
 import { logout } from "./api/auth";
 
 function App() {
   const [LOCAL_IP, setIp] = useState(null);
+  const [showIpPrompt, setShowIpPrompt] = useState(false);
 
   useEffect(() => {
     const handleMessage = (event) => {
@@ -23,9 +25,9 @@ function App() {
 
     window.addEventListener("message", handleMessage);
 
-    // ⏱ fallback if message never arrives (e.g. WebView issue)
+    // ⏱ if IP not received, show popup
     const timeout = setTimeout(() => {
-      setIp((prev) => prev ?? "localhost");
+      setShowIpPrompt(true);
     }, 2000);
 
     return () => {
@@ -34,33 +36,28 @@ function App() {
     };
   }, []);
 
-  const [isDark, setIsDark] = useState(false);
-
-  useEffect(() => {
-    // Sync React state with HTML class on initial load and change
-    if (isDark) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, [isDark]);
-
-  const toggleDarkMode = () => {
-    setIsDark((prev) => !prev);
+  const handleIpSubmit = (ip) => {
+    setIp(ip);
+    setShowIpPrompt(false);
   };
 
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isLoading, setIsLoading] = useState(true); // start as true
+  const [isDark, setIsDark] = useState(false);
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", isDark);
+  }, [isDark]);
 
-  // Check if token exists on mount
+  const toggleDarkMode = () => setIsDark((p) => !p);
+
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
     const token = localStorage.getItem("auth_token");
     if (token) {
-      // Simulate token validation delay if needed
       setTimeout(() => {
         setIsLoggedIn(true);
         setIsLoading(false);
-      }, 500); // optional delay
+      }, 500);
     } else {
       setIsLoading(false);
     }
@@ -68,7 +65,6 @@ function App() {
 
   const handleLoginSuccess = useCallback(() => {
     setIsLoading(true);
-    // small delay to simulate login process
     setTimeout(() => {
       setIsLoggedIn(true);
       setIsLoading(false);
@@ -78,7 +74,6 @@ function App() {
   const handleLogout = async () => {
     await logout();
     setIsLoading(true);
-    // small delay to simulate logout process
     setTimeout(() => {
       setIsLoggedIn(false);
       setIsLoading(false);
@@ -86,7 +81,6 @@ function App() {
   };
 
   if (isLoading) {
-    // You can replace this with any loader/spinner component
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-900">
         <div className="text-indigo-600 dark:text-indigo-400 font-bold text-xl">
@@ -96,25 +90,26 @@ function App() {
     );
   }
 
-  if (!LOCAL_IP) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        Waiting for IP...
-      </div>
-    );
-  }
-
   return (
     <>
-      {isLoggedIn ? (
-        <CallerScreen
-          ip={LOCAL_IP}
-          handleLogout={handleLogout}
-          toggleDarkMode={toggleDarkMode}
-          isDark={isDark}
-        />
-      ) : (
-        <StaffPinLogin ip={LOCAL_IP} onLoginSuccess={handleLoginSuccess} />
+      {showIpPrompt && !LOCAL_IP && (
+        <IpPromptModal onSubmit={handleIpSubmit} />
+      )}
+
+      {LOCAL_IP && (
+        isLoggedIn ? (
+          <CallerScreen
+            ip={LOCAL_IP}
+            handleLogout={handleLogout}
+            toggleDarkMode={toggleDarkMode}
+            isDark={isDark}
+          />
+        ) : (
+          <StaffPinLogin
+            ip={LOCAL_IP}
+            onLoginSuccess={handleLoginSuccess}
+          />
+        )
       )}
     </>
   );
