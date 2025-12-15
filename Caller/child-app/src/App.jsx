@@ -25,7 +25,7 @@ function App() {
 
     // ⏱ fallback if message never arrives (e.g. WebView issue)
     const timeout = setTimeout(() => {
-      setIp((prev) => prev ?? DEFAULT_IP);
+      setIp((prev) => prev ?? "localhost");
     }, 2000);
 
     return () => {

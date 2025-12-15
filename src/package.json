@@ -67,6 +67,10 @@
       {
         "from": "dispener",
         "to": "dispener"
+      },
+      {
+        "from": "caller",
+        "to": "caller"
       }
     ],
     "productName": "SmartQueue",
