@@ -1,8 +1,7 @@
-const BASE_URL = "http://192.168.1.205:8000"; // replace with your backend IP
 
 // --- Login with PIN ---
-export async function loginWithPin(pin) {
-  const response = await fetch(`${BASE_URL}/api/login/pin`, {
+export async function loginWithPin(ip, pin) {
+  const response = await fetch(`http://${ip}:8000/api/login/pin`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

@@ -18,9 +18,10 @@ const PinInputBox = React.forwardRef(({ value, isFocused, isError }, ref) => (
       text-slate-900 dark:text-white 
       placeholder-slate-300 dark:placeholder-slate-600 
       focus:outline-none focus:ring-0
-      ${isFocused
-        ? "border-2 border-indigo-500 focus:border-indigo-500 shadow-indigo-200 dark:shadow-indigo-900/50"
-        : "border-2 border-slate-200 dark:border-slate-700"
+      ${
+        isFocused
+          ? "border-2 border-indigo-500 focus:border-indigo-500 shadow-indigo-200 dark:shadow-indigo-900/50"
+          : "border-2 border-slate-200 dark:border-slate-700"
       }
       ${isError ? "border-rose-500 dark:border-rose-400" : ""}
     `}
@@ -64,7 +65,7 @@ const NumpadButton = ({ value, isDelete, onClick }) => {
 
 // --- Main Page Component ---
 
-const StaffLoginPage = ({ onLoginSuccess }) => {
+const StaffLoginPage = ({ ip, onLoginSuccess }) => {
   const [pin, setPin] = useState(["", "", "", ""]);
   const [error, setError] = useState(null);
   const pinInputRefs = useRef([]);
@@ -118,7 +119,6 @@ const StaffLoginPage = ({ onLoginSuccess }) => {
     }
   };
 
-    
   const handleLogin = async () => {
     const fullPin = pin.join("");
 
@@ -126,14 +126,13 @@ const StaffLoginPage = ({ onLoginSuccess }) => {
 
     try {
       setError(null);
-      await loginWithPin(fullPin);
+      await loginWithPin(ip, fullPin);
       onLoginSuccess(); // move to next screen
     } catch (err) {
       setError(err.message);
       setPin(["", "", "", ""]);
     }
   };
-
 
   // Numpad layout: 1-9, spacer, 0, backspace
   const numpadKeys = [1, 2, 3, 4, 5, 6, 7, 8, 9];
@@ -211,9 +210,10 @@ const StaffLoginPage = ({ onLoginSuccess }) => {
             className={`
               w-full h-12 text-white text-base font-bold rounded-xl transition-all shadow-lg
               flex items-center justify-center gap-2 active:scale-[0.99]
-              ${isPinComplete
-                ? "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-300/50 dark:shadow-indigo-900/50"
-                : "bg-slate-300 dark:bg-slate-700 cursor-not-allowed shadow-none"
+              ${
+                isPinComplete
+                  ? "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-300/50 dark:shadow-indigo-900/50"
+                  : "bg-slate-300 dark:bg-slate-700 cursor-not-allowed shadow-none"
               }
             `}
           >

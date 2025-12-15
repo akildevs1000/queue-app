@@ -13,11 +13,9 @@ import { useWebSocket } from "./hooks/useWebSocket";
 import { useTokenCounts } from "./hooks/useTokenCounts";
 import { useNextToken } from "./hooks/useNextToken";
 
-
-const localIp = "192.168.1.205";
-const WS_URL = `ws://${localIp}:7777`;
-
-const CallerScreen = ({ handleLogout, toggleDarkMode, isDark }) => {
+const CallerScreen = ({ ip, handleLogout, toggleDarkMode, isDark }) => {
+  const localIp = ip;
+  const WS_URL = `ws://${localIp}:7777`;
 
   const { isConnected, messages, sendMessage } = useWebSocket(WS_URL);
   const [selectedCounterId, setSelectedCounterId] = useState(null);
@@ -26,10 +24,7 @@ const CallerScreen = ({ handleLogout, toggleDarkMode, isDark }) => {
   const [isServing, setIsServing] = useState(false);
   const [startTime, setStartTime] = useState(null);
 
-
   const tokenCounts = useTokenCounts(selectedCounterId, localIp, messages);
-
-
 
   const [servingInfo, setServingInfo] = useState(null);
 
@@ -49,7 +44,6 @@ const CallerScreen = ({ handleLogout, toggleDarkMode, isDark }) => {
     setStartTime(Date.now());
   };
 
-
   const handleAction = (action) => console.log(`${action} clicked`);
 
   return (
@@ -63,7 +57,6 @@ const CallerScreen = ({ handleLogout, toggleDarkMode, isDark }) => {
             {/* Stat Cards */}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
               <ServingTimeCard time="05:23" />
 
               <StatCard

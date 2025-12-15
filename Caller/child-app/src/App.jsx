@@ -4,8 +4,9 @@ import StaffPinLogin from "./StaffPinLogin";
 import "./index.css";
 import { logout } from "./api/auth";
 
-function App() {
+const LOCAL_IP = "192.168.2.46";
 
+function App() {
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -47,7 +48,6 @@ function App() {
     }, 300);
   }, []);
 
-
   const handleLogout = async () => {
     await logout();
     setIsLoading(true);
@@ -72,9 +72,14 @@ function App() {
   return (
     <>
       {isLoggedIn ? (
-        <CallerScreen handleLogout={handleLogout} toggleDarkMode={toggleDarkMode} isDark={isDark} />
+        <CallerScreen
+          ip={LOCAL_IP}
+          handleLogout={handleLogout}
+          toggleDarkMode={toggleDarkMode}
+          isDark={isDark}
+        />
       ) : (
-        <StaffPinLogin onLoginSuccess={handleLoginSuccess} />
+        <StaffPinLogin ip={LOCAL_IP} onLoginSuccess={handleLoginSuccess} />
       )}
     </>
   );
