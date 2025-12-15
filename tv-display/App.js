@@ -187,6 +187,12 @@ export default function Welcome() {
           }, 1000);
 
         }
+        if (eventType === 'token-serving-end' && tokenData) {
+          sendTokenInfoToChild({
+            ...tokenData,
+            status: "end",
+          });
+        }
       } catch (e) { console.log(e); }
     };
 
