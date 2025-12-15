@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { fetchTokenCounts } from "../api/actions";
 
 export const useTokenCounts = (counterId, localIp, messages) => {
@@ -6,20 +6,20 @@ export const useTokenCounts = (counterId, localIp, messages) => {
   const lastCountsRef = useRef(null);
   const pollingRef = useRef(null);
 
-  // Initial load / counter change
-  useEffect(() => {
+  const load = useCallback(async () => {
     if (!counterId) return;
 
-    const load = async () => {
-      const data = await fetchTokenCounts(counterId, localIp);
-      if (data) {
-        setTokenCounts(data);
-        lastCountsRef.current = data;
-      }
-    };
-
-    load();
+    const data = await fetchTokenCounts(counterId, localIp);
+    if (data) {
+      setTokenCounts(data);
+      lastCountsRef.current = data;
+    }
   }, [counterId, localIp]);
+
+  // Initial load / counter change
+  useEffect(() => {
+    load();
+  }, [load]);
 
   // WebSocket-triggered refresh with polling fallback
   useEffect(() => {
@@ -29,10 +29,9 @@ export const useTokenCounts = (counterId, localIp, messages) => {
     if (lastMessage.event !== "new-ticket") return;
 
     let attempts = 0;
-    const MAX_ATTEMPTS = 8;        // ~8 seconds
-    const INTERVAL = 1000;         // 1 second
+    const MAX_ATTEMPTS = 8;
+    const INTERVAL = 1000;
 
-    // Clear existing polling
     if (pollingRef.current) {
       clearInterval(pollingRef.current);
     }
@@ -55,7 +54,6 @@ export const useTokenCounts = (counterId, localIp, messages) => {
         pollingRef.current = null;
       }
 
-      // Safety stop
       if (attempts >= MAX_ATTEMPTS) {
         clearInterval(pollingRef.current);
         pollingRef.current = null;
@@ -70,5 +68,8 @@ export const useTokenCounts = (counterId, localIp, messages) => {
     };
   }, [messages, counterId, localIp]);
 
-  return tokenCounts;
+  return {
+    tokenCounts,
+    refetch: load,   // ✅ expose manual refresh
+  };
 };

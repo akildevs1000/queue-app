@@ -4,9 +4,36 @@ import StaffPinLogin from "./StaffPinLogin";
 import "./index.css";
 import { logout } from "./api/auth";
 
-const LOCAL_IP = "192.168.2.46";
-
 function App() {
+  const [LOCAL_IP, setIp] = useState(null);
+
+  useEffect(() => {
+    const handleMessage = (event) => {
+      if (!event.data) return;
+
+      try {
+        const data =
+          typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+
+        if (data?.ipUrl) {
+          setIp(data.ipUrl);
+        }
+      } catch (e) {}
+    };
+
+    window.addEventListener("message", handleMessage);
+
+    // ⏱ fallback if message never arrives (e.g. WebView issue)
+    const timeout = setTimeout(() => {
+      setIp((prev) => prev ?? DEFAULT_IP);
+    }, 2000);
+
+    return () => {
+      window.removeEventListener("message", handleMessage);
+      clearTimeout(timeout);
+    };
+  }, []);
+
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -65,6 +92,14 @@ function App() {
         <div className="text-indigo-600 dark:text-indigo-400 font-bold text-xl">
           Loading...
         </div>
+      </div>
+    );
+  }
+
+  if (!LOCAL_IP) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        Waiting for IP...
       </div>
     );
   }

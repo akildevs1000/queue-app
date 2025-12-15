@@ -6,31 +6,36 @@ export const useNextToken = (ip, selectedCounterId, sendMessage) => {
       const ticketInfo = await fetchNextToken(ip);
       if (!ticketInfo?.id) return null;
 
-      const startServingRes = await startServingToken(
+      const json = await startServingToken(
         ip,
         ticketInfo.id,
         selectedCounterId
       );
 
-      if (startServingRes?.counter) {
-        sendMessage({
+      let socketPayload = {};
+
+      if (json?.counter) {
+
+        socketPayload = {
           event: "token-serving",
-          data: startServingRes,
-        });
+          data: json,
+        };
+
+        sendMessage(socketPayload);
 
         sendMessage({
           event: "feedback",
           data: {
             counter_id: selectedCounterId,
             token_id: ticketInfo.id,
-            ...startServingRes,
+            ...json,
           },
         });
       }
 
       return {
         ticket: ticketInfo,
-        serving: startServingRes,
+        serving: json
       };
     } catch (err) {
       console.error("Failed to fetch next token or start serving:", err);

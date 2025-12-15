@@ -1,8 +1,14 @@
-const NowServingCard = ({ servingInfo }) => {
-  console.log("NowServingCard props:", servingInfo);
+import React, { useEffect } from "react";
+
+const NowServingCard = React.memo(({ servingInfo }) => {
+  
+  useEffect(() => {
+    console.log("NowServingCard props changed:", servingInfo);
+  }, [servingInfo]);
 
   const { ticket, serving } = servingInfo || {}; // destructure ticket & serving from servingInfo
 
+  console.log("Rendered NowServingCard");
   return (
     <div className="flex-1 min-h-[400px] bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm relative flex flex-col items-center justify-center p-8 overflow-hidden group">
       {/* Background Glow/Gradient */}
@@ -23,10 +29,10 @@ const NowServingCard = ({ servingInfo }) => {
         </div>
         <div className="space-y-4">
           <h1 className="text-7xl lg:text-8xl font-black text-slate-800 dark:text-white tracking-tight leading-none">
-            {serving?.token}
+            {serving?.token || "---"}
           </h1>
           <p className="text-2xl text-slate-500 dark:text-slate-400 font-medium">
-            Counter: {serving?.counter}
+            Counter: {serving?.counter || "---"}
           </p>
         </div>
         <div className="pt-10 grid grid-cols-2 gap-8 border-t border-slate-100 dark:border-slate-800 w-full mx-auto">
@@ -43,13 +49,13 @@ const NowServingCard = ({ servingInfo }) => {
               Ticket Issued
             </p>
             <p className="text-lg font-bold text-slate-700 dark:text-slate-200">
-              {ticket?.created_at_formatted}
+              {ticket?.created_at_formatted || "---"}
             </p>
           </div>
         </div>
       </div>
     </div>
   );
-};
+});
 
 export default NowServingCard;
