@@ -1,10 +1,6 @@
 const ServingList = ({ tokens }) => {
   return (
-    <div className="w-50 lg:w-[380px] bg-surface-darker border-l border-white/5 flex flex-col z-20 shadow-xl h-full shrink-0">
-      {/* Header Title Section */}
-
-      {/* Dynamic Token List Section */}
-      <div className="flex-grow overflow-hidden flex flex-col">
+    <div className="flex-grow overflow-hidden flex flex-col">
         <div className="flex-grow overflow-y-auto">
           {/* Check if tokens array is provided and not empty before mapping */}
           {tokens && tokens.length > 0 ? (
@@ -14,7 +10,6 @@ const ServingList = ({ tokens }) => {
                 className="px-6 py-4  hover:bg-white/[0.02] transition-colors duration-200 group cursor-default relative"
               >
 
-                {/* Visual indicator for "active" or "hovered" item */}
                 {/* <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div> */}
 
                 <div className="flex items-center justify-between mb-1">
@@ -23,7 +18,7 @@ const ServingList = ({ tokens }) => {
                     {token.number}
                   </span>
                   {/* Counter Information */}
-                  <span className="text-[14px] font-bold text-white uppercase bg-white/5 px-1.5 py-0.5 rounded border border-white/5">
+                  <span className="text-[16px] font-bold text-white uppercase">
                     04
                   </span>
                 </div>
@@ -33,7 +28,7 @@ const ServingList = ({ tokens }) => {
                     Teller
                   </span>
                   {/* Counter Information */}
-                  <span className="text-[14px] font-bold text-white uppercase bg-white/5 px-1.5 py-0.5 rounded border border-white/5">
+                  <span className="text-[14px] font-bold text-white uppercase bg-white/5">
                     Counter
                   </span>
                 </div>
@@ -48,7 +43,6 @@ const ServingList = ({ tokens }) => {
           )}
         </div>
       </div>
-    </div>
   );
 };
 

@@ -1,7 +1,7 @@
 const NowServingCard = ({ token }) => {
   return (
     <>
-      <div className="w-full h-[75vh] max-h-[85vh] bg-surface-dark rounded-2xl shadow-card overflow-hidden border border-white/5 flex flex-col relative group">
+      <div className="w-full max-h-[70vh] bg-surface-dark rounded-2xl shadow-card overflow-hidden border border-white/5 flex flex-col relative group">
         <div className="absolute inset-0 bg-card-sheen pointer-events-none"></div>
         <div className="bg-surface-darker/40 backdrop-blur-sm px-6 py-3 flex justify-between items-center border-b border-white/5 relative z-10 shrink-0 h-14">
           <div className="flex items-center gap-2.5">
@@ -18,15 +18,7 @@ const NowServingCard = ({ token }) => {
           </div>
         </div>
         <div className="p-6 md:p-10 flex flex-col items-center justify-center text-center flex-grow relative z-10">
-          <div className="mb-4 shrink-0">
-            {/* <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-300 text-[10px] font-bold uppercase tracking-wider border border-indigo-500/20">
-              <span className="material-symbols-outlined text-[14px]">
-                star
-              </span>
-              Priority Customer
-            </span> */}
-          </div>
-          <h2 className="text-[140px] lg:text-[220px] xl:text-[200px] font-display font-bold leading-none tracking-tight text-white drop-shadow-2xl mb-2">
+          <h2 className="text-[100px] lg:text-[220px] xl:text-[200px] font-display font-bold leading-none tracking-tight text-white drop-shadow-2xl mb-2">
             {token.token}
           </h2>
           <div className="w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent my-6 max-w-2xl shrink-0"></div>

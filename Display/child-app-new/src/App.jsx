@@ -21,7 +21,7 @@ const generateNextTokenNumber = (lastToken) => {
     num = parseInt(lastToken.substring(1)) + 1;
   } else {
     // Starting number if state is empty
-    num = 606; 
+    num = 606;
   }
   return `${prefix}${num}`;
 };
@@ -34,10 +34,10 @@ function App() {
   // 1. State for Token Simulation and Display
   const [currentTokens, setCurrentTokens] = useState(initialTokens);
   // NEW STATE: Track the absolute last generated token number for perfect sequence
-  const [lastTokenNumber, setLastTokenNumber] = useState("B605"); 
-  const [nowServingToken, setNowServingToken] = useState(null); 
-  const [showNowServing, setShowNowServing] = useState(false); 
-  
+  const [lastTokenNumber, setLastTokenNumber] = useState("B605");
+  const [nowServingToken, setNowServingToken] = useState(null);
+  const [showNowServing, setShowNowServing] = useState(false);
+
   // --- IP Prompt and Fetching App Details Logic (Unchanged) ---
   useEffect(() => {
     // ... (IP prompt logic)
@@ -49,7 +49,7 @@ function App() {
         if (data?.ipUrl) {
           setIp(data.ipUrl);
         }
-      } catch (e) {}
+      } catch (e) { }
     };
     window.addEventListener("message", handleMessage);
     const timeout = setTimeout(() => {
@@ -83,7 +83,7 @@ function App() {
   }, [LOCAL_IP, fetchAppDetails]);
 
   const [isDark, setIsDark] = useState(true);
-  const [youtubeVideoId, setYoutubeVideoId] = useState("84BNaEVxLd8"); 
+  const [youtubeVideoId, setYoutubeVideoId] = useState("84BNaEVxLd8");
   const [footerContent, setFooterContent] = useState(
     " • For ticket verification, please present your ID at Counter 1. • Mortgage inquiries, please take a ticket from Kiosk B. • Operating hours: 09:00 - 17:00. • Thank you for your patience. • Please keep your mask on at all times."
   );
@@ -96,28 +96,28 @@ function App() {
   // 2. Token Simulation: Add a new incremental token every 5 seconds
   useEffect(() => {
     const interval = setInterval(() => {
-      
+
       // Use setLastTokenNumber to safely get and set the next incremental number
       setLastTokenNumber(prevNumber => {
         const nextNumber = generateNextTokenNumber(prevNumber);
-        
+
         // Add the new token to the queue
         setCurrentTokens((prevTokens) => {
-            // Define possible counters and services
-            const counters = ["Counter 1", "Counter 2", "Counter 3", "Counter 4"];
-            const services = ["General", "Priority", "Inquiries", "Mortgage"];
-            
-            const newToken = {
-                number: nextNumber,
-                counter: counters[Math.floor(Math.random() * counters.length)],
-                service: services[Math.floor(Math.random() * services.length)],
-                status: "Waiting...",
-            };
-            
-            // Add the new token to the front, keep the list size small for display
-            return [newToken, ...prevTokens.slice(0, 4)]; 
+          // Define possible counters and services
+          const counters = ["Counter 1", "Counter 2", "Counter 3", "Counter 4"];
+          const services = ["General", "Priority", "Inquiries", "Mortgage"];
+
+          const newToken = {
+            number: nextNumber,
+            counter: counters[Math.floor(Math.random() * counters.length)],
+            service: services[Math.floor(Math.random() * services.length)],
+            status: "Waiting...",
+          };
+
+          // Add the new token to the front, keep the list size small for display
+          return [newToken, ...prevTokens.slice(0, 4)];
         });
-        
+
         return nextNumber; // Return the new, incremental number to update the state
       });
 
@@ -133,10 +133,10 @@ function App() {
 
     if (!showNowServing && currentTokens.length > 0) {
       const nextToken = currentTokens[0];
-      
+
       setNowServingToken({
         token: nextToken.number,
-        counter: nextToken.counter.replace('Counter ', ''), 
+        counter: nextToken.counter.replace('Counter ', ''),
         service: nextToken.service,
       });
 
@@ -152,7 +152,7 @@ function App() {
         // Stays on video, effect re-runs after timeout
       }, 25000); // Show video for 25 seconds
     }
-    
+
     return () => clearTimeout(timer);
 
   }, [showNowServing, currentTokens]);
@@ -168,7 +168,7 @@ function App() {
           <main className="flex-grow flex flex-row h-[calc(100vh-104px)] relative">
             <div className="absolute top-1/2 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-600/5 blur-[120px] rounded-full pointer-events-none z-0"></div>
 
-            <div className="flex-grow p-4 md:p-6 lg:p-5 flex flex-col justify-center items-center relative z-10 w-[500px]">
+            <div className="flex p-4 w-[70%]">
               {showNowServing && nowServingToken ? (
                 <NowServingCard token={nowServingToken} />
               ) : (
@@ -176,8 +176,10 @@ function App() {
               )}
               {/* <YouTubePlayer videoId={youtubeVideoId} /> */}
             </div>
-            
-            <ServingList tokens={currentTokens} />
+
+            <div className="w-[30%] bg-surface-darker">
+              <ServingList tokens={currentTokens} />
+            </div>
           </main>
           <Footer content={footerContent} />
         </div>
