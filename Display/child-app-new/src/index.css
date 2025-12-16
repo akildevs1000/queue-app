@@ -1,0 +1,60 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+
+/* index.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Fonts: Nunito and Material Symbols */
+
+
+/*
+ * 1. Container: Sets the visible area
+ */
+.scrolling-text-container {
+  overflow: hidden;
+  white-space: nowrap;
+  /* position: relative; (Optional, but good practice) */
+  width: 100%;
+}
+
+/*
+ * 2. Text Content: The element that moves
+ */
+.scrolling-text {
+  display: inline-block;
+  /* Crucial: Ensure the animation runs on the element that holds the text */
+  animation: scroll-left 25s linear infinite; 
+}
+
+/*
+ * 3. Keyframes: Define the start (off-screen right) and end (off-screen left)
+ */
+@keyframes scroll-left {
+  0% {
+    /* Start fully off-screen right (100% of container width) */
+    transform: translateX(100%);
+  }
+  100% {
+    /* End fully off-screen left (negative 100% of the text element's width) */
+    /* This value should ideally be the negative of the text element's width */
+    /* However, in many simple implementations, -100% of the element's width is used */
+    /* to make the text move out, relying on the browser's rendering model. */
+    transform: translateX(-100%); 
+  }
+}
+
+/* Your other styles */
+.material-symbols-outlined {
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 48;
+}
+.marquee-container {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    black 10%,
+    black 90%,
+    transparent
+  );
+}
