@@ -11,7 +11,10 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use WebSocket\Client;
+
+use function Laravel\Prompts\info;
 
 class TokenController extends Controller
 {
@@ -26,14 +29,18 @@ class TokenController extends Controller
 
     public function servingList()
     {
-        return Token::orderBy("token", "desc")
+    //    Log::info("Serving List Requested with statsus: " . request("status", Token::SERVING));
+
+        return Token::orderBy("id", "desc")
+            ->with("service")
             ->with("counter:id,name")
             ->whereDate('created_at', Carbon::today())->where('status', request("status", Token::SERVING))
-            ->get(["id", "counter_id", "token_number_display"])
+            ->get(["id", "counter_id","service_id", "token_number_display"])
             ->map(function ($token) {
                 return [
                     'token'   => $token->token_number_display,
                     'counter' => optional($token->counter)->name,
+                    'service' => optional($token->service)->name,
                 ];
             });
     }
@@ -95,7 +102,7 @@ class TokenController extends Controller
             return;
         }
 
-        $token = Token::find($id);
+        $token = Token::with("service")->find($id);
 
         if (! $token) {
             return response()->json(['error' => 'Token not found'], 404);
@@ -112,6 +119,7 @@ class TokenController extends Controller
         return response()->json([
             "token"    => $token->token_number_display,
             "counter"  => $token->counter->name,
+            "service"  => $token->service->name,
             "language" => $token->language,
         ]);
     }

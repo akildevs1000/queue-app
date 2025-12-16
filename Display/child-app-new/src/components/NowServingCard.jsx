@@ -19,7 +19,7 @@ const NowServingCard = ({ token }) => {
         </div>
         <div className="p-6 md:p-10 flex flex-col items-center justify-center text-center flex-grow relative z-10">
           <h2 className="text-[100px] lg:text-[220px] xl:text-[200px] font-display font-bold leading-none tracking-tight text-white drop-shadow-2xl mb-2">
-            {token.token}
+            {token?.token || "----"}
           </h2>
           <div className="w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent my-6 max-w-2xl shrink-0"></div>
           <div className="flex w-full justify-center gap-16 md:gap-32 items-end shrink-0 pb-4">
@@ -28,9 +28,8 @@ const NowServingCard = ({ token }) => {
                 Counter
               </p>
               <div className="flex items-center justify-center gap-3">
-              
                 <span className="text-6xl font-bold text-white tracking-tight leading-none">
-                  {token.counter}
+                  {String((""+token?.counter ?? 0).replace(/\D/g, '') || 0).padStart(2, '0')}
                 </span>
               </div>
             </div>
@@ -40,13 +39,13 @@ const NowServingCard = ({ token }) => {
                 Service
               </p>
               <span className="text-4xl md:text-5xl font-light text-gray-100 tracking-tight leading-none">
-                {token.service}
+                {token?.service || "No Service"}
               </span>
             </div>
           </div>
         </div>
       </div>
-      
+
     </>
   );
 };

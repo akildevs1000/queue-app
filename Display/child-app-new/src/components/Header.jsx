@@ -13,7 +13,25 @@ const formatDateTime = (date) => {
   return { timeString, dateString };
 };
 
-const Header = ({ title = "Your Organization" }) => {
+const Header = ({ ip }) => {
+
+  const [title, setTitle] = useState("Loading...");
+
+  const fetchAppDetails = async (ip) => {
+    try {
+      const res = await fetch(`http://${ip}:8000/api/app-details`);
+      const json = await res.json();
+      setTitle(json?.name);
+    } catch (err) {
+      console.error("Failed to fetch services", err);
+    }
+  };
+
+  useEffect(() => {
+    if (ip) {
+      fetchAppDetails(ip);
+    }
+  }, [ip]);
   // Initialize state with the current time/date
   const [currentDateTime, setCurrentDateTime] = useState(formatDateTime(new Date()));
 

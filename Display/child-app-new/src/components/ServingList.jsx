@@ -15,17 +15,17 @@ const ServingList = ({ tokens }) => {
                 <div className="flex items-center justify-between mb-1">
                   {/* Token Number/Code */}
                   <span className="text-2xl font-bold text-gray-200 group-hover:text-white transition-colors tracking-tight">
-                    {token.number}
+                    {token.token}
                   </span>
                   {/* Counter Information */}
                   <span className="text-[16px] font-bold text-white uppercase">
-                    04
+                    {String((""+token?.counter ?? 0).replace(/\D/g, '') || 0).padStart(2, '0')}
                   </span>
                 </div>
                 <div className="flex items-center justify-between mb-1">
                   {/* Token Number/Code */}
                   <span className="text-1xl text-white font-bold  group-hover:text-white transition-colors tracking-tight">
-                    Teller
+                    {token.service}
                   </span>
                   {/* Counter Information */}
                   <span className="text-[14px] font-bold text-white uppercase bg-white/5">
