@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import IpPromptModal from "./components/IpPromptModal";
 import "./index.css";
 import Header from "./components/Header";
@@ -16,7 +16,9 @@ function App() {
     if (LOCAL_IP) {
       localStorage.setItem("LOCAL_IP", LOCAL_IP);
     }
-  }, [LOCAL_IP]); const [showIpPrompt, setShowIpPrompt] = useState(false);
+  }, [LOCAL_IP]);
+  const [showIpPrompt, setShowIpPrompt] = useState(false);
+  const nowServingTimerRef = useRef(null);
 
   // 1. State for Token Simulation and Display
   const [tokens, setTokens] = useState([]);
@@ -24,7 +26,7 @@ function App() {
   const [showNowServing, setShowNowServing] = useState(false);
 
   const [isDark, setIsDark] = useState(true);
-  const [youtubeVideoId, setYoutubeVideoId] = useState("84BNaEVxLd8");
+  const [youtubeVideoId, setYoutubeVideoId] = useState("6jGFVmIZfTY");
   const [footerContent, setFooterContent] = useState(
     " • For ticket verification, please present your ID at Counter 1. • Mortgage inquiries, please take a ticket from Kiosk B. • Operating hours: 09:00 - 17:00. • Thank you for your patience. • Please keep your mask on at all times."
   );
@@ -34,18 +36,35 @@ function App() {
     // ... (IP prompt logic)
     const handleMessage = (event) => {
       if (!event.data) return;
+
+      let data;
       try {
-        const data =
+        data =
           typeof event.data === "string" ? JSON.parse(event.data) : event.data;
-        // Token messages
-        if (data.tokenInfo) {
-          fetchTokens(LOCAL_IP);
-          setNowServingToken(data.tokenInfo);
-        }
-        if (data?.ipUrl) {
-          setIp(data.ipUrl);
-        }
-      } catch (e) { }
+      } catch (e) {
+        return;
+      }
+
+      // Token messages
+      if (data.tokenInfo) {
+        fetchTokens(LOCAL_IP);
+        setNowServingToken(data.tokenInfo);
+      }
+      // Token end (from React Native sending { status: "end" })
+      // Token end
+      if (data.tokenInfo && data.tokenInfo.status === "end") {
+        // Clear the timer immediately
+        if (nowServingTimerRef.current)
+          clearTimeout(nowServingTimerRef.current);
+        nowServingTimerRef.current = null;
+
+        setNowServingToken(null);
+        setShowNowServing(false);
+      }
+
+      if (data?.ipUrl) {
+        setIp(data.ipUrl);
+      }
     };
     window.addEventListener("message", handleMessage);
     const timeout = setTimeout(() => {
@@ -88,11 +107,30 @@ function App() {
     return () => clearInterval(interval);
   }, [LOCAL_IP]);
 
-
-
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDark);
   }, [isDark]);
+
+  useEffect(() => {
+    if (!nowServingToken) return;
+
+    // Show Now Serving
+    setShowNowServing(true);
+
+    // Clear any existing timer
+    if (nowServingTimerRef.current) clearTimeout(nowServingTimerRef.current);
+
+    // Hide after 10 seconds
+    nowServingTimerRef.current = setTimeout(() => {
+      setShowNowServing(false);
+      setNowServingToken(null);
+      nowServingTimerRef.current = null;
+    }, 10 * 1000);
+
+    return () => {
+      if (nowServingTimerRef.current) clearTimeout(nowServingTimerRef.current);
+    };
+  }, [nowServingToken]);
 
   return (
     <>
@@ -105,14 +143,11 @@ function App() {
             <div className="absolute top-1/2 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-600/5 blur-[120px] rounded-full pointer-events-none z-0"></div>
 
             <div className="flex p-4 w-[70%]">
-              {/* {showNowServing && nowServingToken ? (
+              {showNowServing && nowServingToken ? (
                 <NowServingCard token={nowServingToken} />
               ) : (
                 <YouTubePlayer videoId={youtubeVideoId} />
-              )} */}
-
-              <NowServingCard token={nowServingToken} />
-
+              )}
             </div>
 
             <div className="w-[30%] bg-surface-darker">
