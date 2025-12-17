@@ -65,8 +65,8 @@
         "to": "tv-display"
       },
       {
-        "from": "dispener",
-        "to": "dispener"
+        "from": "dispenser",
+        "to": "dispenser"
       },
       {
         "from": "caller",
