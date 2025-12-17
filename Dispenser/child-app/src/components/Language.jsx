@@ -4,15 +4,11 @@ const LanguageCard = ({ lang, label, darkMode, handleLanguageSelect }) => {
       onClick={() => handleLanguageSelect(lang)}
       className={`relative flex flex-col items-center justify-center rounded-2xl p-8 md:p-7 lg:p-16 xl:p-20
                   text-white overflow-hidden
-                  ${
-                    darkMode
-                      ? "animate-update-highlight bg-gradient-to-br from-brand-cyan/10 via-transparent to-transparent border border-brand-cyan/40"
-                      : "bg-blue-500"
-                  }
+                  ${darkMode ? "" : "bg-blue-500"}
                   transition-colors cursor-pointer`}
     >
       {darkMode && (
-        <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] bg-gradient-to-br from-brand-cyan/20 via-transparent to-transparent -z-10"></div>
+        <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] bg-white dark:bg-slate-700 -z-10"></div>
       )}
       <h2
         className={`text-2xl lg:text-5xl xl:text-6xl font-light tracking-widest mb-4 md:mb-6 lg:mb-8`}

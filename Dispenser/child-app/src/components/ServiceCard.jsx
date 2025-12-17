@@ -8,23 +8,18 @@ const ServiceCard = ({ service, darkMode, onSelect }) => {
   return (
     <div
       className={`relative flex flex-col rounded-2xl
-  /* increased width */
   p-4 md:p-7 lg:p-16 xl:p-20
   text-white overflow-hidden
   transition-all duration-300 hover:scale-[1.02] hover:shadow-glow
-  cursor-pointer
-  ${
-    darkMode
-      ? "animate-update-highlight bg-gradient-to-br from-brand-cyan/10 via-transparent to-transparent border border-brand-cyan/40"
-      : "bg-blue-500"
-  }`}
+  cursor-pointer bg-blue-500 dark:bg-slate-700
+  `}
       onClick={() => onSelect?.(service)}
       style={{ width: "28rem", minHeight: "20rem" }}
     >
       {/* Decorations */}
-      <div className="absolute inset-0 bg-white/5 backdrop-blur-[2px]"></div>
+      {/* <div className="absolute inset-0 bg-white/5 backdrop-blur-[2px]"></div>
       <div className="absolute -top-12 -right-12 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
-      <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-white/10 rounded-full blur-xl"></div>
+      <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-white/10 rounded-full blur-xl"></div> */}
 
       {/* Title / Content */}
       <div className="flex flex-col items-center justify-center text-center z-10 h-full">
