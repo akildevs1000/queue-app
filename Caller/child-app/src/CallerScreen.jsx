@@ -1,5 +1,5 @@
 // src/CallerScreen.jsx
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import StatCard from "./components/StatCard";
 import ServingTimeCard from "./components/ServingTimeCard";
 import QuickActionButton from "./components/QuickActionButton";
@@ -188,6 +188,21 @@ const CallerScreen = ({ ip, handleLogout, toggleDarkMode, isDark }) => {
 
     return () => clearInterval(interval);
   }, [isServing, startTime, totalElapsed]);
+
+  const lastHandledRef = useRef(null);
+
+  useEffect(() => {
+    if (!messages?.length) return;
+
+    const last = messages[messages.length - 1];
+    if (lastHandledRef.current === last) return;
+
+    lastHandledRef.current = last;
+
+    if (last.event === "token-serving-end") {
+      refetch();
+    }
+  }, [messages]);
 
   return (
     <div className="dark:bg-background-dark bg-background-light text-slate-700 dark:text-slate-200 font-display transition-colors duration-300 min-h-screen flex flex-col overflow-hidden">

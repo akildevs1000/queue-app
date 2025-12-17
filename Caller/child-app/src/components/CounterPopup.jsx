@@ -2,15 +2,16 @@ import { useState, useEffect } from "react";
 
 export default function CounterPopup({ onSelectCounter, localIp = "localhost" }) {
     const [counters, setCounters] = useState([]);
-    const [selectedCounterId, setSelectedCounterId] = useState(null);
-    const [isOpen, setIsOpen] = useState(true); // Auto-open dialog on load
+    const [selected, setSelected] = useState(null);
+    const [open, setOpen] = useState(true);
+    const [dropdownOpen, setDropdownOpen] = useState(false);
 
     useEffect(() => {
         const fetchCounters = async () => {
             try {
                 const res = await fetch(`http://${localIp}:8000/api/counter-list`);
                 let data = await res.json();
-                data.shift(); // remove first element
+                data.shift();
                 setCounters(data);
             } catch (err) {
                 console.error("Failed to fetch counters", err);
@@ -20,41 +21,50 @@ export default function CounterPopup({ onSelectCounter, localIp = "localhost" })
         fetchCounters();
     }, [localIp]);
 
-    const handleSelect = (id) => {
-        setSelectedCounterId(id);
-        onSelectCounter(id); // send to parent
-        setIsOpen(false); // close dialog
+    const handleSelect = (counter) => {
+        setSelected(counter);
+        onSelectCounter(counter.id);
+        setDropdownOpen(false);
+        setOpen(false);
     };
 
-    if (!isOpen) return null;
+    if (!open) return null;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-white rounded-lg shadow-lg w-80 p-6 relative">
+            <div className="bg-white dark:bg-slate-900 rounded-lg shadow-lg w-80 p-6 relative">
                 <h2 className="text-xl font-bold mb-4">Select Counter</h2>
 
                 <button
-                    onClick={() => setIsOpen(false)}
-                    className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+                    onClick={() => setOpen(false)}
+                    className="absolute top-3 right-3 text-gray-500"
                 >
                     ✕
                 </button>
 
-                <div className="mt-4">
-                    <select
-                        value={selectedCounterId || ""}
-                        onChange={(e) => handleSelect(e.target.value)}
-                        className="block w-full px-4 py-2 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                {/* Custom Select */}
+                <div className="relative">
+                    <button
+                        onClick={() => setDropdownOpen(!dropdownOpen)}
+                        className="w-full text-left px-4 py-2 border rounded bg-white dark:bg-slate-900"
                     >
-                        <option value="" disabled>
-                            Select a counter
-                        </option>
-                        {counters.map((counter) => (
-                            <option key={counter.id} value={counter.id}>
-                                {counter.name}
-                            </option>
-                        ))}
-                    </select>
+                        {selected ? selected.name : "Select a counter"}
+                    </button>
+
+                    {dropdownOpen && (
+                        <div className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto
+                                        bg-white dark:bg-slate-900 border rounded shadow">
+                            {counters.map((counter) => (
+                                <div
+                                    key={counter.id}
+                                    onClick={() => handleSelect(counter)}
+                                    className="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-800"
+                                >
+                                    {counter.name}
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
