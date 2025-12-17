@@ -6,6 +6,28 @@ import Footer from "./components/Footer";
 import NowServingCard from "./components/NowServingCard";
 import ServingList from "./components/ServingList";
 import YouTubePlayer from "./components/YouTubePlayer";
+import ImageDisplay from "./components/ImageDisplay";
+
+const IMAGE_EXTENSIONS = /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i;
+
+const isImageUrl = (value) => {
+  const url = String(value ?? "").trim();
+  return IMAGE_EXTENSIONS.test(url);
+};
+
+const extractYouTubeVideoId = (value) => {
+  const url = String(value ?? "").trim();
+  if (!url) return null;
+
+  // already a youtube ID
+  if (/^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
+
+  const match = url.match(
+    /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+  );
+
+  return match ? match[1] : null;
+};
 
 function App() {
   const [LOCAL_IP, setIp] = useState(() => {
@@ -26,7 +48,7 @@ function App() {
   const [showNowServing, setShowNowServing] = useState(false);
 
   const [isDark, setIsDark] = useState(true);
-  const [youtubeVideoId, setYoutubeVideoId] = useState("2O7B-NpKv4c");
+  const [mediaUrl, setMediaUrl] = useState(null);
   const [footerContent, setFooterContent] = useState(
     " • For ticket verification, please present your ID at Counter 1. • Mortgage inquiries, please take a ticket from Kiosk B. • Operating hours: 09:00 - 17:00. • Thank you for your patience. • Please keep your mask on at all times."
   );
@@ -132,21 +154,55 @@ function App() {
     };
   }, [nowServingToken]);
 
+  const [title, setTitle] = useState("Loading...");
+
+  const fetchAppDetails = async (ip) => {
+    try {
+      const res = await fetch(`http://${ip}:8000/api/app-details`);
+      const json = await res.json();
+      setTitle(json?.name);
+      setMediaUrl(json?.media_url);
+    } catch (err) {
+      console.error("Failed to fetch services", err);
+    }
+  };
+
+  useEffect(() => {
+    if (LOCAL_IP) {
+      fetchAppDetails(LOCAL_IP);
+    }
+  }, [LOCAL_IP]);
+
   return (
     <>
       {showIpPrompt && !LOCAL_IP && <IpPromptModal onSubmit={handleIpSubmit} />}
 
       {LOCAL_IP && (
         <div className="bg-background-dark text-white transition-colors duration-300 min-h-screen flex flex-col font-sans dark selection:bg-primary selection:text-white">
-          <Header ip={LOCAL_IP} />
+          <Header title={title} />
           <main className="flex-grow flex flex-row h-[calc(100vh-104px)] relative">
             <div className="absolute top-1/2 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-600/5 blur-[120px] rounded-full pointer-events-none z-0"></div>
 
             <div className="flex p-4 w-[70%]">
               {showNowServing && nowServingToken ? (
                 <NowServingCard token={nowServingToken} />
+              ) : !mediaUrl ? (
+                <div className="w-full h-full flex items-center justify-center text-white/60">
+                  No media configured
+                </div>
+              ) : isImageUrl(mediaUrl) ? (
+                <ImageDisplay src={String(mediaUrl)} />
               ) : (
-                <YouTubePlayer videoId={youtubeVideoId} />
+                (() => {
+                  const videoId = extractYouTubeVideoId(mediaUrl);
+                  return videoId ? (
+                    <YouTubePlayer videoId={videoId} />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-white/60">
+                      Unsupported media URL
+                    </div>
+                  );
+                })()
               )}
             </div>
 

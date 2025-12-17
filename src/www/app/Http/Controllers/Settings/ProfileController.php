@@ -40,34 +40,15 @@ class ProfileController extends Controller
     public function tvSettingsUpdate(Request $request)
     {
         $validated = $request->validate([
-            'ip' => ['required', 'ip'],
-            'port' => ['required', 'integer'],
-            'media_type' => ['required', 'in:youtube,video,gif,image'],
-            // 'media_url' => ['required'],
-            // 'media_url.*' => [
-            //     'file',
-            //     'max:2048', // 2MB 
-            //     'mimes:jpg,jpeg,png,gif,mp4'
-            // ],
-            'media_height' => ['nullable'],
-            'media_width' => ['nullable'],
+            'media_url' => ['required'],
         ]);
 
         $user = $request->user();
-
-        $validated['media_url'] = $this->handleMediaUpload($user, $request, 'media_url', 'media_type');
 
         $user->update($validated);
 
         // Reload fresh user data from DB
         $updatedUser = $user->fresh();
-
-        // Transform media_url paths to full URLs if needed
-        if (in_array($updatedUser->media_type, ['image', 'video', 'gif']) && is_array($updatedUser->media_url)) {
-            $updatedUser->media_url = array_map(function ($path) {
-                return url(Storage::url($path));
-            }, $updatedUser->media_url);
-        }
 
         return back()->with('tv_settings', $updatedUser);
     }
