@@ -12,26 +12,18 @@ const ServingList = ({ tokens }) => {
 
                 {/* <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div> */}
 
-                <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center justify-between py-1">
                   {/* Token Number/Code */}
-                  <span className="text-2xl font-bold text-gray-200 group-hover:text-white transition-colors tracking-tight">
-                    {token.token}
+                  <span className="text-[12px] font-bold text-gray-200 group-hover:text-white transition-colors tracking-tight">
+                    {token.token} 
                   </span>
+                  <span className="material-symbols-outlined">arrow_forward</span>
                   {/* Counter Information */}
-                  <span className="text-[16px] font-bold text-white uppercase">
-                    {String((""+token?.counter ?? 0).replace(/\D/g, '') || 0).padStart(2, '0')}
+                  <span className="text-[12px] font-bold text-white uppercase">
+                    Counter {String((""+token?.counter ?? 0).replace(/\D/g, '') || 0).padStart(2, '0')}
                   </span>
                 </div>
-                <div className="flex items-center justify-between mb-1">
-                  {/* Token Number/Code */}
-                  <span className="text-1xl text-white font-bold  group-hover:text-white transition-colors tracking-tight">
-                    {token.service}
-                  </span>
-                  {/* Counter Information */}
-                  <span className="text-[14px] font-bold text-white uppercase bg-white/5">
-                    Counter
-                  </span>
-                </div>
+              
                 <div className="w-full h-[2px] bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
               </div>
             ))

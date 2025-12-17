@@ -31,8 +31,12 @@ class ServiceController extends Controller
             // Calculate estimated wait time for the current service
             $estimated_wait_time = (new Token)->getAverageServingTime($serviceId);
 
-            // Translate the service model data (name and code)
-            $translatedData = Translator::translateModel($service, $language, ['name', 'code']);
+            $translatedData = Translator::translateModel($service, $language, ['name']); // only name
+
+            // Keep code untouched
+            $translatedData['code'] = $service->code;
+
+            info($translatedData);
 
             // Merge the translated data with the new metrics
             return array_merge($translatedData, [

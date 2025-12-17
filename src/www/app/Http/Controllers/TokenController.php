@@ -29,13 +29,13 @@ class TokenController extends Controller
 
     public function servingList()
     {
-    //    Log::info("Serving List Requested with statsus: " . request("status", Token::SERVING));
+        //    Log::info("Serving List Requested with statsus: " . request("status", Token::SERVING));
 
         return Token::orderBy("id", "desc")
             ->with("service")
             ->with("counter:id,name")
-            ->whereDate('created_at', Carbon::today())->where('status', request("status", Token::SERVING))
-            ->get(["id", "counter_id","service_id", "token_number_display"])
+            ->whereDate('created_at', Carbon::today())->whereIn('status', request("status", [Token::SERVING, Token::SERVED]))
+            ->get(["id", "counter_id", "service_id", "token_number_display"])
             ->map(function ($token) {
                 return [
                     'token'   => $token->token_number_display,
