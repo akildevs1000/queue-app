@@ -18,10 +18,10 @@ function writeLog(ip) {
 
 function createWindow() {
   win = new BrowserWindow({
-    fullscreen: true,
+    // fullscreen: true,
     frame: false,
     autoHideMenuBar: true,
-    kiosk: false,
+    // kiosk: true,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -30,6 +30,9 @@ function createWindow() {
   });
 
   win.loadFile('index.html');
+
+  win.maximize();
+
 }
 
 app.whenReady().then(() => {
@@ -97,7 +100,7 @@ async function startAutoTicketPolling(serverIp) {
   pollingActive = true;
   console.log('startAutoTicketPolling:', serverIp);
 
-  const pollInterval = 3000; // ms
+  const pollInterval = 1000; // ms
 
   const fetchAndPrint = async () => {
     if (!pollingActive) return;
@@ -121,13 +124,13 @@ async function startAutoTicketPolling(serverIp) {
         fs.writeFileSync(tempFile, response.data);
 
         const command = `"${sumatraPath}" -print-to-default -silent "${tempFile}"`;
-        // exec(command, (error, stdout, stderr) => {
-        //   if (error) {
-        //     console.error('Error printing:', error.message);
-        //     return;
-        //   }
-        //   console.log('Printed using Sumatra successfully.');
-        // });
+        exec(command, (error, stdout, stderr) => {
+          if (error) {
+            console.error('Error printing:', error.message);
+            return;
+          }
+          console.log('Printed using Sumatra successfully.');
+        });
 
       } else {
         // Log status and message for debugging
