@@ -53,7 +53,7 @@ export default function Password() {
             <Head title="Profile settings" />
 
             <SettingsLayout>
-                <div className="space-y-6">
+                <div className="space-y-6 dark:bg-gray-700 p-5 rounded-xl">
                     <HeadingSmall title="Update password" description="Ensure your account is using a long, random password to stay secure" />
 
                     <form onSubmit={updatePassword} className="space-y-6">
@@ -66,7 +66,7 @@ export default function Password() {
                                 value={data.current_password}
                                 onChange={(e) => setData('current_password', e.target.value)}
                                 type="password"
-                                className="mt-1 block w-full"
+                                className="mt-1 block w-full dark:text-white dark:border-white"
                                 autoComplete="current-password"
                                 placeholder="Current password"
                             />
@@ -83,7 +83,7 @@ export default function Password() {
                                 value={data.password}
                                 onChange={(e) => setData('password', e.target.value)}
                                 type="password"
-                                className="mt-1 block w-full"
+                                className="mt-1 block w-full dark:text-white dark:border-white"
                                 autoComplete="new-password"
                                 placeholder="New password"
                             />
@@ -99,7 +99,7 @@ export default function Password() {
                                 value={data.password_confirmation}
                                 onChange={(e) => setData('password_confirmation', e.target.value)}
                                 type="password"
-                                className="mt-1 block w-full"
+                                className="mt-1 block w-full dark:text-white dark:border-white"
                                 autoComplete="new-password"
                                 placeholder="Confirm password"
                             />
@@ -117,7 +117,7 @@ export default function Password() {
                                 leave="transition ease-in-out"
                                 leaveTo="opacity-0"
                             >
-                                <p className="text-sm text-neutral-600">Saved</p>
+                                <p className="text-sm text-neutral-600 dark:text-white">Saved</p>
                             </Transition>
                         </div>
                     </form>

@@ -18,11 +18,6 @@ const sidebarNavItems: NavItem[] = [
         icon: null,
     },
     {
-        title: 'Appearance',
-        href: '/settings/appearance',
-        icon: null,
-    },
-    {
         title: 'Tv Settings',
         href: '/settings/tv-settings',
         icon: null,
@@ -51,7 +46,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                                 variant="ghost"
                                 asChild
                                 className={cn('w-full justify-start', {
-                                    'bg-muted': currentPath === item.href,
+                                    'bg-gray-700': currentPath === item.href,
                                 })}
                             >
                                 <Link href={item.href} prefetch>
