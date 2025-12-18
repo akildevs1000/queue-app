@@ -7,16 +7,18 @@ import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { Transition } from '@headlessui/react';
 import { Head, useForm, usePage } from '@inertiajs/react';
-import { FormEventHandler, useRef } from 'react';
+import { FormEventHandler, useRef, useState } from 'react';
 
 export default function Profile() {
     const { auth } = usePage().props;
 
     const { data, setData, errors, post, reset, processing, recentlySuccessful } = useForm({
-        media_url: auth.user.media_url || '', // string for YouTube ID or file URL
+        media_type: auth.user.media_type || 'youtube', // youtube | image
+        media_url: auth.user.media_url || '',          // youtube ID/URL or base64 image
     });
 
-    const mediaUrlInput = useRef<HTMLInputElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
+    const [imageError, setImageError] = useState<string | null>(null);
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -27,10 +29,42 @@ export default function Profile() {
             onError: (errors) => {
                 if (errors.media_url) {
                     reset('media_url');
-                    mediaUrlInput.current?.focus();
+                    inputRef.current?.focus();
                 }
             },
         });
+    };
+
+    /** Validate image size (900x600) and convert to base64 */
+    const handleImageUpload = (file: File) => {
+        setImageError(null);
+
+        const img = new Image();
+        const objectUrl = URL.createObjectURL(file);
+
+        img.onload = () => {
+            if (img.width !== 900 || img.height !== 600) {
+                setImageError('Image must be exactly 900 × 600 pixels');
+                setData('media_url', '');
+                URL.revokeObjectURL(objectUrl);
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setData('media_url', reader.result as string);
+            };
+            reader.readAsDataURL(file);
+
+            URL.revokeObjectURL(objectUrl);
+        };
+
+        img.onerror = () => {
+            setImageError('Invalid image file');
+            URL.revokeObjectURL(objectUrl);
+        };
+
+        img.src = objectUrl;
     };
 
     return (
@@ -39,27 +73,70 @@ export default function Profile() {
 
             <SettingsLayout>
                 <div className="space-y-6 rounded-xl p-5 dark:bg-gray-700">
-                    <HeadingSmall title="Update your media settings" description="Enter the media URL or YouTube video ID" />
+                    <HeadingSmall
+                        title="Update your media settings"
+                        description="Select media type and provide YouTube video or image"
+                    />
 
                     <form onSubmit={submit} className="space-y-6">
+
+                        {/* Media Type */}
                         <div className="grid gap-2">
-                            <Label htmlFor="media_url">YouTube Video ID</Label>
-
-                            <Input
-                                ref={mediaUrlInput}
-                                id="media_url"
-                                type="text"
-                                placeholder="Enter media URL or YouTube video ID"
-                                value={data.media_url}
-                                onChange={(e) => setData('media_url', e.target.value)}
-                                className="mt-1 block w-full dark:border-white dark:text-white"
-                            />
-
-                            <InputError message={errors.media_url} />
+                            <Label>Media Type</Label>
+                            <select
+                                value={data.media_type}
+                                onChange={(e) => {
+                                    setData('media_type', e.target.value);
+                                    setData('media_url', '');
+                                    setImageError(null);
+                                }}
+                                className="rounded-md border p-2 dark:bg-gray-800 dark:text-white"
+                            >
+                                <option value="youtube">YouTube</option>
+                                <option value="image">Image</option>
+                            </select>
                         </div>
 
+                        {/* YouTube Input */}
+                        {data.media_type === 'youtube' && (
+                            <div className="grid gap-2">
+                                <Label>YouTube Video ID / URL</Label>
+                                <Input
+                                    ref={inputRef}
+                                    type="text"
+                                    placeholder="e.g. 2sh8rCvijrY"
+                                    value={data.media_url}
+                                    onChange={(e) => setData('media_url', e.target.value)}
+                                />
+                                <InputError message={errors.media_url} />
+                            </div>
+                        )}
+
+                        {/* Image Upload */}
+                        {data.media_type === 'image' && (
+                            <div className="grid gap-2">
+                                <Label>Upload Image (900 × 600)</Label>
+                                <Input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                        if (e.target.files?.[0]) {
+                                            handleImageUpload(e.target.files[0]);
+                                        }
+                                    }}
+                                />
+
+                                {(imageError || errors.media_url) && (
+                                    <InputError message={imageError || errors.media_url} />
+                                )}
+                            </div>
+                        )}
+
+                        {/* Submit */}
                         <div className="flex items-center gap-4">
-                            <Button disabled={processing}>Save password</Button>
+                            <Button disabled={processing}>
+                                Save
+                            </Button>
 
                             <Transition
                                 show={recentlySuccessful}
@@ -68,9 +145,12 @@ export default function Profile() {
                                 leave="transition ease-in-out"
                                 leaveTo="opacity-0"
                             >
-                                <p className="text-sm text-neutral-600 dark:text-white">Saved</p>
+                                <p className="text-sm text-neutral-600 dark:text-white">
+                                    Saved
+                                </p>
                             </Transition>
                         </div>
+
                     </form>
                 </div>
             </SettingsLayout>
