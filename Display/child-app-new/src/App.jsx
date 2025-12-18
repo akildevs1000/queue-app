@@ -79,6 +79,7 @@ function App() {
   const handleIpSubmit = (ip) => {
     setIp(ip);
     setShowIpPrompt(false);
+    fetchAppDetails(ip);
   };
 
   const fetchTokens = async (ip) => {
