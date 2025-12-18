@@ -126,7 +126,7 @@ class CreateTokenJob implements ShouldQueue
             <div class='token'>{$token}</div>
             <div class='service'>{$service}</div>
             <div class='info'>{$infoText}</div>
-            <div class='datetime'>{$datetimeText}</div>
+            <div class='datetime' style='direction:ltr !important;'>{$datetimeText}</div>
         </div>
     </body>
     </html>
