@@ -8,27 +8,6 @@ import ServingList from "./components/ServingList";
 import YouTubePlayer from "./components/YouTubePlayer";
 import ImageDisplay from "./components/ImageDisplay";
 
-const IMAGE_EXTENSIONS = /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i;
-
-const isImageUrl = (value) => {
-  const url = String(value ?? "").trim();
-  return IMAGE_EXTENSIONS.test(url);
-};
-
-const extractYouTubeVideoId = (value) => {
-  const url = String(value ?? "").trim();
-  if (!url) return null;
-
-  // already a youtube ID
-  if (/^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
-
-  const match = url.match(
-    /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
-  );
-
-  return match ? match[1] : null;
-};
-
 function App() {
   const [LOCAL_IP, setIp] = useState(() => {
     return localStorage.getItem("LOCAL_IP");
@@ -48,7 +27,6 @@ function App() {
   const [showNowServing, setShowNowServing] = useState(false);
 
   const [isDark, setIsDark] = useState(true);
-  const [mediaUrl, setMediaUrl] = useState(null);
   const [footerContent, setFooterContent] = useState(
     " • For ticket verification, please present your ID at Counter 1. • Mortgage inquiries, please take a ticket from Kiosk B. • Operating hours: 09:00 - 17:00. • Thank you for your patience. • Please keep your mask on at all times."
   );
@@ -155,13 +133,14 @@ function App() {
   }, [nowServingToken]);
 
   const [title, setTitle] = useState("Loading...");
+  const [appInfo, setAppInfo] = useState("Loading...");
 
   const fetchAppDetails = async (ip) => {
     try {
       const res = await fetch(`http://${ip}:8000/api/app-details`);
       const json = await res.json();
       setTitle(json?.name);
-      setMediaUrl(json?.media_url);
+      setAppInfo(json);
     } catch (err) {
       console.error("Failed to fetch services", err);
     }
@@ -186,23 +165,14 @@ function App() {
             <div className="flex p-4 w-[70%]">
               {showNowServing && nowServingToken ? (
                 <NowServingCard token={nowServingToken} />
-              ) : !mediaUrl ? (
+              ) : !appInfo?.media_url ? (
                 <div className="w-full h-full flex items-center justify-center text-white/60">
                   No media configured
                 </div>
-              ) : isImageUrl(mediaUrl) ? (
-                <ImageDisplay src={String(mediaUrl)} />
+              ) : appInfo?.media_type == "image" ? (
+                <ImageDisplay src={String(appInfo?.media_url)} />
               ) : (
-                (() => {
-                  const videoId = extractYouTubeVideoId(mediaUrl);
-                  return videoId ? (
-                    <YouTubePlayer videoId={videoId} />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-white/60">
-                      Unsupported media URL
-                    </div>
-                  );
-                })()
+                <YouTubePlayer videoId={appInfo?.media_url} />
               )}
             </div>
 
