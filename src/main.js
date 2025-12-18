@@ -58,7 +58,7 @@ function createWindow() {
   mainWindow.loadFile('index.html');
 
   mainWindow.webContents.once('did-finish-load', () => {
-    const phpPorts = [9000, 9001, 9002, 9003, 9004];
+    const phpPorts = [9000];
     phpPorts.forEach(port => {
       spawnPhpCgiWorker(phpCGi, port);
     });
