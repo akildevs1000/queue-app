@@ -102,26 +102,39 @@ class TokenController extends Controller
             return;
         }
 
-        $token = Token::with("service")->find($id);
+        $token = DB::transaction(function () use ($id) {
+
+            $token = Token::with('service')->lockForUpdate()->find($id);
+            if (! $token) {
+                return;
+            }
+
+            $token->start_serving = now();
+            $token->status        = Token::SERVING;
+            $token->counter_id    = request("counter_id", 0);
+            $token->user_id       = Auth::user()->id;
+            $token->save();
+
+            $token->load('counter');
+
+            return $token;
+        });
+
 
         if (! $token) {
             return response()->json(['error' => 'Token not found'], 404);
         }
 
-        $token->start_serving = now();
-        $token->status        = Token::SERVING;
-        $token->counter_id    = request("counter_id", 0);
-        $token->user_id       = Auth::user()->id;
-        $token->save();
-
-        $token->load('counter');
-
-        return response()->json([
+        $payload = [
             "token"    => $token->token_number_display,
             "counter"  => $token->counter->name,
             "service"  => $token->service->name,
             "language" => $token->language,
-        ]);
+        ];
+
+        Log::info($payload);
+
+        return response()->json($payload);
     }
 
     public function endServing(Request $request, $id)
