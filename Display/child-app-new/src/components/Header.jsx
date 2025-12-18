@@ -42,7 +42,7 @@ const Header = ({ title }) => {
             {title}
           </h1>
           <p className="text-xs text-text-secondary uppercase tracking-wider font-medium mt-0.5">
-            Main Hall
+            {/* Main Hall */}
           </p>
         </div>
       </div>
