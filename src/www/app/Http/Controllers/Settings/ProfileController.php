@@ -11,7 +11,9 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -40,17 +42,34 @@ class ProfileController extends Controller
     public function tvSettingsUpdate(Request $request)
     {
         $validated = $request->validate([
-            'media_url' => ['required'],
+            'media_type' => ['required', 'in:youtube,image'],
+            'media_url'  => ['required'],
         ]);
+
+        // Extra safety for image uploads
+        if ($validated['media_type'] === 'image') {
+
+            // Ensure base64 image
+            if (!str_starts_with($validated['media_url'], 'data:image')) {
+                throw ValidationException::withMessages([
+                    'media_url' => 'Invalid image format.',
+                ]);
+            }
+        }
 
         $user = $request->user();
 
-        $user->update($validated);
+        $payload = [
+            'media_type' => $validated['media_type'],
+            'media_url'  => $validated['media_url'],
+        ];
 
-        // Reload fresh user data from DB
-        $updatedUser = $user->fresh();
+        Log::info($validated['media_type']);
+        Log::info($validated['media_url']);
 
-        return back()->with('tv_settings', $updatedUser);
+        $user->update($payload);
+
+        return back()->with('tv_settings', $user->fresh());
     }
 
     /**
