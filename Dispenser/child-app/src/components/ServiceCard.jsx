@@ -44,9 +44,13 @@ const ServiceCard = ({ service, darkMode, onSelect }) => {
         <div className="flex flex-col items-end">
           <div className="flex items-center space-x-2 text-blue-100/80 text-sm">
             <ClockIcon className="w-5 h-5" />
-            <span>Est Time</span>
+            <span>Avg Time</span>
           </div>
-          <span className="text-2xl ml-1">{estimated_time}</span>
+          <span className="text-2xl ml-1">
+            {estimated_time?.includes(":")
+              ? estimated_time.split(":").slice(-2).join(":")
+              : estimated_time || "--:--"}
+          </span>
         </div>
       </div>
     </div>

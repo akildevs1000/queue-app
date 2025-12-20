@@ -6,6 +6,7 @@ import SocketIndicator from "./components/SocketIndicator";
 import IpDialog from "./components/IpDialog";
 import BootScreen from "./components/BootScreen";
 import TicketPrintingIndicator from "./components/TicketPrintingIndicator";
+import Back from "./components/Back";
 
 // Boot sequence duration
 const BOOT_DURATION = 2500; // 2.5 seconds
@@ -112,7 +113,6 @@ function App() {
     setData(updatedData);
   };
 
-
   const connectSocket = (currentIp) => {
     try {
       setRetrying(false);
@@ -162,7 +162,6 @@ function App() {
       }
     };
   }, [ip]);
-
 
   // Auto-submit when service selected
   useEffect(() => {
@@ -304,35 +303,70 @@ function App() {
           />
         </div>
         <main
-          className={`flex-1 px-10 py-8 flex items-center justify-center ${darkMode ? "" : "bg-white"
-            }`}
+          className={`flex-1 px-10 py-8 flex items-center justify-center ${
+            darkMode ? "" : "bg-white"
+          }`}
         >
           {step === "language" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-5xl">
-              {selectedLanguages.map((item) => (
-                <LanguageCard
-                  key={item.lang}
-                  lang={item.lang}
-                  label={item.label}
-                  darkMode={darkMode}
-                  handleLanguageSelect={handleLanguageSelect}
-                />
-              ))}
+            <div className="flex flex-col items-center w-full max-w-5xl">
+              <h2
+                className={`text-3xl font-bold mb-8 ${
+                  darkMode ? "text-white" : "text-gray-800"
+                }`}
+              >
+                Choose Language
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
+                {selectedLanguages.map((item) => (
+                  <LanguageCard
+                    key={item.lang}
+                    lang={item.lang}
+                    label={item.label}
+                    darkMode={darkMode}
+                    handleLanguageSelect={handleLanguageSelect}
+                  />
+                ))}
+              </div>
             </div>
           )}
 
           {step === "service" && (
-            <div className="flex flex-wrap justify-center gap-6 items-stretch">
-              {services.map((service) => (
-                <ServiceCard
-                  key={service.id}
-                  service={service}
-                  darkMode={darkMode}
-                  onSelect={handleServiceSelect}
-                  className="flex-1 min-w-[250px] max-w-[350px]"
-                />
-              ))}
-            </div>
+            <>
+              <div className="flex flex-col items-center w-full max-w-6xl">
+                <h2
+                  className={`text-3xl font-bold mb-8 ${
+                    darkMode ? "text-white" : "text-gray-800"
+                  }`}
+                >
+                  Choose Service
+                </h2>
+                <div className="flex flex-wrap justify-center gap-6 items-stretch">
+                  {services.map((service) => (
+                    <ServiceCard
+                      key={service.id}
+                      service={service}
+                      darkMode={darkMode}
+                      onSelect={handleServiceSelect}
+                      className="flex-1 min-w-[250px] max-w-[350px]"
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <Back
+                onClick={() => {
+                  console.log(selectedLanguages);
+                  setStep("language");
+                  setData({
+                    language: "",
+                    service_id: 0,
+                    service_name: "",
+                    code: "",
+                    vip_number: null,
+                  });
+                }}
+              />
+            </>
           )}
         </main>
       </div>
