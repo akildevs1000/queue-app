@@ -4,7 +4,7 @@ const QueueItem = ({ ticket, destination, isCurrent, opacity = "" }) => {
       <div className="sticky top-0 z-10 mb-2 transform transition-all hover:scale-[1.01]">
         <div className="relative bg-gradient-to-r from-indigo-600 via-primary to-accent rounded-xl p-[2px] shadow-glow overflow-hidden">
           <div className="absolute inset-0 bg-white/20"></div>
-          <div className="bg-surface-light dark:bg-black rounded-[10px] p-6 flex items-center justify-between relative overflow-hidden h-20">
+          <div className="bg-surface-light dark:bg-black rounded-[10px] p-6 flex items-center justify-between relative overflow-hidden h-16">
             <div className="relative z-10 flex flex-col justify-center">
               <span className="text-[9px] font-bold text-primary dark:text-accent uppercase tracking-widest mb-1">Current Ticket</span>
               <span className="block text-[30px] font-black text-gray-900 dark:text-white tracking-tighter leading-none">{ticket}</span>
@@ -37,7 +37,7 @@ const QueueList = ({ tickets }) => {
         <span className="text-xs font-black text-gray-500 uppercase tracking-[0.2em]">Ticket Number</span>
         <span className="text-xs font-black text-gray-500 uppercase tracking-[0.2em]">Counter</span>
       </div>
-      <div className="flex-1 overflow-y-auto p-5 space-y-2 relative bg-surface-light dark:bg-surface-dark">
+      <div className="flex-1 overflow-y-auto px-5 py-2 space-y-2 relative bg-surface-light dark:bg-surface-dark">
         {tickets.map((t, idx) => (
           <QueueItem 
             key={idx} 
