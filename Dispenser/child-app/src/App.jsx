@@ -7,7 +7,6 @@ import IpDialog from "./components/IpDialog";
 import BootScreen from "./components/BootScreen";
 import TicketPrintingIndicator from "./components/TicketPrintingIndicator";
 import Back from "./components/Back";
-import Services from "./components/Services";
 
 // Boot sequence duration
 const BOOT_DURATION = 2500; // 2.5 seconds
