@@ -6,6 +6,7 @@ import SocketIndicator from "./components/SocketIndicator";
 import IpDialog from "./components/IpDialog";
 import BootScreen from "./components/BootScreen";
 import TicketPrintingIndicator from "./components/TicketPrintingIndicator";
+import Back from "./components/Back";
 
 // Boot sequence duration
 const BOOT_DURATION = 2500; // 2.5 seconds
@@ -112,7 +113,6 @@ function App() {
     setData(updatedData);
   };
 
-
   const connectSocket = (currentIp) => {
     try {
       setRetrying(false);
@@ -162,7 +162,6 @@ function App() {
       }
     };
   }, [ip]);
-
 
   // Auto-submit when service selected
   useEffect(() => {
@@ -273,15 +272,7 @@ function App() {
 
   return (
     <div style={styles.appContainer}>
-      <div className="relative flex h-screen w-full flex-col group/design-root overflow-hidden">
-        {darkMode && (
-          <>
-            {/* Background Gradient & Texture */}
-            <div className="absolute inset-0 -z-10 h-full w-full bg-gradient-to-tr from-brand-navy-deep via-brand-navy-mid to-brand-navy-deep bg-[length:200%_200%] animate-gradient-bg"></div>
-            <div className="absolute inset-0 -z-20 h-full w-full bg-[url('https://www.transparenttextures.com/patterns/arabesque.png')] opacity-[0.02]"></div>
-          </>
-        )}
-
+      <div className="bg-gray-100 dark:bg-background-dark text-slate-800 dark:text-slate-100 min-h-screen font-sans">
         <IpDialog
           darkMode={darkMode}
           open={showIpDialog}
@@ -303,41 +294,89 @@ function App() {
             className="border-none outline-none"
           />
         </div>
-        <main
-          className={`flex-1 px-10 py-8 flex items-center justify-center ${darkMode ? "" : "bg-white"
-            }`}
-        >
+
+        <main className="flex-grow p-6 md:p-10 relative">
+          <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+            <div className="absolute -top-[20%] -left-[10%] w-[600px] h-[600px] bg-primary/10 rounded-full blur-[120px] opacity-40 dark:opacity-20 mix-blend-screen"></div>
+            <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[100px] opacity-40 dark:opacity-20 mix-blend-screen"></div>
+          </div>
+
           {step === "language" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-5xl">
-              {selectedLanguages.map((item) => (
-                <LanguageCard
-                  key={item.lang}
-                  lang={item.lang}
-                  label={item.label}
-                  darkMode={darkMode}
-                  handleLanguageSelect={handleLanguageSelect}
-                />
-              ))}
+            <div className="max-w-7xl mx-auto h-full flex flex-col">
+              <div className="flex justify-center mb-10">
+                <div>
+                  <h2 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight text-center">
+                    Language Selection
+                  </h2>
+                  <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm max-w-xl">
+                    Please select your preferred language to continue
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 px-[150px] gap-6">
+                {selectedLanguages.map((item) => (
+                  <LanguageCard
+                    key={item.lang}
+                    lang={item.lang}
+                    label={item.label}
+                    darkMode={darkMode}
+                    handleLanguageSelect={handleLanguageSelect}
+                  />
+                ))}
+              </div>
             </div>
           )}
 
           {step === "service" && (
-            <div className="flex flex-wrap justify-center gap-6 items-stretch">
-              {services.map((service) => (
-                <ServiceCard
-                  key={service.id}
-                  service={service}
-                  darkMode={darkMode}
-                  onSelect={handleServiceSelect}
-                  className="flex-1 min-w-[250px] max-w-[350px]"
-                />
-              ))}
+            <div className="max-w-7xl mx-auto h-full flex flex-col">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+                <div>
+                  <h2 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
+                    Service Selection
+                  </h2>
+                  <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm max-w-xl">
+                    Monitor real-time status and wait times across all service
+                    departments.
+                  </p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {services.map((service, index) => (
+                  <ServiceCard
+                    index={index}
+                    key={service.id}
+                    service={service}
+                    darkMode={darkMode}
+                    onSelect={handleServiceSelect}
+                    className="flex-1 min-w-[250px] max-w-[350px]"
+                  />
+                ))}
+              </div>
             </div>
           )}
         </main>
       </div>
 
       <SocketIndicator retrying={retrying} />
+
+      {step === "service" && (
+        <>
+          <Back
+            onClick={() => {
+              console.log(selectedLanguages);
+              setStep("language");
+              setData({
+                language: "",
+                service_id: 0,
+                service_name: "",
+                code: "",
+                vip_number: null,
+              });
+            }}
+          />
+        </>
+      )}
     </div>
   );
 }

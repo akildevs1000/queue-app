@@ -1,14 +1,11 @@
 const Footer = ({ content = "Your Organization" }) => {
   return (
-    
-    <footer className="h-5 bottom-[30px] bg-surface-darker text-white flex items-center overflow-hidden relative z-30 border-t border-white/5 shadow-[0_-5px_15px_rgba(0,0,0,0.3)]">
-      <div className="bg-primary h-full px-6 flex items-center justify-center font-bold text-xs uppercase tracking-wider shrink-0 z-10 shadow-[5px_0_15px_rgba(0,0,0,0.3)]">
+    <footer className="h-12 bg-black border-t border-border-dark flex items-center overflow-hidden">
+      <div className="dark:bg-black text-accent h-full px-8 flex items-center font-black text-sm z-10">
         Announcement
       </div>
-      <div className="scrolling-text-container w-full h-full flex items-center bg-surface-darker/50">
-        <div className="scrolling-text px-4 text-text-secondary font-medium tracking-wide">
-          {content}
-        </div>
+      <div className="animate-marquee whitespace-nowrap text-sm dark:text-green-400">
+        {content}
       </div>
     </footer>
   );

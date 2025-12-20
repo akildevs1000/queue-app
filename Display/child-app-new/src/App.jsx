@@ -1,191 +1,50 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import IpPromptModal from "./components/IpPromptModal";
-import "./index.css";
-import Header from "./components/Header";
+import React, { useState, useEffect } from "react";
 import Footer from "./components/Footer";
-import NowServingCard from "./components/NowServingCard";
-import ServingList from "./components/ServingList";
-import YouTubePlayer from "./components/YouTubePlayer";
-import ImageDisplay from "./components/ImageDisplay";
+import Header from "./components/Header";
+import VideoFeed from "./components/VideoFeed";
+import QueueList from "./components/QueueList";
+import AnnouncementBar from "./components/AnnouncementBar";
 
-function App() {
-  const [LOCAL_IP, setIp] = useState(() => {
-    return localStorage.getItem("LOCAL_IP");
-  });
+const App = () => {
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
-    if (LOCAL_IP) {
-      localStorage.setItem("LOCAL_IP", LOCAL_IP);
-    }
-  }, [LOCAL_IP]);
-  const [showIpPrompt, setShowIpPrompt] = useState(false);
-  const nowServingTimerRef = useRef(null);
-
-  // 1. State for Token Simulation and Display
-  const [tokens, setTokens] = useState([]);
-  const [nowServingToken, setNowServingToken] = useState(null);
-  const [showNowServing, setShowNowServing] = useState(false);
-
-  const [isDark, setIsDark] = useState(true);
-  const [footerContent, setFooterContent] = useState(
-    " • For ticket verification, please present your ID at Counter 1. • Mortgage inquiries, please take a ticket from Kiosk B. • Operating hours: 09:00 - 17:00. • Thank you for your patience. • Please keep your mask on at all times."
-  );
-
-  // --- IP Prompt and Fetching App Details Logic (Unchanged) ---
-  useEffect(() => {
-    // ... (IP prompt logic)
-    const handleMessage = (event) => {
-      if (!event.data) return;
-
-      let data;
-      try {
-        data =
-          typeof event.data === "string" ? JSON.parse(event.data) : event.data;
-      } catch (e) {
-        return;
-      }
-
-      // Token messages
-      if (data.tokenInfo) {
-        fetchTokens(LOCAL_IP);
-        setNowServingToken(data.tokenInfo);
-      }
-      // Token end (from React Native sending { status: "end" })
-      // Token end
-      if (data.tokenInfo && data.tokenInfo.status === "end") {
-        // Clear the timer immediately
-        if (nowServingTimerRef.current)
-          clearTimeout(nowServingTimerRef.current);
-        nowServingTimerRef.current = null;
-
-        setNowServingToken(null);
-        setShowNowServing(false);
-      }
-
-      if (data?.ipUrl) {
-        setIp(data.ipUrl);
-      }
-    };
-    window.addEventListener("message", handleMessage);
-    const timeout = setTimeout(() => {
-      setShowIpPrompt(true);
-    }, 2000);
-    return () => {
-      window.removeEventListener("message", handleMessage);
-      clearTimeout(timeout);
-    };
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
   }, []);
 
-  const handleIpSubmit = (ip) => {
-    setIp(ip);
-    setShowIpPrompt(false);
-    fetchAppDetails(ip);
-  };
+  // Mock data for the queue
+  const queueData = [
+    { id: "A1014", destination: "COUNTER 01", current: true },
+    { id: "A1013", destination: "COUNTER 01" },
+    { id: "A1012", destination: "COUNTER 01" },
+    { id: "A1011", destination: "COUNTER 01" },
+    { id: "A1010", destination: "COUNTER 01" },
+    { id: "A1009", destination: "COUNTER 01" },
+    { id: "A1010", destination: "COUNTER 01" },
+    { id: "A1011", destination: "COUNTER 01" },
+  ];
 
-  const fetchTokens = async (ip) => {
-    try {
-      const res = await fetch(`http://${ip}:8000/api/serving_list`);
-
-      const tokens = await res.json();
-
-      setTokens(tokens);
-    } catch (e) {
-      console.error("Error @ fetchTokens", e);
-    } finally {
-    }
-  };
-
-  useEffect(() => {
-    if (!LOCAL_IP) return;
-
-    // initial fetch
-    fetchTokens(LOCAL_IP);
-
-    const interval = setInterval(() => {
-      fetchTokens(LOCAL_IP);
-    }, 10000); // 10 seconds
-
-    return () => clearInterval(interval);
-  }, [LOCAL_IP]);
+  const [isDark, setIsDark] = useState(true);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDark);
   }, [isDark]);
 
-  useEffect(() => {
-    if (!nowServingToken) return;
-
-    // Show Now Serving
-    setShowNowServing(true);
-
-    // Clear any existing timer
-    if (nowServingTimerRef.current) clearTimeout(nowServingTimerRef.current);
-
-    // Hide after 10 seconds
-    nowServingTimerRef.current = setTimeout(() => {
-      setShowNowServing(false);
-      setNowServingToken(null);
-      nowServingTimerRef.current = null;
-    }, 10 * 1000);
-
-    return () => {
-      if (nowServingTimerRef.current) clearTimeout(nowServingTimerRef.current);
-    };
-  }, [nowServingToken]);
-
-  const [title, setTitle] = useState("Loading...");
-  const [appInfo, setAppInfo] = useState("Loading...");
-
-  const fetchAppDetails = async (ip) => {
-    try {
-      const res = await fetch(`http://${ip}:8000/api/app-details`);
-      const json = await res.json();
-      setTitle(json?.name);
-      setAppInfo(json);
-    } catch (err) {
-      console.error("Failed to fetch services", err);
-    }
-  };
-
-  useEffect(() => {
-    if (LOCAL_IP) {
-      fetchAppDetails(LOCAL_IP);
-    }
-  }, [LOCAL_IP]);
-
   return (
-    <>
-      {showIpPrompt && !LOCAL_IP && <IpPromptModal onSubmit={handleIpSubmit} />}
+    <div className="bg-background-light dark:bg-background-dark min-h-screen text-gray-900 dark:text-text-main overflow-hidden flex flex-col font-display">
+      <Header time={currentTime} />
 
-      {LOCAL_IP && (
-        <div className="bg-background-dark text-white transition-colors duration-300 min-h-screen flex flex-col font-sans dark selection:bg-primary selection:text-white">
-          <Header title={title} />
-          <main className="flex-grow flex flex-row h-[calc(100vh-104px)] relative">
-            <div className="absolute top-1/2 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-600/5 blur-[120px] rounded-full pointer-events-none z-0"></div>
+      <main className="flex-1 flex p-6 gap-6 h-[calc(100vh-6rem-3rem)] overflow-hidden">
+        <VideoFeed />
+        <QueueList tickets={queueData} />
+      </main>
 
-            <div className="flex p-4 w-[70%]">
-              {showNowServing && nowServingToken ? (
-                <NowServingCard token={nowServingToken} />
-              ) : !appInfo?.media_url ? (
-                <div className="w-full h-full flex items-center justify-center text-white/60">
-                  No media configured
-                </div>
-              ) : appInfo?.media_type == "image" ? (
-                <ImageDisplay src={String(appInfo?.media_url)} />
-              ) : (
-                <YouTubePlayer videoId={appInfo?.media_url} />
-              )}
-            </div>
+      <Footer content="Please have your identification documents ready. Counter 05 is now closed for lunch break. Reminder: The office will close at 5:00 PM today. Thank you for your patience." />
 
-            <div className="w-[30%] bg-surface-darker">
-              <ServingList tokens={tokens} />
-            </div>
-          </main>
-          <Footer content={footerContent} />
-        </div>
-      )}
-    </>
+      {/* <AnnouncementBar message="Please have your identification documents ready. Counter 05 is now closed for lunch break. Reminder: The office will close at 5:00 PM today. Thank you for your patience." /> */}
+    </div>
   );
-}
+};
 
 export default App;
