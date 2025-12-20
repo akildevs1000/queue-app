@@ -1,78 +1,79 @@
 import { useEffect, useState } from "react";
 import { SunIcon, MoonIcon } from "@heroicons/react/24/solid";
 
-const Header = ({ title = "Your Organization", darkMode, setDarkMode }) => {
-  const [now, setNow] = useState(() => new Date());
+const Header = ({}) => {
+  const [darkMode, setDarkMode] = useState(true);
+  const [currentDate, setCurrentDate] = useState("");
+  const [currentTime, setCurrentTime] = useState("");
 
-  // Update time every second
+  // Clock
   useEffect(() => {
-    const interval = setInterval(() => setNow(new Date()), 1000);
+    const updateTime = () => {
+      const now = new Date();
+      setCurrentDate(
+        now.toLocaleDateString("en-US", {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })
+      );
+      setCurrentTime(
+        now.toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: true,
+        })
+      );
+    };
+
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
   }, []);
 
-  const formattedTime = now.toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
-
-  const formattedDate = now.toLocaleDateString("en-GB", {
-    weekday: "long",
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+  // Dark mode persistence
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+      localStorage.theme = "dark";
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.theme = "light";
+    }
+  }, [darkMode]);
 
   return (
-    <header
-      className={`flex items-center justify-between
-        px-4 sm:px-8 lg:px-12 py-4
-         whitespace-nowrap
-  ${
-    darkMode
-      ? "dark:bg-brand-navy-deep/80 backdrop-blur-lg border-b border-white/10 dark:border-base-100/10 shadow-lg"
-      : "bg-blue-500"
-  }`}
-    >
-      {/* Title */}
-      <h1
-        className="
-          font-display text-white dark:text-base-100
-          font-light tracking-wider
-          text-lg sm:text-xl md:text-2xl xl:text-4xl
-        "
-      >
-        {title}
-      </h1>
+    <header className="sticky top-0 z-50 bg-white/80 dark:bg-surface-dark/90 backdrop-blur-md border-b border-gray-200 dark:border-slate-800">
+      <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="bg-primary p-2 rounded-xl shadow-lg shadow-primary/20">
+            <span className="material-symbols-outlined text-white">dns</span>
+          </div>
+          <div>
+            <h1 className="text-lg font-bold">SmartQueue</h1>
+            <p className="text-[11px] uppercase tracking-wider text-slate-500">
+              Dashboard V3
+            </p>
+          </div>
+        </div>
 
-      {/* Right section: Date, Time, Dark Mode Toggle */}
-      <div className="flex items-center gap-4 sm:gap-6">
-        <span
-          className="
-            text-white dark:text-base-100
-            text-sm sm:text-lg md:text-xl xl:text-3xl
-            font-normal
-          "
-        >
-          {formattedDate} {formattedTime}
-        </span>
+        <div className="flex items-center gap-6">
+          <div className="hidden md:block text-right border-r pr-6">
+            <div className="text-xs uppercase tracking-wider text-slate-500">
+              {currentDate}
+            </div>
+            <div className="text-sm font-mono font-semibold">{currentTime}</div>
+          </div>
 
-        {/* Dark Mode Toggle */}
-        <button
-          onClick={() => setDarkMode(!darkMode)}
-          className="
-            px-3 py-1 rounded-xl
-            text-white
-            text-sm md:text-base
-            transition
-          "
-        >
-          {darkMode ? (
-            <SunIcon className="h-5 w-5" />
-          ) : (
-            <MoonIcon className="h-5 w-5" />
-          )}
-        </button>
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800"
+          >
+            <span className="material-symbols-outlined">dark_mode</span>
+          </button>
+        </div>
       </div>
     </header>
   );
