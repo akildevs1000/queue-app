@@ -1,7 +1,7 @@
 const Header = ({ time }) => {
   const formattedTime = time.toLocaleTimeString("en-GB", { hour12: false });
   const formattedDate = time.toLocaleDateString("en-US", {
-    weekday: "long",
+    weekday: "short",
     month: "short",
     day: "numeric",
   });
@@ -21,7 +21,7 @@ const Header = ({ time }) => {
         </div>
       </div>
       <div className="flex flex-col items-end">
-        <div className="text-1xl font-mono font-bold text-gray-900 dark:text-white tracking-tighter tabular-nums leading-none mb-1 drop-shadow-sm">
+        <div className="text-1xl uppercase font-mono font-bold text-gray-900 dark:text-white tracking-tighter tabular-nums leading-none mb-1 drop-shadow-sm">
           {formattedDate} {formattedTime}
         </div>
       </div>
