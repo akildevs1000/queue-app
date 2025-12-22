@@ -329,29 +329,40 @@ function App() {
           )}
 
           {step === "service" && (
-            <div className="max-w-7xl mx-auto h-full flex flex-col">
-              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
-                <div>
-                  <h2 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
-                    Service Selection
-                  </h2>
-                  <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm max-w-xl">
-                    Monitor real-time status and wait times across all service
-                    departments.
-                  </p>
-                </div>
+
+            <div className="min-h-screen bg-gray-100 dark:bg-[#0B1120] text-slate-800 dark:text-slate-100 font-sans p-6 md:p-10 relative overflow-hidden transition-colors duration-300">
+              {/* Dynamic Background Blurs */}
+              <div className="fixed inset-0 pointer-events-none -z-10">
+                <div className="absolute -top-[10%] -left-[5%] w-[600px] h-[600px] bg-indigo-500/10 rounded-full blur-[120px] opacity-40 dark:opacity-20"></div>
+                <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[100px] opacity-40 dark:opacity-20"></div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {services.map((service, index) => (
-                  <ServiceCard
-                    index={index}
-                    key={service.id}
-                    service={service}
-                    darkMode={darkMode}
-                    onSelect={handleServiceSelect}
-                    className="flex-1 min-w-[250px] max-w-[350px]"
-                  />
-                ))}
+
+              <div className="max-w-7xl mx-auto flex flex-col">
+                {/* Page Title & Actions */}
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+                  <div>
+                    <h2 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Service Selection</h2>
+                    <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm max-w-xl">
+                      Monitor real-time status and wait times across all service departments.
+                    </p>
+                  </div>
+
+                </div>
+
+                {/* Grid Container */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {services.map((service, index) => (
+
+
+                    <ServiceCard
+                      index={index}
+                      key={service.id}
+                      service={service}
+                      darkMode={darkMode}
+                      onSelect={handleServiceSelect}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
           )}
