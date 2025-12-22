@@ -4,7 +4,7 @@ const Footer = ({ content = "Your Organization" }) => {
       <div className="dark:bg-black text-accent h-full px-8 flex items-center font-black text-sm z-10">
         Announcement
       </div>
-      <div className="animate-marquee whitespace-nowrap text-sm dark:text-green-400">
+      <div className="scrolling-text whitespace-nowrap text-sm dark:text-green-400">
         {content}
       </div>
     </footer>

@@ -1,7 +1,7 @@
 const NowServingCard = ({ token }) => {
   return (
     <>
-      <div className="w-full max-h-[70vh] bg-surface-dark rounded-2xl shadow-card overflow-hidden border border-white/5 flex flex-col relative group">
+      <div className="w-full h-full min-h-[400px] bg-surface-dark rounded-2xl shadow-card overflow-hidden border border-white/5 flex flex-col relative group">
         <div className="absolute inset-0 bg-card-sheen pointer-events-none"></div>
         <div className="bg-surface-darker/40 backdrop-blur-sm px-6 py-3 flex justify-between items-center border-b border-white/5 relative z-10 shrink-0 h-14">
           <div className="flex items-center gap-2.5">
@@ -18,18 +18,18 @@ const NowServingCard = ({ token }) => {
           </div>
         </div>
         <div className="p-6 md:p-10 flex flex-col items-center justify-center text-center flex-grow relative z-10">
-          <h2 className="text-[100px] lg:text-[220px] xl:text-[200px] font-display font-bold leading-none tracking-tight text-white drop-shadow-2xl mb-2">
+          <h2 className="text-[70px] font-display font-bold leading-none tracking-tight text-white drop-shadow-2xl mb-2">
             {token?.token || "----"}
           </h2>
           <div className="w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent my-6 max-w-2xl shrink-0"></div>
-          <div className="flex w-full justify-center gap-16 md:gap-32 items-end shrink-0 pb-4">
+          <div className="flex w-full justify-center gap-16 md:gap-32 items-end shrink-0">
             <div className="text-center group/counter">
               <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 opacity-70">
                 Counter
               </p>
               <div className="flex items-center justify-center gap-3">
-                <span className="text-6xl font-bold text-white tracking-tight leading-none">
-                  {String((""+token?.counter ?? 0).replace(/\D/g, '') || 0).padStart(2, '0')}
+                <span className="text-3xl font-light text-gray-100 tracking-tight leading-none">
+                  {String(("" + token?.counter ?? 0).replace(/\D/g, '') || 0).padStart(2, '0')}
                 </span>
               </div>
             </div>
@@ -38,7 +38,7 @@ const NowServingCard = ({ token }) => {
               <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 opacity-70">
                 Service
               </p>
-              <span className="text-4xl md:text-5xl font-light text-gray-100 tracking-tight leading-none">
+              <span className="text-3xl font-light text-gray-100 tracking-tight leading-none">
                 {token?.service || "No Service"}
               </span>
             </div>

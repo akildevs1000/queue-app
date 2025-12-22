@@ -1,4 +1,7 @@
-const Header = ({ time }) => {
+const Header = () => {
+
+  const time = new Date();
+
   const formattedTime = time.toLocaleTimeString("en-GB", { hour12: false });
   const formattedDate = time.toLocaleDateString("en-US", {
     weekday: "short",

@@ -6,19 +6,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Fonts: Nunito and Material Symbols */
-
-
-/*
- * 1. Container: Sets the visible area
- */
-.scrolling-text-container {
-  overflow: hidden;
-  white-space: nowrap;
-  /* position: relative; (Optional, but good practice) */
-  width: 100%;
-}
-
 /*
  * 2. Text Content: The element that moves
  */
@@ -43,18 +30,4 @@
     /* to make the text move out, relying on the browser's rendering model. */
     transform: translateX(-100%); 
   }
-}
-
-/* Your other styles */
-.material-symbols-outlined {
-  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 48;
-}
-.marquee-container {
-  mask-image: linear-gradient(
-    to bottom,
-    transparent,
-    black 10%,
-    black 90%,
-    transparent
-  );
 }
