@@ -8,6 +8,8 @@ import BootScreen from "./components/BootScreen";
 import TicketPrintingIndicator from "./components/TicketPrintingIndicator";
 import Back from "./components/Back";
 
+
+
 // Boot sequence duration
 const BOOT_DURATION = 2500; // 2.5 seconds
 
