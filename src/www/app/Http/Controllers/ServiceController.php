@@ -35,6 +35,7 @@ class ServiceController extends Controller
 
             // Keep code untouched
             $translatedData['code'] = $service->code;
+            $translatedData['description'] = $service->description;
 
             info($translatedData);
 
