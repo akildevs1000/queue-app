@@ -110,4 +110,12 @@ class ServiceController extends Controller
 
         return redirect()->route("setup");
     }
+
+    public function serviceStats()
+    {
+        info(Service::statsByServiceToday());
+        return response()->json(
+            Service::statsByServiceToday()
+        );
+    }
 }

@@ -15,9 +15,9 @@ class TokenSeeder extends Seeder
     public function run(): void
     {
         DB::transaction(function () {
-            $this->pendingTokenSeeder(20);
+            // $this->pendingTokenSeeder(20);
             // $this->markSomeAsServing(5); // 30: 20 for endServing, 10 for noShow
-            // $this->markSomeAsServed(10);  // simulate endServing
+            $this->markSomeAsServed(10);  // simulate endServing
             // $this->markSomeAsNoShow(10);  // simulate noShow
         });
     }

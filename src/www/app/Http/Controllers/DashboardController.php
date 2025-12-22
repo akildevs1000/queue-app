@@ -16,7 +16,14 @@ class DashboardController extends Controller
             ->groupBy('status')
             ->pluck('total', 'status');
 
-
+        // ✅ Best counter name (most SERVED tokens today)
+        $bestCounterName = Token::join('counters', 'tokens.counter_id', '=', 'counters.id')
+            ->whereDate('tokens.created_at', Carbon::today())
+            ->where('tokens.status', Token::SERVED)
+            ->select('counters.name')
+            ->groupBy('counters.name')
+            ->orderByRaw('COUNT(tokens.id) DESC')
+            ->value('counters.name'); // 👈 returns only name
 
         $items = [
             'total_visits' => Token::whereDate('created_at', Carbon::today())->count() ?? 0,
@@ -25,6 +32,7 @@ class DashboardController extends Controller
             'serving'      => $counts[TOKEN::SERVING] ?? 0,
             'notAnswered'  => $counts[TOKEN::NOT_SHOW] ?? 0,
             'avgTimeInMinutes'  => $this->getAvgTime(),
+            'best_counter' => $bestCounterName ?? 'N/A',
         ];
 
         return Inertia::render('dashboard', [

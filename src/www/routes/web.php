@@ -75,6 +75,7 @@ Route::get("service-by-user", [UserController::class, 'serviceByUser'])->middlew
 Route::get("counter-by-user", [UserController::class, 'counterByUser'])->middleware("auth");
 
 Route::get("login-logs", [LoginLogController::class, 'index'])->middleware("auth");
+Route::get("service-stats", [ServiceController::class, 'serviceStats'])->middleware("auth");
 
 Route::get("last-login", [LoginLogController::class, 'lastLogin'])->middleware("auth");
 

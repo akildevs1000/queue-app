@@ -9,6 +9,12 @@ export default defineConfig({
         // host: '0.0.0.0',
         // port: 5173,
         cors: true,
+        watch: {
+            ignored: [
+                '**/database/**',           // ignore the entire database folder
+                '**/database/*.sqlite*',    // ignore sqlite files and -wal/-shm files
+            ],
+        },
     },
     plugins: [
         laravel({
@@ -19,6 +25,7 @@ export default defineConfig({
         react(),
         tailwindcss(),
     ],
+
     esbuild: {
         jsx: 'automatic',
     },

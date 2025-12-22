@@ -1,14 +1,12 @@
 import AppLayout from '@/layouts/app-layout';
 import { SharedData, type BreadcrumbItem } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
-import { Activity, Check, Clock, Users } from 'lucide-react';
+import { Activity, Check, Clock, Monitor, Users } from 'lucide-react';
 
-import CallerScreen from '@/components/Dashboard/CallerScreen';
-
-import PeakDay from '@/components/Dashboard/PeakDay';
 import PeakHour from '@/components/Dashboard/PeakHour';
 import Report from '@/components/Reports/Index';
 import LoginLogs from '@/components/LoginLog/Index';
+import ServedAndPendingStats from '@/components/Dashboard/ServedAndPendingStats';
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Dashboard',
@@ -33,16 +31,16 @@ export default function Dashboard({ items }: any) {
             borderColor: '#06b400ff',
         },
         {
-            title: 'Total in Serving',
-            value: items.serving,
-            icon: <Clock className="h-8 w-8 text-blue-500" />,
-            borderColor: '#3b82f6',
-        },
-        {
             title: 'Total in Queue',
             value: items.pending,
             icon: <Clock className="h-8 w-8 text-orange-300" />,
             borderColor: '#f59e0b',
+        },
+        {
+            title: 'Best Counter',
+            value: items.best_counter,
+            icon: <Monitor className="h-8 w-8 text-blue-500" />,
+            borderColor: '#3b82f6',
         },
         {
             title: 'Avg. Wait Time',
@@ -79,26 +77,22 @@ export default function Dashboard({ items }: any) {
                     </div>
 
                     {/* Tables Section */}
-                    {/* <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div className="grid grid-cols-12 gap-4">
                         <div
-                            className="rounded-xl bg-[var(--background)] p-4 text-[var(--foreground)] shadow-md dark:border-gray-700 dark:bg-gray-800"
-                            style={{ borderBottom: `2px solid #6366f1` }}
-                        >
-                            <PeakDay />
-                        </div>
-
-                        <div
-                            className="rounded-xl bg-[var(--background)] p-4 text-[var(--foreground)] shadow-md dark:border-gray-700 dark:bg-gray-800"
+                            className="col-span-8  rounded-xl bg-[var(--background)] p-4 text-[var(--foreground)] shadow-md dark:border-gray-700 dark:bg-gray-800"
                             style={{ borderBottom: `2px solid #6366f1` }}
                         >
                             <PeakHour />
                         </div>
-                    </div> */}
+                        <div
+                            className="col-span-4 rounded-xl bg-[var(--background)] p-4 text-[var(--foreground)] shadow-md dark:border-gray-700 dark:bg-gray-800"
+                            style={{ borderBottom: `2px solid #6366f1` }}
+                        >
+                            <ServedAndPendingStats />
+                        </div>
+                    </div>
 
                     <div className="rounded-xl bg-[var(--background)] p-4 text-[var(--foreground)] shadow-md dark:border-gray-700 dark:bg-gray-800">
-                        <PeakHour />
-                    </div>
-                     <div className="rounded-xl bg-[var(--background)] p-4 text-[var(--foreground)] shadow-md dark:border-gray-700 dark:bg-gray-800">
                         <Report />
                     </div>
                     <div className="w-full rounded-lg border border-gray-100 bg-[var(--background)] p-4 p-6 text-[var(--foreground)] shadow dark:border-gray-700 dark:bg-gray-900">
@@ -106,8 +100,6 @@ export default function Dashboard({ items }: any) {
                     </div>
                 </div>
             )}
-
-            {auth?.user?.type === 'user' && <CallerScreen />}
         </AppLayout>
     );
 }
