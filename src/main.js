@@ -1,14 +1,26 @@
-const { app, BrowserWindow, ipcMain, screen, } = require('electron');
-
+const { app, BrowserWindow, screen } = require('electron');
+const fs = require('fs');
 const path = require('path');
-const { spawn, execSync } = require('child_process');
+const { execSync } = require('child_process');
+const { logger, spawnWrapper, spawnPhpCgiWorker, runInstaller, ipv4Address, setMenu } = require('./helpers');
 
 app.setName('SmartQueue');
 app.setAppUserModelId('SmartQueue');
 
-const { logger, spawnWrapper, spawnPhpCgiWorker, stopProcess, runInstaller, ipv4Address, setMenu } = require('./helpers');
+let isQuitting = false;
 
+const isDev = !app.isPackaged;
+const appDir = isDev ? __dirname : process.resourcesPath;
+const srcDirectory = path.join(appDir, 'www');
 
+const nginxPath = path.join(appDir, 'nginx.exe');
+const phpPath = path.join(srcDirectory, 'php');
+const phpPathCli = path.join(phpPath, 'php.exe');
+const phpCGi = path.join(phpPath, 'php-cgi.exe');
+
+let nginxWindow;
+
+// -------------------- SOCKET CLEANUP --------------------
 const socketPort = 7777; // declare outside
 
 try {
@@ -19,144 +31,85 @@ try {
   logger(`SOCKET`, `ℹ️ Port ${socketPort} was free, continuing...`);
 }
 
-
+// Initialize socket
 require('./socket');
 
-const isDev = !app.isPackaged;
+function startServices() {
+  // Spawn nginx
+  spawnWrapper("[Nginx]", nginxPath, { cwd: appDir });
 
-let appDir;
-if (isDev) {
-  appDir = path.join(__dirname);
-} else {
-  appDir = process.resourcesPath; // where extraResources are placed
+  // Spawn PHP workers
+  [9000].forEach(port => spawnPhpCgiWorker(phpCGi, port));
+
+  // Spawn artisan schedule and queue
+  spawnWrapper("[Application]", phpPathCli, ['artisan', 'schedule:work'], { cwd: srcDirectory });
+  spawnWrapper("[Application]", phpPathCli, ['artisan', 'queue:work'], { cwd: srcDirectory });
+
+  logger('Application', `Application started at http://${ipv4Address}:8000`);
 }
 
-const srcDirectory = path.join(appDir, 'www');
-const phpPath = path.join(srcDirectory, 'php');
-
-const nginxPath = path.join(appDir, 'nginx.exe');
-const phpPathCli = path.join(phpPath, 'php.exe');
-const phpCGi = path.join(phpPath, 'php-cgi.exe');
-
-let mainWindow;
-let nginxWindow;
-
-function createWindow() {
-
+function createNginxWindow() {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
 
-  mainWindow = new BrowserWindow({
+  nginxWindow = new BrowserWindow({
     width,
     height,
-    show: false, // enable to hide the window
+    fullscreen: true,
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-    },
+      nodeIntegration: false,
+      contextIsolation: true
+    }
   });
 
-  mainWindow.loadFile('index.html');
+  nginxWindow.loadURL(`http://${ipv4Address}:8000`);
+  nginxWindow.maximize();
 
-  mainWindow.webContents.once('did-finish-load', () => {
-    const phpPorts = [9000];
-    phpPorts.forEach(port => {
-      spawnPhpCgiWorker(phpCGi, port);
-    });
-    startServices(mainWindow);
-  });
-}
-
-function startServices(mainWindow) {
-  const address = `http://${ipv4Address}:8000`;
-
-
-
-  NginxProcess = spawnWrapper(mainWindow, "[Nginx]", nginxPath, { cwd: appDir });
-
-  logger('Application', `Application started on ${address}`);
-
-
-  ScheduleProcess = spawnWrapper(mainWindow, "[Application]", phpPathCli, ['artisan', 'schedule:work'], {
-    cwd: srcDirectory
+  nginxWindow.on('closed', () => {
+    nginxWindow = null;
   });
 
-  QueueProcess = spawnWrapper(mainWindow, "[Application]", phpPathCli, ['artisan', 'queue:work'], {
-    cwd: srcDirectory
-  });
-
-
-  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-
-  // ✅ Only create a new window if it's not already open
-  if (!nginxWindow || nginxWindow.isDestroyed()) {
-    nginxWindow = new BrowserWindow({
-      width,
-      height,
-      // frame: false,
-      // fullscreen: true,
-      // autoHideMenuBar: true,
-      webPreferences: {
-        nodeIntegration: false,
-        contextIsolation: true
-      }
-    });
-
-    nginxWindow.loadURL(`http://${ipv4Address}:8000`);
-    nginxWindow.maximize();
-
-    nginxWindow.on('closed', () => {
-      nginxWindow = null;
-    });
-  } else {
-    nginxWindow.focus(); // ✅ Bring existing window to front
-  }
+  startServices();
 }
 
 function stopServices() {
-  return new Promise((resolve) => {
-    const batFile = path.join(appDir, 'stop-services.bat');
+  return new Promise(resolve => {
+    fs.appendFileSync(path.join(__dirname, 'SMARTQUEUE_SHUTDOWN.txt'), 'Stopping services...\n');
 
-    const child = spawn('cmd.exe', ['/c', batFile], {
-      windowsHide: true,
-      cwd: appDir
-    });
+    const commands = [
+      'taskkill /IM nginx.exe /T /F',
+      'taskkill /IM php.exe /T /F',
+      'taskkill /IM php-cgi.exe /T /F'
+    ];
 
-    child.on('exit', () => {
-      logger('Application', 'stop-services.bat finished');
-      resolve();
-    });
+    for (const cmd of commands) {
+      try {
+        execSync(cmd, { stdio: 'ignore' });
+        fs.appendFileSync(path.join(__dirname, 'SMARTQUEUE_SHUTDOWN.txt'), `✅ ${cmd}\n`);
+      } catch {
+        fs.appendFileSync(path.join(__dirname, 'SMARTQUEUE_SHUTDOWN.txt'), `ℹ️ ${cmd} (not running)\n`);
+      }
+    }
+
+    setTimeout(resolve, 1000);
   });
 }
 
 app.whenReady().then(async () => {
-
   setMenu();
-
-  await runInstaller(path.join(appDir, `vs_redist.exe`));
-
-  createWindow();
-  // ipcMain.on('start-server', () => startServices(mainWindow));
-  // ipcMain.on('stop-server', () => stopServices(mainWindow));
+  createNginxWindow();
+  await runInstaller(path.join(appDir, 'vs_redist.exe'));
 });
-let isQuitting = false;
 
-app.on('before-quit', async (e) => {
+// Ensure app quits cleanly and stops services
+app.on('before-quit', async e => {
   if (isQuitting) return;
 
-  e.preventDefault(); // stop default quit
+  e.preventDefault();
   isQuitting = true;
 
-  logger('Application', 'Stopping services before quitting...');
+  fs.appendFileSync(path.join(__dirname, 'SMARTQUEUE_SHUTDOWN.txt'), 'before-quit fired\n');
 
-  try {
-    await stopServices(); // MUST return a Promise
-  } catch (err) {
-    logger('Application', `Stop services error: ${err.message}`);
-  }
+  await stopServices();
 
-  app.quit(); // quit AFTER services stop
-});
-
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
+  app.exit(0);
 });

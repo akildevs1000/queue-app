@@ -29,23 +29,8 @@ Object.keys(networkInterfaces).forEach((interfaceName) => {
     });
 });
 
-function tailLogFile(logFilePath) {
-    const tail = spawn('powershell.exe', [
-        '-Command',
-        `Get-Content -Path "${logFilePath}" -Wait -Tail 10`
-    ]);
-
-    tail.stdout.on('data', (data) => {
-        log(`[NGINX] ${data.toString()}`);
-    });
-
-    tail.stderr.on('data', (data) => {
-        log(`[NGINX-ERROR] ${data.toString()}`);
-    });
-}
-
 // Flexible spawn wrapper
-function spawnWrapper(mainWindow, processType, command, argsOrOptions, maybeOptions) {
+function spawnWrapper(processType, command, argsOrOptions, maybeOptions) {
     let args = [];
     let options = {};
 
@@ -59,19 +44,19 @@ function spawnWrapper(mainWindow, processType, command, argsOrOptions, maybeOpti
     const child = spawn(command, args, options);
 
     child.stdout.on('data', (data) => {
-        log(mainWindow, `${processType} ${data.toString()}`);
+        logger(processType, `${processType} ${data.toString()}`);
     });
 
     child.stderr.on('data', (data) => {
-        log(mainWindow, `${processType} ${data.toString()}`);
+        logger(processType, `${processType} ${data.toString()}`);
     });
 
     child.on('close', (code) => {
-        log(mainWindow, `${processType} exited with code ${code} for ${JSON.stringify(argsOrOptions)}`);
+        logger(processType, `${processType} exited with code ${code} for ${JSON.stringify(argsOrOptions)}`);
     });
 
     child.on('error', (err) => {
-        log(mainWindow, `${processType} ${err.message}`);
+        logger(processType, `${processType} ${err.message}`);
     });
 
     return child;
@@ -105,54 +90,6 @@ function spawnPhpCgiWorker(phpCGi, port) {
     }
 
     return start();
-}
-
-
-function log(mainWindow, message) {
-    const now = new Date();
-
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-
-    const timestamp = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-    const fullMessage = `[${timestamp}] ${message}\n`;
-
-    // Send to frontend
-    if (mainWindow && mainWindow.webContents) {
-        mainWindow.webContents.send('log', fullMessage);
-    }
-
-    // Write to file in logs directory within appDir
-    const logDir = path.join(appDir, 'logs');
-    const logFile = path.join(logDir, `${year}-${month}-${day}.log`);
-
-    // Create logs directory if it doesn't exist
-    if (!fs.existsSync(logDir)) {
-        fs.mkdirSync(logDir, { recursive: true });
-    }
-
-    fs.appendFile(logFile, fullMessage, (err) => {
-        if (err) {
-            console.error("❌ Failed to write log file:", err);
-        }
-    });
-}
-
-function stopProcess(mainWindow, Process) {
-
-    if (!Process) {
-        log(mainWindow, `Something went wrong ${Process}.`);
-        return;
-    }
-
-    Process.kill();
-    Process = null;
-    log(mainWindow, `${Process} has been stopped.`);
-
 }
 
 const timezoneOptions = {
@@ -244,14 +181,12 @@ function runInstaller(installerPath) {
     return new Promise((resolve, reject) => {
         if (isVSRedistInstalled()) {
             logger(`VS_REDIST`, '✅ VS Redistributable already installed.');
-            console.log('✅ VS Redistributable already installed.');
             return resolve('Already installed');
         }
 
         const installer = spawn(installerPath, ['/quiet', '/norestart']);
 
         installer.stdout.on('data', (data) => {
-            console.log(data.toString());
             logger(`VS_REDIST`, data.toString());
         });
 
@@ -261,17 +196,14 @@ function runInstaller(installerPath) {
 
         installer.on('close', (code) => {
             if (code === 0) {
-                console.log('Installed successfully');
 
                 logger(`VS_REDIST`, 'Installed successfully');
                 resolve('Installed successfully');
             } else if (code === 1638) {
-                console.log('Already installed (code 1638)');
 
                 logger(`VS_REDIST`, 'Already installed (code 1638)');
                 resolve('Already installed');
             } else {
-                console.log(`❌ Installation failed with code ${code}`);
                 logger(`VS_REDIST`, `❌ Installation failed with code ${code}`);
                 reject(new Error(`Installation failed with code ${code}`));
             }
@@ -368,10 +300,7 @@ function setMenu() {
 
 module.exports = {
     logger, runInstaller,
-    tailLogFile,
     spawnWrapper, spawnPhpCgiWorker,
-    stopProcess,
-    getFormattedDate, notify,
-    timezoneOptions, ipv4Address,
+    ipv4Address,
     setMenu
 }
