@@ -354,7 +354,7 @@ function setMenu() {
             label: 'File',
             submenu: [
                 {
-                    label: 'Update Tv Display',
+                    label: 'Update App',
                     click: () => openUpdaterWindow(), // now works
                 },
                 { role: 'quit' },
