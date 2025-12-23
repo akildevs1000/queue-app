@@ -1,7 +1,7 @@
 const simpleGit = require('simple-git');
 const fs = require('fs');
 const path = require('path');
-const { spawn, spawnSync } = require('child_process');
+const { spawn, spawnSync, execSync } = require('child_process');
 const os = require("os");
 const { app, Notification, dialog, Menu } = require('electron');
 const unzipper = require('unzipper');
@@ -59,7 +59,7 @@ function spawnWrapper(processType, command, argsOrOptions, maybeOptions) {
         logger(processType, `${processType} ${err.message}`);
     });
 
-    return child;
+    return child.pid;
 }
 
 function spawnPhpCgiWorker(phpCGi, port) {
@@ -86,7 +86,7 @@ function spawnPhpCgiWorker(phpCGi, port) {
             logger(port, `[PHP-CGI:${port}] error: ${err.message}`);
         });
 
-        return child;
+        return child.pid;
     }
 
     return start();
@@ -298,8 +298,25 @@ function setMenu() {
     Menu.setApplicationMenu(menu);
 }
 
+function stopServices(pid) {
+    return new Promise(resolve => {
+        fs.appendFileSync(path.join(appDir, "logs", 'SMARTQUEUE_SHUTDOWN.txt'), 'Stopping services...\n');
+
+        if (pid) {
+            try {
+                execSync(`taskkill /PID ${pid} /T /F`);
+                fs.appendFileSync(path.join(appDir, "logs", 'SMARTQUEUE_SHUTDOWN.txt'), `✅ ${pid} stopped\n`);
+            } catch (err) {
+                fs.appendFileSync(path.join(appDir, "logs", 'SMARTQUEUE_SHUTDOWN.txt'), `ℹ️ Failed to stop\n`);
+            }
+        }
+
+        setTimeout(resolve, 2000);
+    });
+}
+
 module.exports = {
-    logger, runInstaller,
+    logger, runInstaller, stopServices,
     spawnWrapper, spawnPhpCgiWorker,
     ipv4Address,
     setMenu

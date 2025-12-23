@@ -2,7 +2,7 @@ const { app, BrowserWindow, screen } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
-const { logger, spawnWrapper, spawnPhpCgiWorker, runInstaller, ipv4Address, setMenu } = require('./helpers');
+const { logger, spawnWrapper, spawnPhpCgiWorker, runInstaller, ipv4Address, setMenu, stopServices } = require('./helpers');
 
 app.setName('SmartQueue');
 app.setAppUserModelId('SmartQueue');
@@ -20,6 +20,11 @@ const phpCGi = path.join(phpPath, 'php-cgi.exe');
 
 let nginxWindow;
 
+let nginxPID = null;
+let schedulePID = null;
+let queuePID = null;
+let serverPID = null;
+
 // -------------------- SOCKET CLEANUP --------------------
 const socketPort = 7777; // declare outside
 
@@ -35,15 +40,22 @@ try {
 require('./socket');
 
 function startServices() {
-  // Spawn nginx
-  spawnWrapper("[Nginx]", nginxPath, { cwd: appDir });
+
+  nginxPID = spawnWrapper("[Nginx]", nginxPath, { cwd: appDir });
+
+  console.log("PID", nginxPID);
 
   // Spawn PHP workers
-  [9000].forEach(port => spawnPhpCgiWorker(phpCGi, port));
+  [9000].forEach(port => {
+    serverPID = spawnPhpCgiWorker(phpCGi, port);
+    console.log("serverPID", serverPID);
+  });
 
-  // Spawn artisan schedule and queue
-  spawnWrapper("[Application]", phpPathCli, ['artisan', 'schedule:work'], { cwd: srcDirectory });
-  spawnWrapper("[Application]", phpPathCli, ['artisan', 'queue:work'], { cwd: srcDirectory });
+  schedulePID = spawnWrapper("[Application]", phpPathCli, ['artisan', 'schedule:work'], { cwd: srcDirectory });
+  console.log("schedulePID", schedulePID);
+  queuePID = spawnWrapper("[Application]", phpPathCli, ['artisan', 'queue:work'], { cwd: srcDirectory });
+  console.log("queuePID", queuePID);
+
 
   logger('Application', `Application started at http://${ipv4Address}:8000`);
 }
@@ -71,28 +83,7 @@ function createNginxWindow() {
   startServices();
 }
 
-function stopServices() {
-  return new Promise(resolve => {
-    fs.appendFileSync(path.join(__dirname, 'SMARTQUEUE_SHUTDOWN.txt'), 'Stopping services...\n');
 
-    const commands = [
-      'taskkill /IM nginx.exe /T /F',
-      'taskkill /IM php.exe /T /F',
-      'taskkill /IM php-cgi.exe /T /F'
-    ];
-
-    for (const cmd of commands) {
-      try {
-        execSync(cmd, { stdio: 'ignore' });
-        fs.appendFileSync(path.join(__dirname, 'SMARTQUEUE_SHUTDOWN.txt'), `✅ ${cmd}\n`);
-      } catch {
-        fs.appendFileSync(path.join(__dirname, 'SMARTQUEUE_SHUTDOWN.txt'), `ℹ️ ${cmd} (not running)\n`);
-      }
-    }
-
-    setTimeout(resolve, 1000);
-  });
-}
 
 app.whenReady().then(async () => {
   setMenu();
@@ -107,9 +98,21 @@ app.on('before-quit', async e => {
   e.preventDefault();
   isQuitting = true;
 
-  fs.appendFileSync(path.join(__dirname, 'SMARTQUEUE_SHUTDOWN.txt'), 'before-quit fired\n');
+  fs.appendFileSync(path.join(appDir, "logs", 'SMARTQUEUE_SHUTDOWN.txt'), 'before-quit fired\n');
 
-  await stopServices();
+  await stopServices(nginxPID);
+  await stopServices(schedulePID);
+  await stopServices(queuePID);
+  await stopServices(serverPID);
 
   app.exit(0);
+});
+
+
+app.on('will-quit', async () => {
+  fs.appendFileSync(path.join(appDir, "logs", 'SMARTQUEUE_SHUTDOWN.txt'), 'will-quit fired\n');
+  await stopServices(nginxPID);
+  await stopServices(schedulePID);
+  await stopServices(queuePID);
+  await stopServices(serverPID);
 });
