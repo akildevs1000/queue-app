@@ -1,9 +1,11 @@
 const simpleGit = require('simple-git');
 const fs = require('fs');
 const path = require('path');
-const { spawn,spawnSync } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const os = require("os");
-const { app, Notification } = require('electron');
+const { app, Notification, dialog, Menu } = require('electron');
+const unzipper = require('unzipper');
+
 
 const isDev = !app.isPackaged;
 
@@ -153,40 +155,6 @@ function stopProcess(mainWindow, Process) {
 
 }
 
-function cloneTheRepoIfRequired(mainWindow, appDir, targetDir, backendDir, phpPath, repoUrl) {
-    const composerPhar = path.join(appDir, 'composer.phar');
-
-    if (!fs.existsSync(targetDir) || fs.readdirSync(targetDir).length === 0) {
-        log(mainWindow, `Cloning repository from ${repoUrl}`);
-        const git = simpleGit();
-
-        git.clone(repoUrl, targetDir)
-            .then(() => {
-                log(mainWindow, 'Repository cloned successfully.');
-
-                // Run `composer install`
-                return spawnWrapper(mainWindow, "Repo", phpPath, [composerPhar, 'install'], {
-                    cwd: backendDir
-                });
-            })
-            .then(() => {
-                // Run `php artisan migrate --force`
-                log(mainWindow, 'Running php artisan migrate --force');
-                return spawnWrapper(mainWindow, "Repo", phpPath, ['artisan', 'migrate', '--force'], {
-                    cwd: backendDir
-                });
-            })
-            .then(() => {
-                log(mainWindow, 'Migration completed successfully.');
-            })
-            .catch(err => {
-                log(mainWindow, `Error: ${err.message}`);
-            });
-    } else {
-        // log(mainWindow, 'Repository already cloned.');
-    }
-}
-
 const timezoneOptions = {
     year: "numeric",
     month: "2-digit",
@@ -294,7 +262,7 @@ function runInstaller(installerPath) {
         installer.on('close', (code) => {
             if (code === 0) {
                 console.log('Installed successfully');
-                
+
                 logger(`VS_REDIST`, 'Installed successfully');
                 resolve('Installed successfully');
             } else if (code === 1638) {
@@ -303,7 +271,7 @@ function runInstaller(installerPath) {
                 logger(`VS_REDIST`, 'Already installed (code 1638)');
                 resolve('Already installed');
             } else {
-                console.log( `❌ Installation failed with code ${code}`);
+                console.log(`❌ Installation failed with code ${code}`);
                 logger(`VS_REDIST`, `❌ Installation failed with code ${code}`);
                 reject(new Error(`Installation failed with code ${code}`));
             }
@@ -311,12 +279,99 @@ function runInstaller(installerPath) {
     });
 }
 
+
+
+async function openUpdaterWindow() {
+    const result = await dialog.showOpenDialog({
+        title: 'Select Update ZIP File',
+        filters: [{ name: 'ZIP Files', extensions: ['zip'] }],
+        properties: ['openFile']
+    });
+
+    logger('Updater', `called openUpdaterWindow, result: ${JSON.stringify(result)}`);
+
+
+    if (!result.canceled && result.filePaths.length > 0) {
+        const zipPath = result.filePaths[0];
+        await applyUpdate(zipPath);
+    }
+}
+
+async function applyUpdate(zipPath) {
+    try {
+        const tempDir = path.join(appDir, 'SmartQueueUpdate');
+
+        // Clean temp dir first
+        if (fs.existsSync(tempDir)) {
+            fs.rmSync(tempDir, { recursive: true, force: true });
+        }
+        fs.mkdirSync(tempDir, { recursive: true });
+
+        // Extract ZIP
+        await fs.createReadStream(zipPath)
+            .pipe(unzipper.Extract({ path: tempDir }))
+            .promise();
+
+        // Copy files to app directory
+        copyFolderRecursiveSync(tempDir, appDir);
+
+        // ✅ DELETE temp update folder after copy
+        fs.rmSync(tempDir, { recursive: true, force: true });
+
+        const { dialog } = require('electron');
+        dialog.showMessageBox({
+            type: 'info',
+            title: 'Update Applied',
+            message: 'Update applied successfully. The app will now restart.'
+        }).then(() => {
+            app.relaunch();
+            app.exit();
+        });
+
+    } catch (err) {
+        logger('Updater', `Failed to apply update: ${err}`);
+    }
+}
+
+function copyFolderRecursiveSync(source, target) {
+    if (!fs.existsSync(source)) return;
+    const files = fs.readdirSync(source);
+    files.forEach(file => {
+        const srcPath = path.join(source, file);
+        const destPath = path.join(target, file);
+        if (fs.lstatSync(srcPath).isDirectory()) {
+            if (!fs.existsSync(destPath)) fs.mkdirSync(destPath);
+            copyFolderRecursiveSync(srcPath, destPath);
+        } else {
+            fs.copyFileSync(srcPath, destPath);
+        }
+    });
+}
+
+function setMenu() {
+    const template = [
+        {
+            label: 'File',
+            submenu: [
+                {
+                    label: 'Update Tv Display',
+                    click: () => openUpdaterWindow(), // now works
+                },
+                { role: 'quit' },
+            ]
+        },
+    ];
+
+    const menu = Menu.buildFromTemplate(template);
+    Menu.setApplicationMenu(menu);
+}
+
 module.exports = {
     logger, runInstaller,
     tailLogFile,
     spawnWrapper, spawnPhpCgiWorker,
     stopProcess,
-    cloneTheRepoIfRequired,
     getFormattedDate, notify,
-    timezoneOptions, ipv4Address
+    timezoneOptions, ipv4Address,
+    setMenu
 }

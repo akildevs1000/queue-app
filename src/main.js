@@ -6,7 +6,7 @@ const { spawn, execSync } = require('child_process');
 app.setName('SmartQueue');
 app.setAppUserModelId('SmartQueue');
 
-const { logger, spawnWrapper, spawnPhpCgiWorker, stopProcess, runInstaller, ipv4Address } = require('./helpers');
+const { logger, spawnWrapper, spawnPhpCgiWorker, stopProcess, runInstaller, ipv4Address, setMenu } = require('./helpers');
 
 
 const socketPort = 7777; // declare outside
@@ -119,6 +119,8 @@ function stopServices(mainWindow) {
 }
 
 app.whenReady().then(async () => {
+
+  setMenu();
 
   await runInstaller(path.join(appDir, `vs_redist.exe`));
 
