@@ -112,10 +112,20 @@ function startServices(mainWindow) {
   }
 }
 
-function stopServices(mainWindow) {
-  const batFile = path.join(appDir, 'stop-services.bat');
-  spawn('cmd.exe', ['/c', batFile], { windowsHide: true });
-  logger(`Application`, 'Application stop-services.bat executed.');
+function stopServices() {
+  return new Promise((resolve) => {
+    const batFile = path.join(appDir, 'stop-services.bat');
+
+    const child = spawn('cmd.exe', ['/c', batFile], {
+      windowsHide: true,
+      cwd: appDir
+    });
+
+    child.on('exit', () => {
+      logger('Application', 'stop-services.bat finished');
+      resolve();
+    });
+  });
 }
 
 app.whenReady().then(async () => {
@@ -130,15 +140,23 @@ app.whenReady().then(async () => {
 });
 let isQuitting = false;
 
-app.on('before-quit', (e) => {
-  if (!isQuitting) {
-    e.preventDefault(); // prevent quit
-    logger(`Application`, "Stopping services before quitting...");
-    stopServices(mainWindow); // assume this is sync or finishes quickly
-    isQuitting = true;
-    app.quit(); // trigger quit again
+app.on('before-quit', async (e) => {
+  if (isQuitting) return;
+
+  e.preventDefault(); // stop default quit
+  isQuitting = true;
+
+  logger('Application', 'Stopping services before quitting...');
+
+  try {
+    await stopServices(); // MUST return a Promise
+  } catch (err) {
+    logger('Application', `Stop services error: ${err.message}`);
   }
+
+  app.quit(); // quit AFTER services stop
 });
+
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });

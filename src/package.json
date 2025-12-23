@@ -24,8 +24,8 @@
     ],
     "extraResources": [
       {
-        "from": "kill-processes.bat",
-        "to": "kill-processes.bat"
+        "from": "stop-services.bat",
+        "to": "stop-services.bat"
       },
       {
         "from": "assets",
