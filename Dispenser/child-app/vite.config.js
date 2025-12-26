@@ -9,4 +9,5 @@ export default defineConfig({
     port: 5173,
     strictPort: false,
   },
+  base: './', // 🔥 REQUIRED for Electron
 })

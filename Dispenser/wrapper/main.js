@@ -39,8 +39,8 @@ ipcMain.on('load-guest', (event, { ip, languages }) => {
   win.setResizable(false);
   win.setMenuBarVisibility(false);
 
-  const targetUrl = `http://${ip}:5174`;
-  win.loadURL(targetUrl);
+  const targetUrl = path.join(__dirname, 'renderer', 'index.html');
+  win.loadFile(targetUrl);
 
   const onFinish = () => {
     logger.log('Main | Guest page loaded successfully');
