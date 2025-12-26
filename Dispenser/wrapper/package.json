@@ -20,9 +20,14 @@
       {
         "from": "print.exe",
         "to": "print.exe"
-      },{
+      },
+      {
         "from": "logs",
         "to": "logs"
+      },
+      {
+        "from": "renderer",
+        "to": "renderer"
       }
     ],
     "win": {

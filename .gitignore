@@ -4,7 +4,8 @@ frontend
 src/www/public/build
 guest-electron
 queue-display-child-app
-Dispenser/backup-child-app
+Dispenser/child-app/renderer
+Dispenser/wrapper/renderer
 src/www/database/database.sqlite
 src/www/database/database.sqlite-shm
 src/www/database/database.sqlite-wal
