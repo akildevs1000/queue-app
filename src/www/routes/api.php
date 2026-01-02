@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\Auth\PinLoginController;
 use App\Http\Controllers\CounterController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\TokenController;
@@ -45,6 +46,8 @@ Route::get("socket-ip-and-port", [UserController::class, 'socketIpAndPort']);
 
 Route::get('/serving_list', [TokenController::class, "servingList"]);
 Route::get('/send-token', [TokenController::class, 'sendToken']);
+
+Route::get('/get-new-summary-report', [ReportController::class, 'getNewSummaryReport']);
 
 Route::get('/ticket/view', function () {
     // Static data for testing

@@ -10,6 +10,8 @@ Route::middleware('auth')->group(function () {
 
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::get('settings/tv-settings', [ProfileController::class, 'tvSettings'])->name('tv_settings');
+    Route::get('settings/operational-hours', [ProfileController::class, 'operationalHours'])->name('operationalHours');
+    Route::patch('settings/operational-hours', [ProfileController::class, 'operationalHoursUpdate'])->name('operationalHours.update');
     Route::post('settings/tv-settings', [ProfileController::class, 'tvSettingsUpdate'])->name('tv_settings.update');
     Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('settings/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

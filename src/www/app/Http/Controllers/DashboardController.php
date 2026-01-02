@@ -65,9 +65,36 @@ class DashboardController extends Controller
 
         if ($validTimeCount > 0) {
             $averageSeconds = $totalSeconds / $validTimeCount;
-            return $avgMinutes = floor(($averageSeconds % 3600) / 60);
+            return floor(($averageSeconds % 3600) / 60);
         } else {
             return "0";
         }
+    }
+
+    public function getAvgTimeByDateRange(array $dateRange): int
+    {
+        $allTimeCounts = Token::whereNotNull("total_serving_time_display")
+            ->whereBetween('created_at', $dateRange)
+            ->pluck('total_serving_time_display');
+
+        $totalSeconds = 0;
+        $validTimeCount = 0;
+
+        foreach ($allTimeCounts as $timeString) {
+            if ($timeString === "00:00:00") {
+                continue; // skip invalid times
+            }
+
+            [$hours, $minutes, $seconds] = explode(':', $timeString);
+            $totalSeconds += ($hours * 3600) + ($minutes * 60) + $seconds;
+            $validTimeCount++;
+        }
+
+        if ($validTimeCount > 0) {
+            $averageSeconds = $totalSeconds / $validTimeCount;
+            return floor(($averageSeconds % 3600) / 60); // return average in minutes
+        }
+
+        return 0;
     }
 }

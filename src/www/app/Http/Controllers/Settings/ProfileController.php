@@ -4,15 +4,12 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
-use App\Jobs\UpdateTvSettings;
-use App\Models\User;
+use App\Http\Requests\Settings\OperationalHoursUpdateRequest;
 use App\Traits\HandlesMedia;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -36,6 +33,13 @@ class ProfileController extends Controller
     {
         return Inertia::render('settings/tv-settings', [
             'tv_settings' => session('tv_settings'),
+        ]);
+    }
+
+    public function operationalHours(Request $request): Response
+    {
+        return Inertia::render('settings/operational-hours', [
+            'status' => $request->session()->get('status'),
         ]);
     }
 
@@ -64,9 +68,6 @@ class ProfileController extends Controller
             'media_url'  => $validated['media_url'],
         ];
 
-        Log::info($validated['media_type']);
-        Log::info($validated['media_url']);
-
         $user->update($payload);
 
         return back()->with('tv_settings', $user->fresh());
@@ -86,6 +87,15 @@ class ProfileController extends Controller
         $request->user()->save();
 
         return to_route('profile.edit');
+    }
+
+    public function operationalHoursUpdate(OperationalHoursUpdateRequest $request): RedirectResponse
+    {
+        $request->user()->fill($request->validated());
+
+        $request->user()->save();
+
+        return to_route('operationalHours');
     }
 
     /**

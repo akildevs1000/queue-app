@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html class="antialiased" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Summary Report - PDF Format</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script id="tailwind-config">
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: "#137fec",
+              "background-preview": "#525659",
+              paper: "#ffffff",
+              "text-main": "#0f172a",
+              "text-muted": "#64748b",
+              "border-light": "#e2e8f0",
+            },
+            fontFamily: {
+              display: ["Inter", "sans-serif"],
+            },
+            screens: {
+              print: { raw: "print" },
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      body {
+        background-color: #525659;
+      }
+      .page-container {
+        width: 210mm;
+        min-height: 297mm;
+        margin: 2rem auto;
+        background: white;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+          0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        padding: 15mm;
+        position: relative;
+        box-sizing: border-box;
+      }
+      @media print {
+        body {
+          background: none;
+        }
+        .no-print {
+          display: none !important;
+        }
+        .page-container {
+          margin: 0;
+          box-shadow: none;
+          width: 100%;
+          height: auto;
+          page-break-after: always;
+        }
+        .page-break {
+          page-break-before: always;
+        }
+      }
+    </style>
+  </head>
+  <body class="font-display text-text-main antialiased">
+    <div
+      class="no-print fixed top-0 left-0 right-0 z-50 bg-[#323639] text-white px-4 py-3 flex items-center justify-between shadow-md"
+    >
+      <div class="flex items-center gap-4">
+        <button class="text-gray-300 hover:text-white flex items-center gap-1">
+          <span class="material-symbols-outlined">arrow_back</span>
+          <span class="text-sm font-medium">Exit Preview</span>
+        </button>
+        <span class="h-6 w-px bg-gray-600 mx-2"></span>
+        <h1 class="font-medium text-sm">Summary_Report_UnitA_Oct2023.pdf</h1>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="flex items-center bg-black/30 rounded-lg p-1">
+          <button class="p-1.5 hover:bg-white/10 rounded">
+            <span class="material-symbols-outlined text-sm">remove</span>
+          </button>
+          <span class="px-2 text-xs font-mono">100%</span>
+          <button class="p-1.5 hover:bg-white/10 rounded">
+            <span class="material-symbols-outlined text-sm">add</span>
+          </button>
+        </div>
+        <button
+          class="bg-primary hover:bg-blue-600 text-white px-4 py-1.5 rounded-md text-sm font-bold flex items-center gap-2 transition-colors"
+        >
+          <span class="material-symbols-outlined text-sm">download</span>
+          Download
+        </button>
+        <button
+          class="bg-white/10 hover:bg-white/20 text-white p-1.5 rounded-md transition-colors"
+        >
+          <span class="material-symbols-outlined text-sm">print</span>
+        </button>
+      </div>
+    </div>
+    <div class="pt-20 pb-10 flex flex-col items-center gap-8">
+      <div
+        class="page-container flex flex-col justify-between bg-gradient-to-br from-white to-blue-50/30"
+      >
+        <div class="flex-1 flex flex-col justify-center">
+          <div
+            class="w-24 h-24 bg-blue-600 text-white rounded-2xl flex items-center justify-center mb-12 shadow-lg shadow-blue-200"
+          >
+            <span class="material-symbols-outlined text-6xl">monitoring</span>
+          </div>
+          <div class="border-l-4 border-primary pl-8 mb-16">
+            <h1
+              class="text-6xl font-black text-slate-900 leading-tight mb-4 tracking-tight"
+            >
+              Summary<br />Report
+            </h1>
+            <!-- <p class="text-2xl text-slate-500 font-light">Cardiology Unit A</p> -->
+          </div>
+          <div class="space-y-8 mb-16">
+            <div class="flex items-baseline gap-4">
+              <span
+                class="w-32 text-sm font-bold text-slate-400 uppercase tracking-wider"
+                >Report Period</span
+              >
+              <span class="text-lg font-medium text-slate-900"
+                >October 17 - October 23, 2025</span
+              >
+            </div>
+            <div class="flex items-baseline gap-4">
+              <span
+                class="w-32 text-sm font-bold text-slate-400 uppercase tracking-wider"
+                >Generated On</span
+              >
+              <span class="text-lg font-medium text-slate-900"
+                >Oct 24, 2025 at 14:30</span
+              >
+            </div>
+            <div class="flex items-baseline gap-4">
+              <span
+                class="w-32 text-sm font-bold text-slate-400 uppercase tracking-wider"
+                >Prepared By</span
+              >
+              <span class="text-lg font-medium text-slate-900"
+                >Dr. Sarah Jenkins</span
+              >
+            </div>
+          </div>
+          <div
+            class="bg-white border border-slate-200 rounded-xl p-8 shadow-sm"
+          >
+            <h2
+              class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2"
+            >
+              <span class="material-symbols-outlined text-primary"
+                >analytics</span
+              >
+              Executive Summary
+            </h2>
+            <div class="grid grid-cols-2 gap-8">
+              <div>
+                <p class="text-slate-600 text-sm leading-relaxed mb-4">
+                  This week showed a
+                  <strong class="text-slate-900">12% increase</strong> in total
+                  visits compared to the previous period. Despite the higher
+                  volume, the average response time improved by
+                  <strong class="text-emerald-600">5%</strong>, demonstrating
+                  efficient staff allocation.
+                </p>
+                <ul class="space-y-2">
+                  <li class="flex items-center gap-2 text-sm text-slate-700">
+                    <span
+                      class="w-1.5 h-1.5 rounded-full bg-emerald-500"
+                    ></span>
+                    97% Resolution Rate achieved
+                  </li>
+                  <li class="flex items-center gap-2 text-sm text-slate-700">
+                    <span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+                    Peak activity observed: 10:00 AM - 12:00 PM
+                  </li>
+                </ul>
+              </div>
+              <div class="bg-slate-50 rounded-lg p-4 border border-slate-100">
+                <h3 class="text-xs font-bold text-slate-400 uppercase mb-3">
+                  Key Metrics at a Glance
+                </h3>
+                <div class="space-y-4">
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm text-slate-600">Total Visits</span>
+                    <span class="font-bold text-slate-900">142</span>
+                  </div>
+                  <div class="w-full h-px bg-slate-200"></div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm text-slate-600">Avg Response</span>
+                    <span class="font-bold text-slate-900">1m 12s</span>
+                  </div>
+                  <div class="w-full h-px bg-slate-200"></div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm text-slate-600">Top Location</span>
+                    <span class="font-bold text-slate-900">Room 304</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <footer
+          class="mt-auto pt-8 border-t border-slate-200 flex justify-between text-xs text-slate-400"
+        >
+          <span>© 2025 Queue Management System</span>
+          <span>Page 1 of 3</span>
+        </footer>
+      </div>
+      <div class="page-container flex flex-col">
+        <header
+          class="border-b-2 border-primary pb-6 mb-8 flex justify-between items-start"
+        >
+          <div class="flex items-center gap-3">
+            <div
+              class="size-10 flex items-center justify-center text-primary border border-primary/20 rounded-lg bg-blue-50"
+            >
+              <span class="material-symbols-outlined" style="font-size: 28px"
+                >monitoring</span
+              >
+            </div>
+            <div>
+              <h1 class="text-2xl font-bold text-slate-900 leading-none">
+                Smart Queue
+              </h1>
+              <p
+                class="text-xs text-slate-500 font-medium uppercase tracking-wider mt-1"
+              >
+                Queue Management System
+              </p>
+            </div>
+          </div>
+          <div class="text-right">
+            <h2 class="text-xl font-bold text-slate-900">Summary Report</h2>
+            <p class="text-sm text-slate-500 mt-1">Detailed Analytics</p>
+          </div>
+        </header>
+        <div class="grid grid-cols-4 gap-4 mb-8">
+          <div class="border border-slate-200 rounded-lg p-4 bg-white">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="material-symbols-outlined text-primary text-lg"
+                >call</span
+              >
+              <span class="text-xs font-bold text-slate-500 uppercase"
+                >Total Visits</span
+              >
+            </div>
+            <p class="text-3xl font-bold text-slate-900">142</p>
+            <div
+              class="mt-2 text-xs text-emerald-600 font-medium flex items-center"
+            >
+              <span class="material-symbols-outlined text-sm mr-0.5"
+                >trending_up</span
+              >
+              12% vs prev. period
+            </div>
+          </div>
+
+          <div class="border border-slate-200 rounded-lg p-4 bg-white">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="material-symbols-outlined text-emerald-500 text-lg"
+                >task_alt</span
+              >
+              <span class="text-xs font-bold text-slate-500 uppercase"
+                >Total Served</span
+              >
+            </div>
+            <p class="text-3xl font-bold text-slate-900">97%</p>
+            <div class="w-full bg-slate-100 rounded-full h-1.5 mt-3">
+              <div
+                class="bg-emerald-500 h-1.5 rounded-full"
+                style="width: 97%"
+              ></div>
+            </div>
+          </div>
+          <div class="border border-slate-200 rounded-lg p-4 bg-white">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="material-symbols-outlined text-purple-500 text-lg"
+                >monitor</span
+              >
+              <span class="text-xs font-bold text-slate-500 uppercase"
+                >Best Counter</span
+              >
+            </div>
+            <p class="text-xl font-bold text-slate-900 truncate">Counter 01</p>
+            <p class="text-xs text-slate-500 mt-2">12 visits this period</p>
+          </div>
+          <div class="border border-slate-200 rounded-lg p-4 bg-white">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="material-symbols-outlined text-orange-500 text-lg"
+                >timer</span
+              >
+              <span class="text-xs font-bold text-slate-500 uppercase"
+                >Avg Response</span
+              >
+            </div>
+            <p class="text-3xl font-bold text-slate-900">1m 12s</p>
+            <div
+              class="mt-2 text-xs text-emerald-600 font-medium flex items-center"
+            >
+              <span class="material-symbols-outlined text-sm mr-0.5"
+                >trending_down</span
+              >
+              5% improvement
+            </div>
+          </div>
+        </div>
+        <h3
+          class="text-lg font-bold text-slate-900 border-b border-slate-200 pb-2 mb-4"
+        >
+          Data Visualization
+        </h3>
+        <div class="grid grid-cols-2 gap-6">
+          <div class="border border-slate-200 rounded-lg p-4 flex flex-col">
+            <h4 class="text-sm font-bold text-slate-700 mb-4">
+              Call Frequency (24h)
+            </h4>
+            <div class="h-160 w-full">
+              <div id="chart"></div>
+            </div>
+          </div>
+          <div class="border border-slate-200 rounded-lg p-4 flex flex-col">
+            <h4 class="text-sm font-bold text-slate-700 mb-4">
+              Response Time Trends
+            </h4>
+            <div class="h-160 w-full">
+              <div id="trend-chart"></div>
+            </div>
+          </div>
+          <div
+            class="border border-slate-200 rounded-lg p-4 flex flex-row items-center gap-6"
+          >
+            <div class="relative w-32 h-32 flex-shrink-0">
+              <div id="service-distribution-chart"></div>
+            </div>
+            <div class="flex flex-col gap-2 w-full">
+              <h4 class="text-sm font-bold text-slate-700 mb-1">
+                Service Distribution
+              </h4>
+              <div class="flex justify-between items-center text-xs">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500"></span
+                  >Served
+                </div>
+                <span class="font-medium">65%</span>
+              </div>
+              <div class="flex justify-between items-center text-xs">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-amber-500"></span>No Show
+                </div>
+                <span class="font-medium">25%</span>
+              </div>
+            </div>
+          </div>
+          <div
+            class="border border-slate-200 rounded-lg p-4 flex flex-col justify-center gap-3"
+          >
+            <h4 class="text-sm font-bold text-slate-700 mb-1">
+              Service Distribution
+            </h4>
+            <div class="w-full">
+              <div class="flex justify-between text-xs mb-1">
+                <span class="font-semibold text-slate-700">Service A</span>
+                <span class="text-slate-500">88 visits</span>
+              </div>
+              <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                <div class="bg-blue-500 h-full rounded-full w-[62%]"></div>
+              </div>
+            </div>
+            <div class="w-full">
+              <div class="flex justify-between text-xs mb-1">
+                <span class="font-semibold text-slate-700">Service B</span>
+                <span class="text-slate-500">42 visits</span>
+              </div>
+              <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                <div class="bg-purple-500 h-full rounded-full w-[30%]"></div>
+              </div>
+            </div>
+            <div class="w-full">
+              <div class="flex justify-between text-xs mb-1">
+                <span class="font-semibold text-slate-700">Service C</span>
+                <span class="text-slate-500">12 visits</span>
+              </div>
+              <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                <div class="bg-slate-400 h-full rounded-full w-[8%]"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <footer
+          class="mt-auto pt-8 border-t border-slate-200 flex justify-between text-xs text-slate-400"
+        >
+          <span>© 2025 Queue Management System</span>
+          <span>Page 2 of 3</span>
+        </footer>
+      </div>
+      <div class="page-container flex flex-col">
+        <div
+          class="flex justify-between items-center pb-6 mb-6 border-b border-slate-200"
+        >
+          <div class="flex items-center gap-2 opacity-50">
+            <span
+              class="material-symbols-outlined text-primary"
+              style="font-size: 20px"
+              >monitoring</span
+            >
+            <span class="font-bold text-slate-900 text-sm"
+              >Queue Management Report</span
+            >
+          </div>
+          <span class="text-xs text-slate-400 uppercase">Continued</span>
+        </div>
+        <h3 class="text-lg font-bold text-slate-900 mb-4">Service A</h3>
+        <div class="w-full mb-8">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead>
+              <tr
+                class="border-b-2 border-slate-200 text-slate-500 text-xs uppercase tracking-wider"
+              >
+                <th class="py-3 pr-4 font-semibold w-24">Counter</th>
+                <th class="py-3 px-2 font-semibold">Served</th>
+                <th class="py-3 px-2 font-semibold">No Show</th>
+                <th class="py-3 px-2 font-semibold">AVG Response Time</th>
+                <th class="py-3 px-2 font-semibold">Feedback</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <tr class="border-b border-slate-100">
+                <td
+                  class="py-3 pr-4 font-mono text-xs font-medium text-slate-600"
+                >
+                  01
+                </td>
+                <td class="py-3 px-2 text-slate-800 font-medium">
+                  1
+                </td>
+                <td class="py-3 px-2 text-slate-600">0</td>
+                <td class="py-3 px-2 text-slate-600">5m 45s</td>
+                <td class="py-3 px-2 text-slate-600">0</td>
+              </tr>
+              <tr class="bg-slate-50/50">
+                <td
+                  class="py-3 pr-4 font-mono text-xs font-medium text-slate-600"
+                >
+                 02
+                </td>
+                <td class="py-3 px-2 text-slate-800 font-medium">
+                  4
+                </td>
+                <td class="py-3 px-2 text-slate-600">1</td>
+                <td class="py-3 px-2 text-slate-600">5m 10s</td>
+                <td class="py-3 px-2 text-slate-600">1</td>
+              </tr>
+              <tr>
+                <td
+                  class="py-3 pr-4 font-mono text-xs font-medium text-slate-600"
+                >
+                 03
+                </td>
+                <td class="py-3 px-2 text-slate-800 font-medium">5</td>
+                <td class="py-3 px-2 text-slate-600">1</td>
+                <td class="py-3 px-2 text-slate-600">12m 45s</td>
+                <td class="py-3 px-2 text-slate-600">2</td>
+              </tr>
+              <tr class="bg-slate-50/50">
+                <td
+                  class="py-3 pr-4 font-mono text-xs font-medium text-slate-600"
+                >
+                  Total
+                </td>
+                <td class="py-3 px-2 text-slate-800 font-medium">10</td>
+                <td class="py-3 px-2 text-slate-600">2</td>
+                <td class="py-3 px-2 text-slate-600">12m 45s</td>
+                <td class="py-3 px-2 text-slate-600">5</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div
+          class="mt-4 p-4 bg-slate-50 rounded border border-slate-200 text-sm text-slate-600"
+        >
+          <strong>Note:</strong> This report includes all visits between Oct 17
+          and Oct 23. Average response time is calculated based on the interval
+          between 'Call Time' and 'End Time'.
+        </div>
+        <footer
+          class="mt-auto pt-8 border-t border-slate-200 flex justify-between text-xs text-slate-400"
+        >
+          <span>© 2025 Queue Management System</span>
+          <span>Page 3 of 3</span>
+        </footer>
+      </div>
+    </div>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        var options = {
+          series: [
+            {
+              name: "Activity",
+              data: [15, 10, 5, 8, 25, 45, 65, 85, 55, 40, 30, 20],
+            },
+          ],
+          chart: {
+            type: "bar",
+            height: 260, // Matches your original div height
+            toolbar: { show: false },
+            animations: {
+              enabled: true,
+              easing: "easeinout",
+              speed: 1000,
+            },
+          },
+          plotOptions: {
+            bar: {
+              borderRadius: 4,
+              columnWidth: "65%",
+            },
+          },
+          colors: ["#3b82f6"],
+          dataLabels: { enabled: false },
+          grid: {
+            borderColor: "#f1f5f9",
+            strokeDashArray: 4,
+            yaxis: { lines: { show: true } },
+            padding: { top: 0, right: 0, bottom: 0, left: 0 },
+          },
+          xaxis: {
+            categories: [
+              "00",
+              "02",
+              "04",
+              "06",
+              "08",
+              "10",
+              "12",
+              "14",
+              "16",
+              "18",
+              "20",
+              "22",
+            ],
+            labels: { style: { colors: "#94a3b8", fontSize: "12px" } },
+            axisBorder: { show: false },
+            axisTicks: { show: false },
+          },
+          yaxis: { show: false },
+        };
+
+        var chart = new ApexCharts(document.querySelector("#chart"), options);
+        chart.render();
+      });
+    </script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        var options = {
+          series: [
+            {
+              name: "Response Time",
+              data: [65, 58, 45, 52, 38, 28, 18],
+            },
+          ],
+          chart: {
+            type: "area",
+            height: 260,
+            toolbar: { show: false },
+            sparkline: { enabled: false },
+            animations: {
+              enabled: true,
+              easing: "easeinout",
+              speed: 1000,
+            },
+          },
+          colors: ["#f97316"],
+          stroke: {
+            curve: "straight",
+            width: 6,
+            lineCap: "butt",
+          },
+          fill: {
+            type: "solid",
+            opacity: 0.1,
+          },
+          markers: {
+            size: 6,
+            colors: ["#ffffff"],
+            strokeColors: "#f97316",
+            strokeWidth: 4,
+            hover: { size: 8 },
+          },
+          dataLabels: { enabled: false },
+          grid: {
+            show: false,
+            // CRITICAL: This adds space inside the chart so labels don't cut off
+            padding: {
+              left: 20,
+              right: 20,
+              top: 0,
+              bottom: 0,
+            },
+          },
+          xaxis: {
+            categories: ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"],
+            labels: {
+              style: {
+                colors: "#94a3b8",
+                fontSize: "12px",
+                fontWeight: 600,
+              },
+            },
+            axisBorder: { show: false },
+            axisTicks: { show: false },
+            // Ensures labels are distributed evenly with space on the ends
+            tickPlacement: "on",
+          },
+          yaxis: {
+            show: false,
+          },
+          tooltip: {
+            enabled: false,
+          },
+        };
+
+        var chart = new ApexCharts(
+          document.querySelector("#trend-chart"),
+          options
+        );
+        chart.render();
+      });
+    </script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        var options = {
+          series: [65, 25], // The percentages from your HTML
+          chart: {
+            type: "donut",
+            height: 280,
+            animations: {
+              enabled: true,
+              easing: "easeinout",
+              speed: 1000,
+            },
+          },
+          labels: ["Served", "No Show"],
+          colors: ["#10b981", "#f59e0b"], // Emerald-500 and Amber-500
+          plotOptions: {
+            pie: {
+              donut: {
+                size: "75%",
+                labels: {
+                  show: true,
+                  name: {
+                    show: true,
+                    fontSize: "14px",
+                    fontFamily: "Inter, ui-sans-serif",
+                    color: "#64748b",
+                    offsetY: -10,
+                  },
+                  value: {
+                    show: true,
+                    fontSize: "24px",
+                    fontFamily: "Inter, ui-sans-serif",
+                    fontWeight: "bold",
+                    color: "#1e293b",
+                    offsetY: 5,
+                    // formatter: function (val) {
+                    //   return val + "%";
+                    // },
+                  },
+                  total: {
+                    show: true,
+                    label: "Served",
+                    color: "#64748b",
+                    // formatter: function (w) {
+                    //   // Returns the first value (Served) as the primary focus
+                    //   return w.globals.series[0] + "%";
+                    // },
+                  },
+                },
+              },
+            },
+          },
+          dataLabels: {
+            enabled: false, // Cleaner look for small donut charts
+          },
+          legend: {
+            show: false, // Hidden because you already have custom HTML legend labels
+          },
+          stroke: {
+            width: 0,
+          },
+          tooltip: {
+            enabled: true,
+            y: {
+              formatter: function (val) {
+                return val + "%";
+              },
+            },
+          },
+          responsive: [
+            {
+              breakpoint: 480,
+              options: {
+                chart: {
+                  height: 240,
+                },
+              },
+            },
+          ],
+        };
+
+        var chart = new ApexCharts(
+          document.querySelector("#service-distribution-chart"),
+          options
+        );
+        chart.render();
+      });
+    </script>
+  </body>
+</html>

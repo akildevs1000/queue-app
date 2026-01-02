@@ -34,7 +34,11 @@ class User extends Authenticatable
         'media_height',
         'media_width',
 
-        'login_pin'
+        'login_pin',
+
+        'operational_start_time',
+        'operational_end_time',
+
     ];
 
     /**
@@ -57,9 +61,9 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            // 'media_url' => 'array',
-            // 'media_height' => 'integer',
-            // 'media_width' => 'integer',
+
+            'operational_start_time' => 'datetime:H:i',
+            'operational_end_time'   => 'datetime:H:i',
         ];
     }
 
