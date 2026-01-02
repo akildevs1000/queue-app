@@ -10,17 +10,18 @@ const sidebarNavItems: NavItem[] = [
     {
         title: 'Profile',
         href: '/settings/profile',
-        icon: null,
     },
     {
         title: 'Password',
         href: '/settings/password',
-        icon: null,
+    },
+    {
+        title: 'Operational Hours',
+        href: '/settings/operational-hours',
     },
     {
         title: 'Tv Settings',
         href: '/settings/tv-settings',
-        icon: null,
     },
 ];
 
