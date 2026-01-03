@@ -18,6 +18,8 @@
     />
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
     <script id="tailwind-config">
       tailwind.config = {
         theme: {
@@ -41,40 +43,7 @@
       };
     </script>
 
-    <style>
-      body {
-        background-color: #525659;
-      }
-      .page-container {
-        width: 210mm;
-        min-height: 297mm;
-        margin: 2rem auto;
-        background: white;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-          0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        padding: 15mm;
-        position: relative;
-        box-sizing: border-box;
-      }
-      @media print {
-        body {
-          background: none;
-        }
-        .no-print {
-          display: none !important;
-        }
-        .page-container {
-          margin: 0;
-          box-shadow: none;
-          width: 100%;
-          height: auto;
-          page-break-after: always;
-        }
-        .page-break {
-          page-break-before: always;
-        }
-      }
-    </style>
+    <link rel="stylesheet" href="./style.css" />
   </head>
   <body class="font-display text-text-main antialiased">
     <div
@@ -86,7 +55,7 @@
           <span class="text-sm font-medium">Exit Preview</span>
         </button>
         <span class="h-6 w-px bg-gray-600 mx-2"></span>
-        <h1 class="font-medium text-sm">Summary_Report_UnitA_Oct2023.pdf</h1>
+        <!-- <h1 class="font-medium text-sm">Summary_Report_UnitA_Oct2023.pdf</h1> -->
       </div>
       <div class="flex items-center gap-3">
         <div class="flex items-center bg-black/30 rounded-lg p-1">
@@ -98,7 +67,8 @@
             <span class="material-symbols-outlined text-sm">add</span>
           </button>
         </div>
-        <button id="downloadPDF"
+        <button
+          id="downloadPDF"
           class="bg-primary hover:bg-blue-600 text-white px-4 py-1.5 rounded-md text-sm font-bold flex items-center gap-2 transition-colors"
         >
           <span class="material-symbols-outlined text-sm">download</span>
@@ -106,14 +76,13 @@
         </button>
       </div>
     </div>
-    <div
-      id="reportContent"
-      class="flex flex-col items-center gap-4"
-    >
+    <div class="pb-20"></div>
+    <div id="reportContent" class="flex flex-col items-center gap-4">
       <div
-        class="page-container flex flex-col justify-between bg-gradient-to-br from-white to-blue-50/30"
+        style="height: 295mm !important"
+        class="page-container page-break flex flex-col justify-between bg-gradient-to-br from-white to-blue-50/30"
       >
-        <div class="flex-1 flex flex-col justify-center">
+        <div class="flex flex-col justify-center">
           <div
             class="w-24 h-24 bg-blue-600 text-white rounded-2xl flex items-center justify-center mb-12 shadow-lg shadow-blue-200"
           >
@@ -127,7 +96,7 @@
             </h1>
             <!-- <p class="text-2xl text-slate-500 font-light">Cardiology Unit A</p> -->
           </div>
-          <div class="space-y-8 mb-16">
+          <div class="space-y-8 mb-16 mt-5">
             <div class="flex items-baseline gap-4">
               <span
                 class="w-32 text-sm font-bold text-slate-400 uppercase tracking-wider"
@@ -218,13 +187,13 @@
           </div>
         </div>
         <footer
-          class="mt-auto pt-8 border-t border-slate-200 flex justify-between text-xs text-slate-400"
+          class="pt-8 border-t border-slate-200 flex justify-between text-xs text-slate-400"
         >
           <span>© 2025 Queue Management System</span>
-          <span>Page 1 of 3</span>
+          <span>Page 1 of <span class="page-count"></span></span>
         </footer>
       </div>
-      <div class="page-container flex flex-col">
+      <div class="page-container">
         <header
           class="border-b-2 border-primary pb-6 mb-8 flex justify-between items-start"
         >
@@ -374,22 +343,10 @@
               <h4 class="text-sm font-bold text-slate-700 mb-1">
                 Service Distribution
               </h4>
-              <div id="service-distribution-legend" class="mt-4 space-y-2">
-                <!-- <div class="flex justify-between items-center text-xs">
-                  <div class="flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span
-                    >Served
-                  </div>
-                  <span class="font-medium">65%</span>
-                </div>
-                <div class="flex justify-between items-center text-xs">
-                  <div class="flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-amber-500"></span>No
-                    Show
-                  </div>
-                  <span class="font-medium">25%</span>
-                </div> -->
-              </div>
+              <div
+                id="service-distribution-legend"
+                class="mt-4 space-y-2"
+              ></div>
             </div>
           </div>
           <div
@@ -402,473 +359,14 @@
           </div>
         </div>
         <footer
-          class="mt-auto pt-8 border-t border-slate-200 flex justify-between text-xs text-slate-400"
+          class="pt-8 border-t border-slate-200 flex justify-between text-xs text-slate-400"
         >
           <span>© 2025 Queue Management System</span>
-          <span>Page 2 of 3</span>
+          <span>Page 2 of <span class="page-count"></span></span>
         </footer>
       </div>
-      <div class="page-container flex flex-col">
-        <div
-          class="flex justify-between items-center pb-6 mb-6 border-b border-slate-200"
-        >
-          <div class="flex items-center gap-2 opacity-50">
-            <span
-              class="material-symbols-outlined text-primary"
-              style="font-size: 20px"
-              >monitoring</span
-            >
-            <span class="font-bold text-slate-900 text-sm"
-              >Queue Management Report</span
-            >
-          </div>
-          <span class="text-xs text-slate-400 uppercase">Continued</span>
-        </div>
-        <div id="servicesContainer"></div>
-        <div
-          class="mt-4 p-4 bg-slate-50 rounded border border-slate-200 text-sm text-slate-600"
-        >
-          <strong>Note:</strong> This report includes all visits between
-          <span id="dateRange2"></span>. Average response time is calculated
-          based on the interval between 'Call Time' and 'End Time'.
-        </div>
-        <footer
-          class="mt-auto pt-8 border-t border-slate-200 flex justify-between text-xs text-slate-400"
-        >
-          <span>© 2026 Queue Management System</span>
-          <span>Page 3 of 3</span>
-        </footer>
-      </div>
+      <div id="servicesContainer"></div>
     </div>
-    <script>
-      const params = new URLSearchParams(window.location.search);
-
-      const from = params.get("start_date");
-      const to = params.get("end_date");
-
-      if (!from || !to) {
-        // alert("Both 'from' and 'to' parameters are required");
-      } else {
-        fetch(
-          `http://127.0.0.1:8000/api/get-new-summary-report?start_date=${from}&end_date=${to}`
-        )
-          .then((response) => response.json())
-          .then(
-            ({
-              activityChartData,
-              responseTimeTrend,
-              serviceDistribution,
-              services,
-              statsByServices,
-              dates,
-              generatedDate,
-              preparedBy,
-            }) => {
-              renderActivityChart(activityChartData);
-              renderTrendChart(responseTimeTrend);
-              renderDonutChart(serviceDistribution);
-              renderServiceLegend(serviceDistribution);
-              renderServiceProgressBars(services);
-              renderServiceTables(statsByServices);
-
-              const dateSpan = document.getElementById("dateRange");
-              const dateSpan2 = document.getElementById("dateRange2");
-              const generatedDateSpan =
-                document.getElementById("generatedDate");
-              const preparedBySpan = document.getElementById("preparedBy");
-
-              if (dateSpan) {
-                dateSpan.textContent = dates;
-              }
-              if (dateSpan2) {
-                dateSpan2.textContent = dates;
-              }
-              if (generatedDateSpan) {
-                generatedDateSpan.textContent = generatedDate;
-              }
-              if (preparedBySpan) {
-                preparedBySpan.textContent = preparedBy;
-              }
-            }
-          )
-          .catch((error) => {
-            console.error("API Error:", error);
-          });
-      }
-
-      function renderServiceTables(statsByServices) {
-        const container = document.getElementById("servicesContainer");
-        container.innerHTML = ""; // clear previous content
-
-        // Group counters by service_name
-        const servicesMap = {};
-
-        statsByServices.forEach((item) => {
-          if (!servicesMap[item.service_name])
-            servicesMap[item.service_name] = [];
-          servicesMap[item.service_name].push(item);
-        });
-
-        // Loop through each service
-        for (const [serviceName, counters] of Object.entries(servicesMap)) {
-          // Create service title
-          const h3 = document.createElement("h3");
-          h3.className = "text-lg font-bold text-slate-900 mb-4";
-          h3.textContent = serviceName;
-          container.appendChild(h3);
-
-          // Create table
-          const tableWrapper = document.createElement("div");
-          tableWrapper.className = "w-full mb-8";
-
-          const table = document.createElement("table");
-          table.className = "w-full text-left border-collapse text-sm";
-
-          // Table header
-          table.innerHTML = `
-      <thead>
-        <tr class="border-b-2 border-slate-200 text-slate-500 text-xs uppercase tracking-wider">
-          <th class="py-3 pr-4 font-semibold w-24">Counter</th>
-          <th class="py-3 px-2 font-semibold">Served</th>
-          <th class="py-3 px-2 font-semibold">No Show</th>
-          <th class="py-3 px-2 font-semibold">AVG Response Time</th>
-          <th class="py-3 px-2 font-semibold">Feedback</th>
-        </tr>
-      </thead>
-    `;
-
-          // Table body
-          const tbody = document.createElement("tbody");
-          tbody.className = "divide-y divide-slate-100";
-
-          let totalServed = 0;
-          let totalNoShow = 0;
-          let totalFeedback = 0;
-          let maxAvgTimeSeconds = 0;
-
-          counters.forEach((item, index) => {
-            const timeParts = item.avgTime
-              ? item.avgTime
-                  .replace("m", "")
-                  .split(" ")
-                  .map((v) => parseInt(v))
-              : [0, 0];
-            const minutes = timeParts[0] || 0;
-            const seconds = timeParts[1] || 0;
-            const avgTimeSeconds = minutes * 60 + seconds;
-            if (avgTimeSeconds > maxAvgTimeSeconds)
-              maxAvgTimeSeconds = avgTimeSeconds;
-
-            totalServed += item.service_count;
-            totalNoShow += item.noShow || 0;
-            totalFeedback += item.feedback || 0;
-
-            const row = document.createElement("tr");
-            if (index % 2 !== 0) row.classList.add("bg-slate-50/50");
-
-            row.innerHTML = `
-        <td class="py-3 pr-4 font-mono text-xs font-medium text-slate-600">${
-          item.counters
-        }</td>
-        <td class="py-3 px-2 text-slate-800 font-medium">${
-          item.service_count
-        }</td>
-        <td class="py-3 px-2 text-slate-600">${item.noShow || 0}</td>
-        <td class="py-3 px-2 text-slate-600">${item.avgTime}</td>
-        <td class="py-3 px-2 text-slate-600">${item.feedback || 0}</td>
-      `;
-            tbody.appendChild(row);
-          });
-
-          // Total row per service
-          const totalRow = document.createElement("tr");
-          totalRow.classList.add("bg-slate-50/50", "font-medium");
-          totalRow.innerHTML = `
-      <td class="py-3 pr-4 font-mono text-xs font-medium text-slate-600">Total</td>
-      <td class="py-3 px-2 text-slate-800 font-medium">${totalServed}</td>
-      <td class="py-3 px-2 text-slate-600">${totalNoShow}</td>
-      <td class="py-3 px-2 text-slate-600">${secondsToHMS(
-        maxAvgTimeSeconds
-      )}</td>
-      <td class="py-3 px-2 text-slate-600">${totalFeedback}</td>
-    `;
-          tbody.appendChild(totalRow);
-
-          table.appendChild(tbody);
-          tableWrapper.appendChild(table);
-          container.appendChild(tableWrapper);
-        }
-      }
-
-      // Helper: convert seconds to Xm Ys
-      function secondsToHMS(seconds) {
-        const m = Math.floor(seconds / 60);
-        const s = seconds % 60;
-        return `${m}m ${s}s`;
-      }
-
-      function exportToPDF() {
-        const element = document.getElementById("reportContent");
-
-        const opt = {
-          margin: 0, // inches
-          filename: `Report_${new Date().toISOString().slice(0, 10)}.pdf`,
-          image: { type: "jpeg", quality: 0.98 },
-          html2canvas: { scale: 2, logging: false, scrollY: 0 },
-          jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
-        };
-
-        html2pdf().set(opt).from(element).save();
-      }
-
-      // Attach to button
-      document
-        .getElementById("downloadPDF")
-        .addEventListener("click", exportToPDF);
-
-      async function renderServiceProgressBars(services) {
-        try {
-          const totalVisits = services.reduce((sum, s) => sum + s.visits, 0);
-
-          const colors = ["bg-blue-500", "bg-purple-500", "bg-slate-400"]; // Extend if more services
-          const container = document.getElementById("service-progress-bars");
-          if (!container) return;
-
-          container.innerHTML = ""; // Clear previous
-
-          services.forEach((service, index) => {
-            const percent =
-              totalVisits > 0
-                ? Math.round((service.visits / totalVisits) * 100)
-                : 0;
-
-            const barWrapper = document.createElement("div");
-            barWrapper.className = "w-full";
-
-            barWrapper.innerHTML = `
-                <div class="flex justify-between text-xs mb-1">
-                    <span class="font-semibold text-slate-700">${
-                      service.name
-                    }</span>
-                    <span class="text-slate-500">${service.visits} visits</span>
-                </div>
-                <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                    <div class="${
-                      colors[index] || "bg-gray-500"
-                    } h-full rounded-full" style="width: ${percent}%"></div>
-                </div>
-            `;
-
-            container.appendChild(barWrapper);
-          });
-        } catch (error) {
-          console.error("Failed to load service progress bars:", error);
-        }
-      }
-
-      async function renderServiceLegend(series) {
-        try {
-          const labels = ["Served", "No Show"];
-          const colors = ["bg-emerald-500", "bg-amber-500"];
-
-          const container = document.getElementById(
-            "service-distribution-legend"
-          );
-          if (!container) return;
-
-          container.innerHTML = ""; // clear previous
-
-          // Create legend dynamically
-          series.forEach((value, index) => {
-            const legendItem = document.createElement("div");
-            legendItem.className = "flex justify-between items-center text-xs";
-
-            legendItem.innerHTML = `
-                <div class="flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full ${colors[index]}"></span>${labels[index]}
-                </div>
-                <span class="font-medium">${value}%</span>
-            `;
-            container.appendChild(legendItem);
-          });
-        } catch (error) {
-          console.error("Failed to load service legend data:", error);
-        }
-      }
-
-      async function renderActivityChart(activityChartData) {
-        try {
-          var seriesData = activityChartData.activity || [];
-          var categories = activityChartData.activity_categories || [
-            "00",
-            "02",
-            "04",
-            "06",
-            "08",
-            "10",
-            "12",
-            "14",
-            "16",
-            "18",
-            "20",
-            "22",
-          ];
-
-          var options = {
-            series: [{ name: "Activity", data: seriesData }],
-            chart: {
-              type: "bar",
-              height: 260,
-              toolbar: { show: false },
-              animations: { enabled: true, easing: "easeinout", speed: 1000 },
-            },
-            plotOptions: { bar: { borderRadius: 4, columnWidth: "65%" } },
-            colors: ["#3b82f6"],
-            dataLabels: { enabled: false },
-            grid: {
-              borderColor: "#f1f5f9",
-              strokeDashArray: 4,
-              yaxis: { lines: { show: true } },
-              padding: { top: 0, right: 0, bottom: 0, left: 0 },
-            },
-            xaxis: {
-              categories: categories,
-              labels: { style: { colors: "#94a3b8", fontSize: "12px" } },
-              axisBorder: { show: false },
-              axisTicks: { show: false },
-            },
-            yaxis: { show: false },
-          };
-
-          var el = document.querySelector("#chart");
-          if (!el) return;
-          el.innerHTML = "";
-          var chart = new ApexCharts(el, options);
-          chart.render();
-        } catch (error) {
-          console.error("Failed to load activity data:", error);
-        }
-      }
-
-      async function renderTrendChart(responseTimeTrend) {
-        try {
-          var seriesData = responseTimeTrend.response_time || [
-            65, 58, 45, 52, 38, 28, 18,
-          ];
-          var categories = responseTimeTrend.response_days || [
-            "MON",
-            "TUE",
-            "WED",
-            "THU",
-            "FRI",
-            "SAT",
-            "SUN",
-          ];
-
-          var options = {
-            series: [{ name: "Response Time", data: seriesData }],
-            chart: {
-              type: "area",
-              height: 260,
-              toolbar: { show: false },
-              sparkline: { enabled: false },
-              animations: { enabled: true, easing: "easeinout", speed: 1000 },
-            },
-            colors: ["#f97316"],
-            stroke: { curve: "straight", width: 6, lineCap: "butt" },
-            fill: { type: "solid", opacity: 0.1 },
-            markers: {
-              size: 6,
-              colors: ["#ffffff"],
-              strokeColors: "#f97316",
-              strokeWidth: 4,
-              hover: { size: 8 },
-            },
-            dataLabels: { enabled: false },
-            grid: {
-              show: false,
-              padding: { left: 20, right: 20, top: 0, bottom: 0 },
-            },
-            xaxis: {
-              categories: categories,
-              labels: {
-                style: { colors: "#94a3b8", fontSize: "12px", fontWeight: 600 },
-              },
-              axisBorder: { show: false },
-              axisTicks: { show: false },
-              tickPlacement: "on",
-            },
-            yaxis: { show: false },
-            tooltip: { enabled: false },
-          };
-
-          var el = document.querySelector("#trend-chart");
-          if (!el) return;
-          el.innerHTML = "";
-          var chart = new ApexCharts(el, options);
-          chart.render();
-        } catch (error) {
-          console.error("Failed to load trend chart data:", error);
-        }
-      }
-
-      async function renderDonutChart(serviceDistribution) {
-        try {
-          var series = serviceDistribution || [65, 25];
-
-          var options = {
-            series: series,
-            chart: {
-              type: "donut",
-              height: 280,
-              animations: { enabled: true, easing: "easeinout", speed: 1000 },
-            },
-            labels: ["Served", "No Show"],
-            colors: ["#10b981", "#f59e0b"],
-            plotOptions: {
-              pie: {
-                donut: {
-                  size: "75%",
-                  labels: {
-                    show: true,
-                    name: {
-                      show: true,
-                      fontSize: "14px",
-                      fontFamily: "Inter, ui-sans-serif",
-                      color: "#64748b",
-                      offsetY: -10,
-                    },
-                    value: {
-                      show: true,
-                      fontSize: "24px",
-                      fontFamily: "Inter, ui-sans-serif",
-                      fontWeight: "bold",
-                      color: "#1e293b",
-                      offsetY: 5,
-                    },
-                    total: { show: true, label: "Served", color: "#64748b" },
-                  },
-                },
-              },
-            },
-            dataLabels: { enabled: false },
-            legend: { show: false },
-            stroke: { width: 0 },
-            tooltip: { enabled: true, y: { formatter: (val) => val + "%" } },
-            responsive: [
-              { breakpoint: 480, options: { chart: { height: 240 } } },
-            ],
-          };
-
-          var el = document.querySelector("#service-distribution-chart");
-          if (!el) return;
-          el.innerHTML = "";
-          var chart = new ApexCharts(el, options);
-          chart.render();
-        } catch (error) {
-          console.error("Failed to load service distribution data:", error);
-        }
-      }
-    </script>
+    <script src="./script.js"></script>
   </body>
 </html>
