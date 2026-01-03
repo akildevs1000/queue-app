@@ -2,6 +2,8 @@
 
 import { type BreadcrumbItem } from '@/types';
 import { Download } from 'lucide-react'; // If you're using lucide-react
+const { ipcRenderer } = window.require('electron');
+const os = window.require('os'); // Node.js module
 
 import {
     ColumnDef,
@@ -219,17 +221,38 @@ export default function App({ services }: { services: any }) {
         }
     };
 
+    const [localIP, setLocalIP] = useState('');
+
+    useEffect(() => {
+        const interfaces = os.networkInterfaces();
+        let ip = "localhost";
+
+        for (const name of Object.keys(interfaces)) {
+            for (const iface of interfaces[name]!) {
+                // Skip over internal (i.e. 127.0.0.1) and non-IPv4 addresses
+                if (iface.family === 'IPv4' && !iface.internal) {
+                    ip = iface.address;
+                    break;
+                }
+            }
+            if (ip) break;
+        }
+
+        setLocalIP(ip);
+        console.log('Local IP detected:', ip);
+    }, []);
+
     const handleDownload = () => {
-        if (selectedService == null) return;
 
         const params = new URLSearchParams();
-        if (selectedService) params.append('service_id', selectedService);
-        if (selectedCounter) params.append('counter_id', selectedCounter);
         if (dateRange?.from) params.append('start_date', format(dateRange.from, 'yyyy-MM-dd'));
         if (dateRange?.to) params.append('end_date', format(dateRange.to, 'yyyy-MM-dd'));
 
-        const downloadUrl = `/summary/download?${params.toString()}`;
-        window.open(downloadUrl, '_blank');
+        const url = `http://${localIP}:8000/report-html?${params.toString()}`;
+
+        // window.open(downloadUrl, '_blank');
+        console.log(url);
+        ipcRenderer.invoke('open-report-window', url);
     };
 
     const handleCounterFilterChange = (counterId: any) => {
@@ -242,7 +265,7 @@ export default function App({ services }: { services: any }) {
                 {/* Left Filters Group */}
                 <div className="flex flex-wrap items-center gap-2">
                     {/* Service Filter */}
-                    <Select onValueChange={handleServiceFilterChange}>
+                    {/* <Select onValueChange={handleServiceFilterChange}>
                         <SelectTrigger className="w-[180px] bg-white dark:bg-gray-900">
                             <SelectValue placeholder="Filter by Service" />
                         </SelectTrigger>
@@ -256,10 +279,10 @@ export default function App({ services }: { services: any }) {
                                 ))}
                             </SelectGroup>
                         </SelectContent>
-                    </Select>
+                    </Select> */}
 
                     {/* Counter Filter */}
-                    <Select onValueChange={handleCounterFilterChange}>
+                    {/* <Select onValueChange={handleCounterFilterChange}>
                         <SelectTrigger className="w-[180px] bg-white dark:bg-gray-900">
                             <SelectValue placeholder="Filter by Counter" />
                         </SelectTrigger>
@@ -273,7 +296,7 @@ export default function App({ services }: { services: any }) {
                                 ))}
                             </SelectGroup>
                         </SelectContent>
-                    </Select>
+                    </Select> */}
 
                     {/* Date Range Picker */}
                     <Popover open={open} onOpenChange={setOpen}>
@@ -318,13 +341,12 @@ export default function App({ services }: { services: any }) {
             </div>
             <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-6">
-                    <div className="flex items-center justify-between rounded-xl p-4 shadow-md shadow-sm bg-white dark:bg-gray-900 dark:border-gray-700">
+                    {/* <div className="flex items-center justify-between rounded-xl p-4 shadow-md shadow-sm bg-white dark:bg-gray-900 dark:border-gray-700">
                         <div>
                             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Visits Today</h3>
                             <p className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{totalVisits}</p>
                         </div>
-                        {/* <div className="ml-4">{item.icon}</div> */}
-                    </div>
+                    </div> */}
                     {stats.map((item, index) => (
                         <div key={index} className="flex items-center justify-between rounded-xl p-4 shadow-md shadow-sm bg-white dark:bg-gray-900 dark:border-gray-700">
                             <div>
@@ -339,69 +361,69 @@ export default function App({ services }: { services: any }) {
                     ))}
                 </div>
 
-               <div className="rounded-xl p-4 text-[var(--foreground) bg-white dark:bg-gray-900">
-                        <Table>
-                            <TableHeader>
-                                {table.getHeaderGroups().map((headerGroup) => (
-                                    <TableRow key={headerGroup.id}>
-                                        {headerGroup.headers.map((header) => (
-                                            <TableHead key={header.id}>
-                                                {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                                            </TableHead>
+                <div className="rounded-xl p-4 text-[var(--foreground) bg-white dark:bg-gray-900">
+                    <Table>
+                        <TableHeader>
+                            {table.getHeaderGroups().map((headerGroup) => (
+                                <TableRow key={headerGroup.id}>
+                                    {headerGroup.headers.map((header) => (
+                                        <TableHead key={header.id}>
+                                            {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                                        </TableHead>
+                                    ))}
+                                </TableRow>
+                            ))}
+                        </TableHeader>
+                        <TableBody>
+                            {table.getRowModel().rows.length ? (
+                                table.getRowModel().rows.map((row) => (
+                                    <TableRow key={row.id}>
+                                        {row.getVisibleCells().map((cell) => (
+                                            <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
                                         ))}
                                     </TableRow>
-                                ))}
-                            </TableHeader>
-                            <TableBody>
-                                {table.getRowModel().rows.length ? (
-                                    table.getRowModel().rows.map((row) => (
-                                        <TableRow key={row.id}>
-                                            {row.getVisibleCells().map((cell) => (
-                                                <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
-                                            ))}
-                                        </TableRow>
-                                    ))
-                                ) : (
-                                    <TableRow>
-                                        <TableCell colSpan={columns.length} className="h-24 text-center">
-                                            No results.
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={columns.length} className="h-24 text-center">
+                                        No results.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
 
-                        <div className="mt-4 flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <span>Rows per page:</span>
-                                <Select
-                                    value={String(table.getState().pagination.pageSize)}
-                                    onValueChange={(value) => {
-                                        table.setPageSize(Number(value));
-                                        setPagination((old) => ({ ...old, pageIndex: 0, pageSize: Number(value) }));
-                                    }}
-                                >
-                                    <SelectTrigger className="w-[100px]">
-                                        <SelectValue />
-                                    </SelectTrigger>
+                    <div className="mt-4 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <span>Rows per page:</span>
+                            <Select
+                                value={String(table.getState().pagination.pageSize)}
+                                onValueChange={(value) => {
+                                    table.setPageSize(Number(value));
+                                    setPagination((old) => ({ ...old, pageIndex: 0, pageSize: Number(value) }));
+                                }}
+                            >
+                                <SelectTrigger className="w-[100px]">
+                                    <SelectValue />
+                                </SelectTrigger>
 
-                                    <SelectContent>
-                                        {[5, 10, 20, 50, 100].map((pageSize) => (
-                                            <SelectItem key={pageSize} value={String(pageSize)}>
-                                                {pageSize}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                                <SelectContent>
+                                    {[5, 10, 20, 50, 100].map((pageSize) => (
+                                        <SelectItem key={pageSize} value={String(pageSize)}>
+                                            {pageSize}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
 
-                            <div className="flex items-center gap-2">
-                                <Button variant="outline">Previous</Button>
-                                <span>Page 1 of 1</span>
-                                <Button variant="outline">Next</Button>
-                            </div>
+                        <div className="flex items-center gap-2">
+                            <Button variant="outline">Previous</Button>
+                            <span>Page 1 of 1</span>
+                            <Button variant="outline">Next</Button>
                         </div>
                     </div>
+                </div>
             </div>
         </>
     );

@@ -18,14 +18,14 @@ export default function TabsScreen({ services }: { services: any }) {
     return (
         <AppLayout>
             <Head title="Report" />
-            <Tabs defaultValue="service" className="w-full p-4">
+            <Tabs defaultValue="summary" className="w-full p-4">
                 <TabsList className="ml-auto bg-white p-4 dark:bg-gray-900">
-                    <TabsTrigger value="report">Report</TabsTrigger>
+                    <TabsTrigger value="summary">Summary</TabsTrigger>
+                    <TabsTrigger value="report">General Report</TabsTrigger>
                     <TabsTrigger value="service">Service</TabsTrigger>
                     <TabsTrigger value="counter">Counter</TabsTrigger>
                     <TabsTrigger value="user">User</TabsTrigger>
                     <TabsTrigger value="status">Status</TabsTrigger>
-                    <TabsTrigger value="summary">Summary</TabsTrigger>
                     <TabsTrigger value="peak">Peak Hours</TabsTrigger>
                     <TabsTrigger value="peak_day">Peak Day</TabsTrigger>
                 </TabsList>
@@ -38,7 +38,7 @@ export default function TabsScreen({ services }: { services: any }) {
                         <Report />
                     </div>
                 </TabsContent>
-                 <TabsContent value="service">
+                <TabsContent value="service">
                     <div
                         className="rounded-xl bg-[var(--background)] p-4 text-[var(--foreground)] shadow-md dark:border-gray-700 dark:bg-gray-800"
                         style={{ borderBottom: `2px solid #6366f1` }}
@@ -63,8 +63,8 @@ export default function TabsScreen({ services }: { services: any }) {
                     </div>
                 </TabsContent>
 
-                 <TabsContent value="status">
-                   <div
+                <TabsContent value="status">
+                    <div
                         className="rounded-xl bg-[var(--background)] p-4 text-[var(--foreground)] shadow-md dark:border-gray-700 dark:bg-gray-800"
                         style={{ borderBottom: `2px solid #6366f1` }}
                     >
