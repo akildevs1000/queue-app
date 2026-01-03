@@ -5,6 +5,7 @@
   "main": "main.js",
   "scripts": {
     "dev": "electron .",
+    "dev:www": "cd www && npm run dev",
     "build": "electron-builder"
   },
   "build": {
