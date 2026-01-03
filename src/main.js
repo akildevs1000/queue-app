@@ -1,4 +1,4 @@
-const { app, BrowserWindow, screen } = require('electron');
+const { app, BrowserWindow, screen, ipcMain } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
@@ -60,6 +60,22 @@ function startServices() {
   logger('Application', `Application started at http://${ipv4Address}:8000`);
 }
 
+ipcMain.handle('open-report-window', (event, url) => {
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+
+  const reportWindow = new BrowserWindow({
+    width,
+    height,
+    fullscreen: true,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+    },
+  });
+
+  reportWindow.loadURL(url);
+});
+
 function createNginxWindow() {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
 
@@ -68,8 +84,8 @@ function createNginxWindow() {
     height,
     fullscreen: true,
     webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true
+      nodeIntegration: true,
+      contextIsolation: false
     }
   });
 
