@@ -424,16 +424,17 @@ class ReportController extends Controller
         $lastWeekComparison = $this->getLastWeekComparison($dateRange);
 
         $avgResponseTimeChange = $this->getAverageResponseTimeChange($dateRange);
-        $reportParagraph = "This week showed a $lastWeekComparison in total visits compared to the previous period. " .
-            "Despite the higher volume, the average response time $avgResponseTimeChange, demonstrating efficient staff allocation.";
 
+        $totalVisits = $this->getTotalForPeriod($dateRange);
 
         return [
+            'total_visits' => $totalVisits,
             'dates'         => "$startDateDisplay - $endDateDisplay",
             'generatedDate' => $generatedDate,
             'preparedBy'    => $preparedBy,
             'cards'         => $currentCards,
-            'reportParagraph'  => $reportParagraph,
+            'lastWeekComparison'  => $lastWeekComparison,
+            'avgResponseTimeChange'  => $avgResponseTimeChange,
             'activityChartData' => $this->getActivityChartData($dateRange),
             'responseTimeTrend' => $this->getResponseTimeTrend($dateRange),
             'serviceDistribution' => $this->getServiceDistribution($dateRange),
@@ -507,8 +508,6 @@ class ReportController extends Controller
         }
     }
 
-
-
     protected function getLastWeekComparison(array $dateRange): string
     {
         [$startDateTime, $endDateTime] = $dateRange;
@@ -535,8 +534,6 @@ class ReportController extends Controller
         $formattedChange = abs(round($percentageChange)) . '%';
         return $percentageChange >= 0 ? "$formattedChange increase" : "$formattedChange decrease";
     }
-
-
 
     protected function generateReportParagraph(array $dateRange): string
     {
