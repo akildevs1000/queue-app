@@ -211,4 +211,11 @@ class Token extends Model
 
         return sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
     }
+
+    public static function formatAvgTime(string $hhmmss): string
+    {
+        [$hours, $minutes, $seconds] = explode(':', $hhmmss);
+        $totalMinutes = ((int)$hours * 60) + (int)$minutes;
+        return $totalMinutes . 'm';
+    }
 }

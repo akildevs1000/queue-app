@@ -419,25 +419,23 @@ class ReportController extends Controller
         // Who prepared the report
         $preparedBy = 'Admin';
 
-        $currentCards = $this->getCards($dateRange);
-
         $lastWeekComparison = $this->getLastWeekComparison($dateRange);
 
         $avgResponseTimeChange = $this->getAverageResponseTimeChange($dateRange);
 
-        $totalVisits = $this->getTotalForPeriod($dateRange);
+        $avgResponse = (new DashboardController)->getAvgTimeByDateRange($dateRange);
 
         return [
-            'total_visits' => $totalVisits,
+            ...$this->getCardsData($dateRange),
             'dates'         => "$startDateDisplay - $endDateDisplay",
             'generatedDate' => $generatedDate,
             'preparedBy'    => $preparedBy,
-            'cards'         => $currentCards,
+            'avgResponse'   => $avgResponse  . " Min",
             'lastWeekComparison'  => $lastWeekComparison,
             'avgResponseTimeChange'  => $avgResponseTimeChange,
             'activityChartData' => $this->getActivityChartData($dateRange),
             'responseTimeTrend' => $this->getResponseTimeTrend($dateRange),
-            'serviceDistribution' => $this->getServiceDistribution($dateRange),
+            'serviceDistributionDonutChartData' => $this->serviceDistributionChart($dateRange),
             'services' => $this->getServiceProgress($dateRange),
             "statsByServices" => $this->getServiceCountersByDateRange($dateRange)
         ];
@@ -448,7 +446,12 @@ class ReportController extends Controller
         return Token::whereBetween('created_at', $dateRange)->count() ?? 0;
     }
 
-    public function getCards($dateRange)
+    protected function getTotalForBestCounterForPeriod($dateRange, $counter_id): float
+    {
+        return Token::whereBetween('created_at', $dateRange)->where("counter_id", $counter_id)->count() ?? 0;
+    }
+
+    public function getCardsData($dateRange)
     {
         $counts = Token::select('status', DB::raw('count(*) as total'))
             ->whereBetween('created_at', $dateRange)
@@ -464,17 +467,37 @@ class ReportController extends Controller
             ->orderByRaw('COUNT(tokens.id) DESC')
             ->value('counters.name'); // 👈 returns only name
 
+        $bestCounterId = Token::join('counters', 'tokens.counter_id', '=', 'counters.id')
+            ->whereBetween('tokens.created_at', $dateRange)
+            ->where('tokens.status', Token::SERVED)
+            ->select('counters.name')
+            ->groupBy('counters.name')
+            ->orderByRaw('COUNT(tokens.id) DESC')
+            ->value('counters.id'); // 👈 returns only name
+
         $totalVisits = $this->getTotalForPeriod($dateRange);
 
         return [
-            'total_visits' => $totalVisits,
-            'pending'      => $counts[TOKEN::PENDING] ?? 0,
-            'served'       => $counts[TOKEN::SERVED] ?? 0,
-            'serving'      => $counts[TOKEN::SERVING] ?? 0,
+            'totalVisits'  => $totalVisits,
+            'totalVisitsForBestCounter'  => $this->getTotalForBestCounterForPeriod($dateRange, $bestCounterId),
+            'totalPending'      => $counts[TOKEN::PENDING] ?? 0,
+            'totalServed'       => $counts[TOKEN::SERVED] ?? 0,
+            'totalServing'      => $counts[TOKEN::SERVING] ?? 0,
             'notAnswered'  => $counts[TOKEN::NOT_SHOW] ?? 0,
-            'avgTimeInMinutes'  => (new DashboardController)->getAvgTime(),
-            'best_counter' => $bestCounterName ?? 'N/A',
+            "bestCounter" => $bestCounterName ?? "N/A",
+            'servedPercentage' => $this->getServedPercentage($counts->toArray(), $totalVisits) . " %",
         ];
+    }
+
+    private function getServedPercentage(array $counts, int $totalVisits): float
+    {
+        if ($totalVisits === 0) {
+            return 0;
+        }
+
+        $served = $counts[TOKEN::SERVED] ?? 0;
+
+        return round(($served / $totalVisits) * 100, 2);
     }
 
     public function getAverageResponseTimeChange(array $dateRange): string
@@ -535,44 +558,6 @@ class ReportController extends Controller
         return $percentageChange >= 0 ? "$formattedChange increase" : "$formattedChange decrease";
     }
 
-    protected function generateReportParagraph(array $dateRange): string
-    {
-        // --- Total visits comparison ---
-        [$startDateTime, $endDateTime] = $dateRange;
-        $currentTotal = $this->getTotalForPeriod($dateRange);
-
-        // Previous period
-        $start = \Carbon\Carbon::parse($startDateTime);
-        $end   = \Carbon\Carbon::parse($endDateTime);
-        $previousStart = $start->copy()->subDays($start->diffInDays($end) + 1);
-        $previousEnd   = $end->copy()->subDays($start->diffInDays($end) + 1);
-        $previousTotal = $this->getTotalForPeriod([$previousStart->format('Y-m-d H:i:s'), $previousEnd->format('Y-m-d H:i:s')]);
-
-        // Calculate % change for total visits
-        if ($previousTotal == 0) {
-            $visitsPercent = $currentTotal > 0 ? 100 : 0;
-        } else {
-            $visitsPercent = round((($currentTotal - $previousTotal) / $previousTotal) * 100);
-        }
-
-        $visitsChange = $visitsPercent > 0 ? "$visitsPercent% increase"
-            : ($visitsPercent < 0 ? abs($visitsPercent) . "% decrease" : "0% change");
-
-        $visitsSentence = $visitsPercent === 0
-            ? "This week had the same number of total visits as the previous period (0% change)."
-            : "This week showed a $visitsChange in total visits compared to the previous period.";
-
-        // --- Average response time comparison ---
-        $avgResponseTimeChange = $this->getAverageResponseTimeChange($dateRange); // returns string like "improved by 5%" or "slowed by 3%" or "0% change"
-
-        $responseTimeSentence = str_contains($avgResponseTimeChange, '0%')
-            ? "The average response time remained the same (0% change), demonstrating consistent staff performance."
-            : "Despite the volume, the average response time $avgResponseTimeChange, demonstrating efficient staff allocation.";
-
-        // Combine
-        return $visitsSentence . ' ' . $responseTimeSentence;
-    }
-
     public function getActivityChartData(array $dateRange)
     {
         $tokens = Token::whereBetween('created_at', $dateRange)
@@ -588,7 +573,7 @@ class ReportController extends Controller
 
         // Count tokens per 2-hour interval
         foreach ($tokens as $token) {
-            $hour = (int) \Carbon\Carbon::parse($token->created_at)->format('H');
+            $hour = (int) Carbon::parse($token->created_at)->format('H');
             $slot = intdiv($hour, 2); // 0-11
             $activity[$slot]++;
         }
@@ -628,7 +613,7 @@ class ReportController extends Controller
         ];
     }
 
-    public function getServiceDistribution(array $dateRange)
+    public function serviceDistributionChart(array $dateRange)
     {
         // Count served tokens
         $served = Token::whereBetween('created_at', $dateRange)
@@ -663,6 +648,8 @@ class ReportController extends Controller
                 ['name' => 'Service A', 'visits' => rand(10, 100)],
                 ['name' => 'Service B', 'visits' => rand(5, 80)],
                 ['name' => 'Service C', 'visits' => rand(1, 50)],
+                ['name' => 'Service D', 'visits' => rand(1, 50)],
+                ['name' => 'Service E', 'visits' => rand(1, 50)],
             ];
 
             return collect($dummyServices);
@@ -682,16 +669,15 @@ class ReportController extends Controller
         return $services;
     }
 
-    public function getServiceCountersByDateRange(array $dateRange, int $selectedServiceId = -1)
+    public function getServiceCountersByDateRange(array $dateRange)
     {
-        [$startDateTime, $endDateTime] = $dateRange;
-
         // Fetch counters with tokens for the date range
-        $counters = Counter::with(['service', 'tokens' => function ($q) use ($startDateTime, $endDateTime) {
-            $q->whereBetween('created_at', [$startDateTime, $endDateTime]);
+        $counters = Counter::with(['service', 'tokens' => function ($q) use ($dateRange) {
+            $q->whereBetween('created_at', $dateRange);
         }])->get()->map(function ($counter) {
             $timeStrings = $counter->tokens->pluck('total_serving_time_display')->toArray();
-            $counter->avgTime  = Token::getAvgTime($timeStrings);
+            $avgTime = Token::getAvgTime($timeStrings); // returns HH:MM:SS
+            $counter->avgTime = Token::formatAvgTime($avgTime); // converts to "Xm"
             $counter->feedback = Feedback::feedbackRatingInNumber($counter->id);
             $counter->served   = $counter->tokens->where('status', Token::SERVED)->count();
             $counter->noShow   = $counter->tokens->where('status', Token::NOT_SHOW)->count();
@@ -723,18 +709,32 @@ class ReportController extends Controller
                     'counters' => "01",
                 ],
                 [
+                    'service_name' => 'Service A',
+                    'service_count' => rand(10, 100),
+                    'avgTime' => rand(1, 10) . 'm',
+                    'feedback' => null,
+                    'counters' => "02",
+                ],
+                [
                     'service_name' => 'Service B',
                     'service_count' => rand(5, 80),
                     'avgTime' => rand(1, 10) . 'm',
                     'feedback' => null,
-                    'counters' => "02",
+                    'counters' => "01",
                 ],
                 [
                     'service_name' => 'Service C',
                     'service_count' => rand(1, 50),
                     'avgTime' => rand(1, 10) . 'm',
                     'feedback' => null,
-                    'counters' => "03",
+                    'counters' => "01",
+                ],
+                [
+                    'service_name' => 'Service D',
+                    'service_count' => rand(1, 50),
+                    'avgTime' => rand(1, 10) . 'm',
+                    'feedback' => null,
+                    'counters' => "01",
                 ],
             ]);
         }
