@@ -166,12 +166,35 @@ document.addEventListener("DOMContentLoaded", () => {
             const tbody = document.createElement("tbody");
             tbody.className = "divide-y divide-slate-100";
 
+            const feedbackMap = {
+                Excellent: 4,
+                Good: 3,
+                Average: 2,
+                Poor: 1,
+                "No Rating": 5
+            };
+
+            const feedbackReverseMap = {
+                4: "Excellent",
+                3: "Good",
+                2: "Average",
+                1: "Poor",
+                5: "No Rating"
+            };
+
             let totalServed = 0;
             let totalNoShow = 0;
-            let totalFeedback = 0;
+            let feedbackScoreTotal = 0;
+            let feedbackCount = 0;
             let maxAvgTimeSeconds = 0;
 
             counters.forEach((item, index) => {
+
+                if (feedbackMap[item.feedback]) {
+                    feedbackScoreTotal += feedbackMap[item.feedback];
+                    feedbackCount++;
+                }
+
                 const timeParts = item.avgTime
                     ? item.avgTime.replace("m", "").split(" ").map(v => parseInt(v))
                     : [0, 0];
@@ -182,7 +205,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 totalServed += item.service_count;
                 totalNoShow += item.noShow || 0;
-                totalFeedback += item.feedback || 0;
 
                 const row = document.createElement("tr");
                 if (index % 2 !== 0) row.classList.add("bg-slate-50/50");
@@ -205,7 +227,11 @@ document.addEventListener("DOMContentLoaded", () => {
             <td class="py-3 px-2 text-slate-800 font-medium">${totalServed}</td>
             <td class="py-3 px-2 text-slate-600">${totalNoShow}</td>
             <td class="py-3 px-2 text-slate-600">${secondsToHMS(maxAvgTimeSeconds)}</td>
-            <td class="py-3 px-2 text-slate-600">${totalFeedback}</td>
+            <td class="py-3 px-2 text-slate-600">
+    ${feedbackCount
+                    ? feedbackReverseMap[Math.round(feedbackScoreTotal / feedbackCount)]
+                    : "-"}
+</td>
         `;
             tbody.appendChild(totalRow);
 
@@ -242,7 +268,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function secondsToHMS(seconds) {
         const m = Math.floor(seconds / 60);
         const s = seconds % 60;
-        return `${m}m ${s}s`;
+        return `${m}m`;
     }
 
     function exportToPDF() {

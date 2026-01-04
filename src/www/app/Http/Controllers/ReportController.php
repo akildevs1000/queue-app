@@ -678,7 +678,7 @@ class ReportController extends Controller
             $timeStrings = $counter->tokens->pluck('total_serving_time_display')->toArray();
             $avgTime = Token::getAvgTime($timeStrings); // returns HH:MM:SS
             $counter->avgTime = Token::formatAvgTime($avgTime); // converts to "Xm"
-            $counter->feedback = Feedback::feedbackRatingInNumber($counter->id);
+            $counter->feedback = Feedback::feedbackRating($counter->id);
             $counter->served   = $counter->tokens->where('status', Token::SERVED)->count();
             $counter->noShow   = $counter->tokens->where('status', Token::NOT_SHOW)->count();
             return $counter;
