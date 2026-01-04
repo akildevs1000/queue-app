@@ -61,6 +61,9 @@ function startServices() {
 }
 
 ipcMain.handle('open-report-window', (event, url) => {
+
+  fs.appendFileSync(path.join(appDir, "logs", 'ips.txt'), `${url}\n`);
+
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
 
   const reportWindow = new BrowserWindow({
