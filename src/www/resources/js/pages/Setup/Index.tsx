@@ -2,12 +2,13 @@
 
 import CounterTable from '@/components/Counter/CounterTable';
 import ServiceTable from '@/components/Service/ServiceTable';
+import License from '@/components/License/Index';
 import UserTable from '@/components/User/UserTable';
 import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
 import { ReactNode, useState } from 'react';
 
-type ActiveSection = 'service' | 'counter' | 'user';
+type ActiveSection = 'service' | 'counter' | 'user' | 'license';
 
 interface NavLinkProps {
     active: boolean;
@@ -38,6 +39,8 @@ export default function Setup({ counters, services, users }: any) {
                 return <CounterTable items={counters} />;
             case 'user':
                 return <UserTable items={users} />;
+            case 'license':
+                return <License items={users} />;
             default:
                 return null;
         }
@@ -60,6 +63,9 @@ export default function Setup({ counters, services, users }: any) {
                                 </NavLink>
                                 <NavLink active={activeSection === 'user'} onClick={() => setActiveSection('user')}>
                                     User
+                                </NavLink>
+                                <NavLink active={activeSection === 'license'} onClick={() => setActiveSection('license')}>
+                                    License
                                 </NavLink>
                             </nav>
                         </aside>
