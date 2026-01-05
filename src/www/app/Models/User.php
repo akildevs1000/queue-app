@@ -39,6 +39,8 @@ class User extends Authenticatable
         'operational_start_time',
         'operational_end_time',
 
+        'expiry_date',
+
     ];
 
     /**
