@@ -321,25 +321,44 @@ function stopServices(pid) {
 }
 
 async function generateHardwareFingerprint() {
-    const cpu = await si.cpu();
-    const baseboard = await si.baseboard();
-    const os = await si.osInfo();
+    const [
+        cpu,
+        baseboard,
+        disks,
+        network,
+        os
+    ] = await Promise.all([
+        si.cpu(),
+        si.baseboard(),
+        si.diskLayout(),
+        si.networkInterfaces(),
+        si.osInfo()
+    ]);
+
+    const primaryDisk = disks.find(d => d.serial) || {};
+
+    const macs = network
+        .filter(n => !n.internal && n.mac)
+        .map(n => n.mac)
+        .join(",");
 
     const raw = [
-        cpu.manufacturer,
         cpu.brand,
-        baseboard.serial || 'unknown',
-        os.uuid
-    ].join('|');
+        cpu.physicalCores,
+        baseboard.serial || "NO_MB",
+        primaryDisk.serial || "NO_DISK",
+        os.hostname,
+        macs
+    ].join("|");
 
     return crypto
-        .createHash('sha256')
+        .createHash("sha256")
         .update(raw)
-        .digest('hex');
+        .digest("hex");
 }
 
 async function getCachedMachineId() {
-    const filePath = path.join(app.getPath('userData'), 'machine.id');
+    const filePath = path.join(appDir, 'machine.id');
 
     if (fs.existsSync(filePath)) {
         return fs.readFileSync(filePath, 'utf8');
