@@ -24,6 +24,7 @@ Route::get('/setup', function () {
         'services'  =>  Service::latest()->paginate(request("per_page", 10)),
         'counters'  =>  Counter::latest()->with('service')->paginate(request("per_page", 10)),
         'users'     =>  User::with("service", "counter")->latest()->where("type", "user")->paginate(request("per_page", 10)),
+        'license_key'     =>  User::where("type", "master")->value("license_key") ?? "",
     ]);
 })->name('setup');
 
