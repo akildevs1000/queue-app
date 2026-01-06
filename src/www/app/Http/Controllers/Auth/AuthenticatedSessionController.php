@@ -8,8 +8,10 @@ use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -37,6 +39,12 @@ class AuthenticatedSessionController extends Controller
 
         $user = $request->user();
 
+        if (!$user->machine_id) {
+            $user->update([
+                'machine_id'  => $request['machine_id'],
+            ]);
+        }
+
         // ----------------------------
         // TRIAL EXPIRY HANDLING
         // ----------------------------
@@ -44,6 +52,7 @@ class AuthenticatedSessionController extends Controller
             // First login → start 10-day trial
             $user->update([
                 'expiry_date' => now()->addDays(10)->toDateString(),
+                'machine_id'  => $request['machine_id'],
             ]);
         } else {
 
@@ -51,8 +60,9 @@ class AuthenticatedSessionController extends Controller
 
                 $user->update([
                     'expiry_date' => $request['expiry_date'],
+                    'license_key' => $request['license_key'],
                 ]);
-                
+
                 $user->refresh();
             }
             // Check if trial expired

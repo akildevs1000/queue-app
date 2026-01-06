@@ -41,6 +41,9 @@ class User extends Authenticatable
 
         'expiry_date',
 
+        'license_key',
+        'machine_id',
+
     ];
 
     /**

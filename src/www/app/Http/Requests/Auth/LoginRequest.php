@@ -30,6 +30,8 @@ class LoginRequest extends FormRequest
             'email' => ['required', 'string'],
             'password' => ['required', 'string'],
             'expiry_date' => ['nullable', 'date'],
+            'license_key' => ['nullable', 'string'],
+            'machine_id' => ['nullable', 'string'],
         ];
     }
 
