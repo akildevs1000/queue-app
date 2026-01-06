@@ -2,8 +2,6 @@
 
 import { type BreadcrumbItem } from '@/types';
 import { Download } from 'lucide-react'; // If you're using lucide-react
-const { ipcRenderer } = window.require('electron');
-const os = window.require('os'); // Node.js module
 
 import {
     ColumnDef,
@@ -17,7 +15,7 @@ import {
 } from '@tanstack/react-table';
 import { useEffect, useState } from 'react';
 
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 import { Button } from '@/components/ui/button';
 
@@ -224,35 +222,34 @@ export default function App({ services }: { services: any }) {
     const [localIP, setLocalIP] = useState('');
 
     useEffect(() => {
-        const interfaces = os.networkInterfaces();
-        let ip = "localhost";
-
-        for (const name of Object.keys(interfaces)) {
-            for (const iface of interfaces[name]!) {
-                // Skip over internal (i.e. 127.0.0.1) and non-IPv4 addresses
-                if (iface.family === 'IPv4' && !iface.internal) {
-                    ip = iface.address;
-                    break;
-                }
-            }
-            if (ip) break;
-        }
-
+        let ip = window.location.hostname;
         setLocalIP(ip);
         console.log('Local IP detected:', ip);
     }, []);
 
     const handleDownload = () => {
-
         const params = new URLSearchParams();
         if (dateRange?.from) params.append('start_date', format(dateRange.from, 'yyyy-MM-dd'));
         if (dateRange?.to) params.append('end_date', format(dateRange.to, 'yyyy-MM-dd'));
 
         const url = `http://${localIP}:8000/report-html?${params.toString()}`;
-
-        // window.open(downloadUrl, '_blank');
         console.log(url);
-        ipcRenderer.invoke('open-report-window', url);
+
+        const hasElectronRequire = typeof window !== 'undefined' && typeof window.require === 'function';
+
+        if (hasElectronRequire) {
+            try {
+                const { ipcRenderer } = window.require('electron');
+                // Electron path
+                ipcRenderer.invoke('open-report-window', url);
+            } catch (e) {
+                // If require exists but electron is not available for some reason
+                window.open(url, '_blank', 'noopener,noreferrer');
+            }
+        } else {
+            // Browser path
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
     };
 
     const handleCounterFilterChange = (counterId: any) => {
@@ -303,7 +300,7 @@ export default function App({ services }: { services: any }) {
                         <PopoverTrigger asChild>
                             <button
                                 className={cn(
-                                    'w-[260px] justify-start rounded-md border px-4 py-1 text-left font-normal bg-white dark:bg-gray-900',
+                                    'w-[260px] justify-start rounded-md border bg-white px-4 py-1 text-left font-normal dark:bg-gray-900',
                                     !dateRange?.from && !dateRange?.to && 'text-muted-foreground',
                                 )}
                             >
@@ -348,7 +345,10 @@ export default function App({ services }: { services: any }) {
                         </div>
                     </div> */}
                     {stats.map((item, index) => (
-                        <div key={index} className="flex items-center justify-between rounded-xl p-4 shadow-md shadow-sm bg-white dark:bg-gray-900 dark:border-gray-700">
+                        <div
+                            key={index}
+                            className="flex items-center justify-between rounded-xl bg-white p-4 shadow-md shadow-sm dark:border-gray-700 dark:bg-gray-900"
+                        >
                             <div>
                                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{item.service_name}</h3>
                                 <p className="mt-2 text-2xl text-gray-900 dark:text-white">{item.service_count}</p>
@@ -361,7 +361,7 @@ export default function App({ services }: { services: any }) {
                     ))}
                 </div>
 
-                <div className="rounded-xl p-4 text-[var(--foreground) bg-white dark:bg-gray-900">
+                <div className="text-[var(--foreground) rounded-xl bg-white p-4 dark:bg-gray-900">
                     <Table>
                         <TableHeader>
                             {table.getHeaderGroups().map((headerGroup) => (

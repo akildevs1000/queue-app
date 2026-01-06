@@ -1,8 +1,8 @@
 'use client';
 
 import CounterTable from '@/components/Counter/CounterTable';
-import ServiceTable from '@/components/Service/ServiceTable';
 import License from '@/components/License/Index';
+import ServiceTable from '@/components/Service/ServiceTable';
 import UserTable from '@/components/User/UserTable';
 import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
@@ -28,7 +28,7 @@ const NavLink = ({ active = false, onClick, children }: NavLinkProps) => {
     );
 };
 
-export default function Setup({ counters, services, users }: any) {
+export default function Setup({ counters, services, users, license_key }: any) {
     const [activeSection, setActiveSection] = useState<ActiveSection>('service');
 
     const renderContent = () => {
@@ -40,7 +40,7 @@ export default function Setup({ counters, services, users }: any) {
             case 'user':
                 return <UserTable items={users} />;
             case 'license':
-                return <License items={users} />;
+                return <License license_key={license_key} items={users} />;
             default:
                 return null;
         }

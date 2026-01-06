@@ -1,13 +1,14 @@
-import { useState } from 'react';
 import { useForm } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useEffect, useState } from 'react';
 
+import AppLogoIcon from '@/components/app-logo-icon';
 import InputError from '@/components/input-error';
+import { GradientButton } from '@/components/ui/GradientButton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import AppLogoIcon from '@/components/app-logo-icon';
-import { GradientButton } from '@/components/ui/GradientButton';
+
+import logo from '@/assets/logo.png'; // or "../assets/logo.png"
 
 interface LoginProps {
     status?: string;
@@ -26,15 +27,43 @@ export default function Login({ status, canResetPassword, subscriptionExpired }:
         password: '',
         remember: false,
         expiry_date: '', // hidden field for license expiry
+
+        license_key: '',
+        machine_id: '',
     });
 
     // License activation form
-    const { data: licenseData, setData: setLicenseData, processing: processingLicense, reset: resetLicense } = useForm({
+    const {
+        data: licenseData,
+        setData: setLicenseData,
+        processing: processingLicense,
+        reset: resetLicense,
+    } = useForm({
         license_key: '',
+        machine_id: '',
     });
 
-    const [toastMessage, setToastMessage] = useState<string | null>(null);
+    const [machineId, setMachineId] = useState(null);
 
+    useEffect(() => {
+        async function loadMachineId() {
+            // Running inside Electron?
+            const isElectron = typeof window !== 'undefined' && window.process && window.process.type === 'renderer';
+
+            if (isElectron) {
+                const { ipcRenderer } = window.require('electron');
+                const id = await ipcRenderer.invoke('get-machine-id');
+                console.log('Machine ID (Electron):', id);
+                setMachineId(id);
+                setData('machine_id', id);
+                setLicenseData('machine_id', id);
+            }
+        }
+
+        loadMachineId();
+    }, []);
+
+    const [toastMessage, setToastMessage] = useState<string | null>(null);
 
     // Normal login submit
     const submitLogin: FormEventHandler = (e) => {
@@ -43,7 +72,6 @@ export default function Login({ status, canResetPassword, subscriptionExpired }:
         post(route('login'), {
             onFinish: () => reset('password'),
             onError: (err) => {
-
                 if (err?.subsription) setTrialExpired(true);
 
                 setSubsriptionError(err?.subsription);
@@ -59,15 +87,12 @@ export default function Login({ status, canResetPassword, subscriptionExpired }:
 
         try {
             const params = new URLSearchParams({ license_key: licenseData.license_key });
-            const response = await fetch(
-                `https://debackend.myhotel2cloud.com/api/validate-license?${params.toString()}`,
-                {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                }
-            );
+            const response = await fetch(`https://debackend.myhotel2cloud.com/api/validate-license?${params.toString()}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
 
             const result = await response.json();
 
@@ -77,6 +102,7 @@ export default function Login({ status, canResetPassword, subscriptionExpired }:
 
                 // Set expiry_date in login form hidden field
                 setData('expiry_date', expiryDate);
+                setData('license_key', licenseData.license_key);
 
                 // Reset license form
                 resetLicense();
@@ -84,7 +110,6 @@ export default function Login({ status, canResetPassword, subscriptionExpired }:
                 setToastMessage(result.message);
                 // Allow login form to show again
                 setTrialExpired(false);
-
             } else {
                 setLicenseError(result.message || 'License activation failed');
             }
@@ -95,26 +120,22 @@ export default function Login({ status, canResetPassword, subscriptionExpired }:
     };
 
     return (
-        <div className="bg-background flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
+        <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-gray-100 p-6 md:p-10 dark:bg-black">
             <div className="w-full max-w-sm">
                 <div className="flex flex-col gap-8">
                     {!trialExpired ? (
                         <form
                             id="login-form"
-                            className="flex flex-col gap-8 bg-white dark:bg-gray-900 p-8 rounded-xl shadow-lg max-w-md mx-auto"
+                            className="mx-5 mx-auto flex max-w-md flex-col gap-8 rounded-xl bg-white p-8 shadow-xl dark:bg-gray-900"
                             onSubmit={submitLogin}
                         >
                             {/* Normal login form */}
                             <div className="flex flex-col items-center gap-4">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-md">
-                                    <AppLogoIcon className="size-9 fill-current text-[var(--foreground)] dark:text-white" />
+                                <div className="w-[150px]">
+                                    <img src={logo} alt="Logo" className="object-contain" />
                                 </div>
-                                <h2 className="text-2xl font-semibold text-center text-gray-800 dark:text-gray-100">
-                                    Welcome Back!
-                                </h2>
-                                <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-                                    Enter your credentials to access your account
-                                </p>
+                                <h2 className="text-center text-2xl font-semibold text-gray-800 dark:text-gray-100">Welcome Back!</h2>
+                                <p className="text-center text-sm text-gray-500 dark:text-gray-400">Enter your credentials to access your account</p>
                             </div>
 
                             <div className="grid gap-6">
@@ -129,7 +150,7 @@ export default function Login({ status, canResetPassword, subscriptionExpired }:
                                         value={data.email}
                                         onChange={(e) => setData('email', e.target.value)}
                                         placeholder="admin"
-                                        className="rounded-md border-gray-300 dark:border-gray-700 focus:border-primary focus:ring focus:ring-primary/30 dark:bg-gray-800"
+                                        className="focus:border-primary focus:ring-primary/30 rounded-md border-gray-300 focus:ring dark:border-gray-700 dark:bg-gray-800"
                                     />
                                     <InputError message={errors.email} />
                                 </div>
@@ -145,18 +166,18 @@ export default function Login({ status, canResetPassword, subscriptionExpired }:
                                         value={data.password}
                                         onChange={(e) => setData('password', e.target.value)}
                                         placeholder="Your password"
-                                        className="rounded-md border-gray-300 dark:border-gray-700 focus:border-primary focus:ring focus:ring-primary/30 dark:bg-gray-800"
+                                        className="focus:border-primary focus:ring-primary/30 rounded-md border-gray-300 focus:ring dark:border-gray-700 dark:bg-gray-800"
                                     />
                                     <InputError message={errors.password} />
                                 </div>
 
                                 {/* Hidden field for expiry_date */}
+                                <input type="hidden" name="machine_id" value={machineId || ''} />
                                 <input type="hidden" name="expiry_date" value={data.expiry_date || ''} />
+                                <input type="hidden" name="license_key" value={data.license_key || ''} />
 
                                 {subsriptionError && (
-                                    <div className="text-red-600 dark:text-red-400 text-center font-medium mb-2">
-                                        {subsriptionError}
-                                    </div>
+                                    <div className="mb-2 text-center font-medium text-red-600 dark:text-red-400">{subsriptionError}</div>
                                 )}
 
                                 <GradientButton disabled={processing}>
@@ -168,16 +189,14 @@ export default function Login({ status, canResetPassword, subscriptionExpired }:
                     ) : (
                         // License activation form
                         <form
-                            className="flex flex-col gap-8 bg-white dark:bg-gray-900 p-8 rounded-xl shadow-lg max-w-md mx-auto"
+                            className="mx-auto flex max-w-md flex-col gap-8 rounded-xl bg-white p-8 shadow-lg dark:bg-gray-900"
                             onSubmit={submitLicense}
                         >
                             <div className="flex flex-col items-center gap-4">
                                 <div className="flex h-9 w-9 items-center justify-center rounded-md">
                                     <AppLogoIcon className="size-9 fill-current text-[var(--foreground)] dark:text-white" />
                                 </div>
-                                <h2 className="text-2xl font-semibold text-center text-gray-800 dark:text-gray-100">
-                                    Activate License
-                                </h2>
+                                <h2 className="text-center text-2xl font-semibold text-gray-800 dark:text-gray-100">Activate License</h2>
                                 <p className="text-center text-sm text-gray-500 dark:text-gray-400">
                                     Your trial expired. Enter your license key to continue.
                                 </p>
@@ -194,13 +213,11 @@ export default function Login({ status, canResetPassword, subscriptionExpired }:
                                         autoFocus
                                         value={licenseData.license_key}
                                         onChange={(e) => setLicenseData('license_key', e.target.value)}
-                                        placeholder="LIC-9F3A-72KD-8XQ2"
-                                        className="rounded-md border-gray-300 dark:border-gray-700 focus:border-primary focus:ring focus:ring-primary/30 dark:bg-gray-800"
+                                        placeholder="XXXX-XXXX-XXXX-XXXX"
+                                        className="focus:border-primary focus:ring-primary/30 rounded-md border-gray-300 focus:ring dark:border-gray-700 dark:bg-gray-800"
                                     />
                                     {licenseError && (
-                                        <div className="text-red-600 dark:text-red-400 text-center font-medium mt-1">
-                                            {licenseError}
-                                        </div>
+                                        <div className="mt-1 text-center font-medium text-red-600 dark:text-red-400">{licenseError}</div>
                                     )}
                                 </div>
 

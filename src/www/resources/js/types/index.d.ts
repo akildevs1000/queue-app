@@ -41,6 +41,7 @@ export interface SharedData {
 
 export interface User {
     id: number;
+    machine_id: string;
     name: string;
     email: string;
     ip: string;
