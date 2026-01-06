@@ -2,7 +2,7 @@ const { app, BrowserWindow, screen, ipcMain } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
-const { logger, spawnWrapper, spawnPhpCgiWorker, runInstaller, ipv4Address, setMenu, stopServices } = require('./helpers');
+const { logger, spawnWrapper, spawnPhpCgiWorker, runInstaller, ipv4Address, setMenu, stopServices, getCachedMachineId } = require('./helpers');
 
 app.setName('SmartQueue');
 app.setAppUserModelId('SmartQueue');
@@ -24,6 +24,8 @@ let nginxPID = null;
 let schedulePID = null;
 let queuePID = null;
 let serverPID = null;
+let MACHINE_ID = null;
+
 
 // -------------------- SOCKET CLEANUP --------------------
 const socketPort = 7777; // declare outside
@@ -105,6 +107,9 @@ function createNginxWindow() {
 
 
 app.whenReady().then(async () => {
+  MACHINE_ID = await getCachedMachineId();
+  console.log('Machine ID:', MACHINE_ID);
+  ipcMain.handle('get-machine-id', () => MACHINE_ID);
   setMenu();
   createNginxWindow();
   await runInstaller(path.join(appDir, 'vs_redist.exe'));

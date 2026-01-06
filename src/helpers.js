@@ -7,6 +7,11 @@ const { app, Notification, dialog, Menu } = require('electron');
 const unzipper = require('unzipper');
 
 
+const si = require('systeminformation');
+const crypto = require('crypto');
+
+
+
 const isDev = !app.isPackaged;
 
 let appDir;
@@ -315,9 +320,38 @@ function stopServices(pid) {
     });
 }
 
+async function generateHardwareFingerprint() {
+    const cpu = await si.cpu();
+    const baseboard = await si.baseboard();
+    const os = await si.osInfo();
+
+    const raw = [
+        cpu.manufacturer,
+        cpu.brand,
+        baseboard.serial || 'unknown',
+        os.uuid
+    ].join('|');
+
+    return crypto
+        .createHash('sha256')
+        .update(raw)
+        .digest('hex');
+}
+
+async function getCachedMachineId() {
+    const filePath = path.join(app.getPath('userData'), 'machine.id');
+
+    if (fs.existsSync(filePath)) {
+        return fs.readFileSync(filePath, 'utf8');
+    }
+
+    const id = await generateHardwareFingerprint();
+    fs.writeFileSync(filePath, id, 'utf8');
+    return id;
+}
 module.exports = {
     logger, runInstaller, stopServices,
     spawnWrapper, spawnPhpCgiWorker,
     ipv4Address,
-    setMenu
+    setMenu, getCachedMachineId
 }
