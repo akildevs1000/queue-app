@@ -20,6 +20,7 @@ export default function Login({ status, canResetPassword, subscriptionExpired }:
     const [trialExpired, setTrialExpired] = useState(subscriptionExpired || false);
     const [licenseError, setLicenseError] = useState<string | null>(null);
     const [subsriptionError, setSubsriptionError] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
 
     // Normal login form
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -63,8 +64,6 @@ export default function Login({ status, canResetPassword, subscriptionExpired }:
         loadMachineId();
     }, []);
 
-    const [toastMessage, setToastMessage] = useState<string | null>(null);
-
     // Normal login submit
     const submitLogin: FormEventHandler = (e) => {
         setSubsriptionError(null);
@@ -72,6 +71,7 @@ export default function Login({ status, canResetPassword, subscriptionExpired }:
         post(route('login'), {
             onFinish: () => reset('password'),
             onError: (err) => {
+                if (err?.error) setError(err?.error);
                 if (err?.subsription) setTrialExpired(true);
 
                 setSubsriptionError(err?.subsription);
@@ -107,7 +107,6 @@ export default function Login({ status, canResetPassword, subscriptionExpired }:
                 // Reset license form
                 resetLicense();
 
-                setToastMessage(result.message);
                 // Allow login form to show again
                 setTrialExpired(false);
             } else {
@@ -175,6 +174,10 @@ export default function Login({ status, canResetPassword, subscriptionExpired }:
                                 <input type="hidden" name="machine_id" value={machineId || ''} />
                                 <input type="hidden" name="expiry_date" value={data.expiry_date || ''} />
                                 <input type="hidden" name="license_key" value={data.license_key || ''} />
+
+                                {error && (
+                                    <div className="mb-2 text-center font-medium text-red-600 dark:text-red-400">{error}</div>
+                                )}
 
                                 {subsriptionError && (
                                     <div className="mb-2 text-center font-medium text-red-600 dark:text-red-400">{subsriptionError}</div>
