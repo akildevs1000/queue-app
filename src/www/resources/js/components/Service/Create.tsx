@@ -9,20 +9,34 @@ import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 export const MATERIAL_ICONS = [
+    'payments',
+    'account_balance_wallet',
+    'devices',
+    'account_box',
+    'house',
     'home',
     'account_circle',
     'person',
     'people',
+    'analytics',
+    'flight_takeoff',
     'group',
     'work',
     'school',
     'local_hospital',
     'restaurant',
     'shopping_cart',
+    'local_shipping',
     'payment',
     'credit_card',
     'support_agent',
+    'lightbulb',
     'settings',
+    'attach_money',
+    'build',
+    'insights',
+    'bookmark',
+    'star',
     'security',
     'lock',
     'vpn_key',
@@ -195,7 +209,7 @@ export default function ItemEdit({ title, endpoint }: { title: any; endpoint: an
 
                         {errors.icon && <p className="pt-1 pl-1 text-sm text-red-400">{errors.icon}</p>}
                     </div>
-                 
+
                     <Button className="bg-gradient-to-r from-blue-500 to-purple-600 text-white" type="submit" disabled={processing}>
                         {processing ? 'Submitting...' : 'Submit'}
                     </Button>

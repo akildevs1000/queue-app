@@ -14,6 +14,7 @@ class ValidationRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'icon'              => 'nullable|string',
             'name'              => 'required|string|min:3|max:255',
             'code'              => 'required|string|min:1|max:255|unique:services,code,' . $this->service?->id,
             'description'       => 'nullable|string|min:3|max:255',

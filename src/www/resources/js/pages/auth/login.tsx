@@ -30,6 +30,7 @@ export default function Login({ status, canResetPassword, subscriptionExpired }:
 
         license_key: '',
         machine_id: '',
+        is_electron:false
     });
 
     // License activation form
@@ -55,6 +56,7 @@ export default function Login({ status, canResetPassword, subscriptionExpired }:
                 const id = await ipcRenderer.invoke('get-machine-id');
                 console.log('Machine ID (Electron):', id);
                 setMachineId(id);
+                setData('is_electron', true);
                 setData('machine_id', id);
                 setLicenseData('machine_id', id);
             }
