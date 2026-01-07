@@ -46,16 +46,19 @@ class AuthenticatedSessionController extends Controller
         }
 
         // Block login if machine ID doesn't match
-        if ($user->machine_id && $user->machine_id != $request['machine_id']) {
+        if ($request['is_electron']) {
+            // Block login if machine ID doesn't match
+            if ($user->machine_id && $user->machine_id != $request['machine_id']) {
 
-            Log::info($user->machine_id);
-            Log::info($request['machine_id']);
+                Log::info($user->machine_id);
+                Log::info($request['machine_id']);
 
-            auth()->logout();
+                auth()->logout();
 
-            return redirect()->route('login')->withErrors([
-                'error' => "Machine Id Mismatch",
-            ]);
+                return redirect()->route('login')->withErrors([
+                    'error' => "Machine Id Mismatch",
+                ]);
+            }
         }
 
         // ----------------------------

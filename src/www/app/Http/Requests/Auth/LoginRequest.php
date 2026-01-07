@@ -32,6 +32,7 @@ class LoginRequest extends FormRequest
             'expiry_date' => ['nullable', 'date'],
             'license_key' => ['nullable', 'string'],
             'machine_id' => ['nullable', 'string'],
+            'is_electron' => ['nullable'],
         ];
     }
 
