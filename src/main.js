@@ -45,18 +45,14 @@ function startServices() {
 
   nginxPID = spawnWrapper("[Nginx]", nginxPath, { cwd: appDir });
 
-  console.log("PID", nginxPID);
 
   // Spawn PHP workers
   [9000].forEach(port => {
     serverPID = spawnPhpCgiWorker(phpCGi, port);
-    console.log("serverPID", serverPID);
   });
 
   schedulePID = spawnWrapper("[Application]", phpPathCli, ['artisan', 'schedule:work'], { cwd: srcDirectory });
-  console.log("schedulePID", schedulePID);
   queuePID = spawnWrapper("[Application]", phpPathCli, ['artisan', 'queue:work'], { cwd: srcDirectory });
-  console.log("queuePID", queuePID);
 
 
   logger('Application', `Application started at http://${ipv4Address}:8000`);
@@ -108,7 +104,6 @@ function createNginxWindow() {
 
 app.whenReady().then(async () => {
   MACHINE_ID = await getCachedMachineId();
-  console.log('Machine ID:', MACHINE_ID);
   ipcMain.handle('get-machine-id', () => MACHINE_ID);
   setMenu();
   createNginxWindow();
