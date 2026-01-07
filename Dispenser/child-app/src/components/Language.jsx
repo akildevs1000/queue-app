@@ -28,7 +28,7 @@ const LanguageCard = ({ lang, label, darkMode, handleLanguageSelect }) => {
         text-center focus:outline-none focus:ring-4 focus:ring-primary/20
         transform hover:-translate-y-1"
     >
-      <div class="flag-icon">
+      <div className="flag-icon">
         <img className="w-[150px]" src={flagMap[lang]} alt="" />
       </div>
       <span className="text-2xl font-bold text-black dark:text-white transition-colors">

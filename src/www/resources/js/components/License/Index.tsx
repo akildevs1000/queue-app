@@ -2,7 +2,7 @@ import { GradientButton } from '@/components/ui/GradientButton';
 import { Input } from '@/components/ui/input';
 import { SharedData } from '@/types';
 import { useForm, usePage } from '@inertiajs/react';
-import { CalendarClock, Check, Copy, KeyRound, LoaderCircle, LucideIcon, Mail, Phone, Unlock, User } from 'lucide-react';
+import { Check, Copy, LoaderCircle, LucideIcon, Unlock } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 // --- Offline License Validator ---
@@ -14,7 +14,6 @@ let cryptoNode: any = undefined;
 if (typeof window !== 'undefined' && window.process?.type === 'renderer') {
     cryptoNode = window.require('crypto'); // Electron renderer
 }
-
 
 interface LicenseProps {
     mustVerifyEmail: boolean;
@@ -68,7 +67,11 @@ export default function License({ license_key, mustVerifyEmail }: LicenseProps) 
     const [machineId, setMachineId] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
 
-    const { data: licenseData, setData: setLicenseData, processing } = useForm({
+    const {
+        data: licenseData,
+        setData: setLicenseData,
+        processing,
+    } = useForm({
         license_key: license_key || '',
         machine_id: '',
         expiry_date: '', // optional if server provides expiry date
@@ -100,21 +103,16 @@ export default function License({ license_key, mustVerifyEmail }: LicenseProps) 
         }
 
         try {
-
             let d = '2025-12-31';
 
             if (isExpired(d)) {
-                alert()
+                alert();
                 setLicenseSuccess(null);
-                setLicenseError("License Expired");
+                setLicenseError('License Expired');
                 return;
             }
             // Use same expiry as generator
-            const isValid = await validateLicenseOffline(
-                licenseData.license_key,
-                machineId,
-                d
-            );
+            const isValid = await validateLicenseOffline(licenseData.license_key, machineId, d);
 
             console.log('Is license valid?', isValid);
 
@@ -130,7 +128,6 @@ export default function License({ license_key, mustVerifyEmail }: LicenseProps) 
             setLicenseError('An error occurred during license validation.');
         }
     };
-
 
     // --- Offline License Validation Helpers ---
     function toBase32(bytes: number[]): string {
@@ -149,49 +146,56 @@ export default function License({ license_key, mustVerifyEmail }: LicenseProps) 
         return new Date() > new Date(expiry);
     }
 
-    async function validateLicenseOffline(
-        licenseKey: string,
-        machineId: string,
-        expiryDate: string
-    ): Promise<boolean> {
+    function decodeDateSegment(encoded: string): string | null {
+        const base = new Date('2020-01-01T00:00:00Z');
+
+        // Convert base36 back to number of days
+        const days = parseInt(encoded, 36);
+        if (!Number.isFinite(days) || days < 0) return null;
+
+        // Add days to base date
+        const decodedDate = new Date(base.getTime() + days * 86400000);
+
+        // Return YYYY-MM-DD
+        return decodedDate.toISOString().slice(0, 10);
+    }
+
+
+    async function validateLicenseOffline(licenseKey: string, machineId: string, expiryDate: string): Promise<boolean> {
         try {
-            if (!licenseKey.startsWith('LIC-')) return false;
-
-            // Extract hash part
-            const parts = licenseKey.split('-');
-            if (parts.length < 2) return false;
-            const hashPart = parts.slice(2).join('-'); // skip LIC and nonce
-
-            const raw = `${machineId}|${expiryDate}|${STATIC_NONCE}|${SECRET}`;
-            let hashBytes: Uint8Array;
-
-            // Electron / Node.js
-            const isElectron = typeof window !== 'undefined' && window.process?.type === 'renderer';
-            if (isElectron) {
-                const cryptoNode = window.require('crypto');
-                const hashBuffer = cryptoNode.createHash('sha256').update(raw).digest();
-                hashBytes = new Uint8Array(hashBuffer);
-            }
-            // Browser fallback
-            else if (crypto?.subtle) {
-                const enc = new TextEncoder().encode(raw);
-                const hashBuffer = await crypto.subtle.digest('SHA-256', enc);
-                hashBytes = new Uint8Array(hashBuffer);
-            } else {
-                throw new Error('No crypto available for hashing');
+            // Remove LIC prefix if present
+            if (licenseKey.startsWith('LIC-')) {
+                licenseKey = licenseKey.slice(4);
             }
 
-            const computedBase32 = toBase32(Array.from(hashBytes))
-                .slice(0, 16)
-                .match(/.{1,4}/g)?.join('-');
+            const blocks = licenseKey.split('-');
+            if (blocks.length !== 4) return false;
 
-            return computedBase32 === hashPart;
+            // Decode the last block to get expiry date from license
+            const decodedExpiry = decodeDateSegment(blocks[3]);
+            if (!decodedExpiry) return false;
+
+            // Compare decoded expiry with expected expiryDate
+            if (decodedExpiry !== expiryDate) return false;
+
+            // Recompute hash for first 3 blocks
+            const enc = new TextEncoder().encode(machineId);
+            const digest = await crypto.subtle.digest('SHA-256', enc);
+            const bytes = Array.from(new Uint8Array(digest));
+            const base32 = toBase32(bytes);
+            const first16 = base32.slice(0, 16).padEnd(16, 'A');
+            const expectedBlocks = first16.match(/.{1,4}/g) || ['AAAA', 'AAAA', 'AAAA', 'AAAA'];
+
+            // Replace last block with decodedExpiry to match license key structure
+            expectedBlocks[3] = blocks[3];
+
+            // Compare first 3 blocks + last block
+            return expectedBlocks.join('-') === licenseKey;
         } catch (err) {
             console.error('License validation error:', err);
             return false;
         }
     }
-
 
     // --- UI (your existing code) ---
     return (

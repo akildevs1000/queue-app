@@ -271,7 +271,7 @@ function App() {
 
   return (
     <div style={styles.appContainer}>
-      <div className="bg-gray-100 dark:bg-background-dark text-slate-800 dark:text-slate-100 min-h-screen font-sans">
+      <div className="bg-gray-100 dark:bg-background-dark text-slate-800 dark:text-slate-100 min-h-screen font-sans flex flex-col">
         <IpDialog
           darkMode={darkMode}
           open={showIpDialog}
@@ -281,7 +281,7 @@ function App() {
           onLanguagesChange={(langs) => setSelectedLanguages(langs)}
         />
 
-        <Header title={title} darkMode={darkMode} setDarkMode={setDarkMode} />
+        <Header />
 
         {/* ✅ Added Hidden QR Input — DOES NOT change layout */}
         <div className="absolute left-[-5000px]">
@@ -305,7 +305,7 @@ function App() {
             <div className="w-full max-w-7xl flex flex-col justify-center min-h-[80vh]">
               <div className="text-center mb-10">
                 <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
-                  Welcome To Emirates Islamic Bank
+                  Welcome To {title || ""}
                 </h1>
                 <br />
                 <h2 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
@@ -332,10 +332,23 @@ function App() {
         )}
         {/* SERVICE STEP */}
         {step === "service" && (
-          <Services services={services} onSelect={handleServiceSelect} />
+          <main className="flex-grow flex justify-center p-6 md:p-10 relative">
+            <div className="w-full max-w-7xl flex flex-col justify-center min-h-[80vh]">
+              <div className="text-center mb-12">
+                <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">
+                  Select Service
+                </h2>
+                <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto text-lg">
+                  Please choose a department to retrieve your queue ticket.
+                </p>
+              </div>
+
+              <Services services={services} onSelect={handleServiceSelect} />
+            </div>
+          </main>
         )}
 
-        <footer className="w-full px-8 py-5 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111a2f] z-20">
+        <footer className="mt-auto w-full px-8 py-5 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111a2f] z-20">
           <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
@@ -343,10 +356,10 @@ function App() {
                 Server: {retrying ? "Reconnecting..." : "Connected"}
               </span>
             </div>
-            <div class="hidden sm:flex justify-center md:justify-end mt-2">
-              <p class="text-[10px] text-slate-400 dark:text-slate-300 uppercase tracking-widest font-medium">
+            <div className="hidden sm:flex justify-center md:justify-end mt-2">
+              <p className="text-[10px] text-slate-400 dark:text-slate-300 uppercase tracking-widest font-medium">
                 Powered by{" "}
-                <span class="text-slate-600 dark:text-slate-100 font-semibold hover:text-blue-500 transition-colors duration-300">
+                <span className="text-slate-600 dark:text-slate-100 font-semibold hover:text-blue-500 transition-colors duration-300">
                   xtremeguard.org
                 </span>
               </p>
@@ -364,9 +377,9 @@ function App() {
                     vip_number: null,
                   });
                 }}
-                class="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 text-white pl-1 pr-3 py-2.5 rounded-xl text-sm font-bold tracking-wide transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 text-white pl-1 pr-3 py-2.5 rounded-xl text-sm font-bold tracking-wide transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
               >
-                <span class="material-icons-round text-lg">chevron_left</span>
+                <span className="material-icons-round text-lg">chevron_left</span>
                 Back
               </button>
             )}
