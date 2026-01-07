@@ -16,7 +16,7 @@ interface LoginProps {
 }
 
 export default function Login({ status, canResetPassword, subscriptionExpired }: LoginProps) {
-    const [trialExpired, setTrialExpired] = useState(subscriptionExpired || true);
+    const [trialExpired, setTrialExpired] = useState(subscriptionExpired || false);
     const [licenseError, setLicenseError] = useState<string | null>(null);
     const [subsriptionError, setSubsriptionError] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
