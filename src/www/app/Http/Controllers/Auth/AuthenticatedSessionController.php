@@ -45,6 +45,19 @@ class AuthenticatedSessionController extends Controller
             ]);
         }
 
+        // Block login if machine ID doesn't match
+        if ($user->machine_id && $user->machine_id != $request['machine_id']) {
+
+            Log::info($user->machine_id);
+            Log::info($request['machine_id']);
+
+            auth()->logout();
+
+            return redirect()->route('login')->withErrors([
+                'error' => "Machine Id Mismatch",
+            ]);
+        }
+
         // ----------------------------
         // TRIAL EXPIRY HANDLING
         // ----------------------------
