@@ -368,9 +368,47 @@ async function getCachedMachineId() {
     fs.writeFileSync(filePath, id, 'utf8');
     return id;
 }
+
+
+// ---------------- CLOCK TAMPERING PROTECTION ----------------
+const CLOCK_FILE = path.join(appDir, 'clock.json');
+
+function readClock() {
+    if (!fs.existsSync(CLOCK_FILE)) return null;
+    try {
+        return JSON.parse(fs.readFileSync(CLOCK_FILE, 'utf8'));
+    } catch {
+        return null;
+    }
+}
+
+function writeClock(ts) {
+    fs.writeFileSync(CLOCK_FILE, JSON.stringify({ last: ts }));
+}
+
+function isClockTampered() {
+    const data = readClock();
+    if (!data || !data.last) {
+        // first run → trust system time
+        writeClock(Date.now());
+        return false;
+    }
+
+    const now = Date.now();
+    const ALLOWED_DRIFT = 5 * 60 * 1000; // 5 minutes
+
+    if (now + ALLOWED_DRIFT < data.last) {
+        return true;
+    }
+
+    // update monotonic timestamp
+    writeClock(now);
+    return false;
+}
+
 module.exports = {
     logger, runInstaller, stopServices,
     spawnWrapper, spawnPhpCgiWorker,
     ipv4Address,
-    setMenu, getCachedMachineId
+    setMenu, getCachedMachineId,isClockTampered
 }

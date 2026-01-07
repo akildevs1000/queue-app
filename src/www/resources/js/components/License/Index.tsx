@@ -5,10 +5,6 @@ import { useForm, usePage } from '@inertiajs/react';
 import { Check, Copy, LoaderCircle, LucideIcon, Unlock } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-// --- Offline License Validator ---
-const SECRET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'; // must match server
-const STATIC_NONCE = 'TEST';
-
 // Detect Electron Node crypto
 let cryptoNode: any = undefined;
 if (typeof window !== 'undefined' && window.process?.type === 'renderer') {
@@ -72,7 +68,7 @@ export default function License({ license_key, mustVerifyEmail }: LicenseProps) 
         setData: setLicenseData,
         processing,
     } = useForm({
-        license_key: license_key || '',
+        license_key: 'LIC-EAVD-C52E-QYKU-01PQ',
         machine_id: '',
         expiry_date: '', // optional if server provides expiry date
     });
@@ -93,6 +89,8 @@ export default function License({ license_key, mustVerifyEmail }: LicenseProps) 
 
     // Offline license validation
     const submitLicense = async (e: React.FormEvent) => {
+
+
         e.preventDefault();
         setLicenseError(null);
         setLicenseSuccess(null);
@@ -102,30 +100,71 @@ export default function License({ license_key, mustVerifyEmail }: LicenseProps) 
             return;
         }
 
-        try {
-            let d = '2025-12-31';
+        let licenseKey = licenseData.license_key;
 
-            if (isExpired(d)) {
-                alert();
-                setLicenseSuccess(null);
-                setLicenseError('License Expired');
+
+
+        try {
+            if (!cryptoNode) throw new Error('Crypto unavailable');
+
+            if (licenseKey.startsWith('LIC-')) {
+                licenseKey = licenseKey.slice(4);
+            }
+
+            const LICENSE_REGEX = /^[A-Z0-9]{4}(-[A-Z0-9]{4}){3}$/;
+            if (!LICENSE_REGEX.test(licenseKey)) {
+                setLicenseError('Invalid license format');
                 return;
             }
-            // Use same expiry as generator
-            const isValid = await validateLicenseOffline(licenseData.license_key, machineId, d);
 
-            console.log('Is license valid?', isValid);
+            const blocks = licenseKey.split('-');
 
-            if (isValid) {
+            if (blocks.length !== 4) {
+                setLicenseError('Invalid license format');
+                return;
+            }
+
+            // Decode expiry block
+            const decodedExpiry = decodeDateSegment(blocks[3]);
+            if (!decodedExpiry) {
+                setLicenseError('Invalid expiry date');
+                return;
+            }
+
+            if (isExpired(decodedExpiry)) {
+                setLicenseError('License expired');
+                return;
+            }
+
+            // SHA256(machineId)
+            const hash = cryptoNode
+                .createHash('sha256')
+                .update(machineId)
+                .digest();
+
+            const bytes: any = Array.from(hash);
+            const base32 = toBase32(bytes);
+            const first16 = base32.slice(0, 16);
+
+            const expectedBlocks = first16.match(/.{1,4}/g);
+            if (!expectedBlocks) {
+                setLicenseError('Hash generation failed');
+                return;
+            }
+
+            const expectedPrefix = expectedBlocks.slice(0, 3).join('-');
+            const licensePrefix = blocks.slice(0, 3).join('-');
+
+            if (expectedPrefix === licensePrefix) {
                 setLicenseSuccess('License activated successfully!');
                 setLicenseError(null);
             } else {
-                setLicenseError('Invalid license or mismatched machine.');
-                setLicenseSuccess(null);
+                setLicenseError('License does not match this machine');
             }
         } catch (err) {
             console.error(err);
-            setLicenseError('An error occurred during license validation.');
+            setLicenseSuccess(null);
+            setLicenseError('Invalid license or mismatched machine.');
         }
     };
 
@@ -160,43 +199,6 @@ export default function License({ license_key, mustVerifyEmail }: LicenseProps) 
         return decodedDate.toISOString().slice(0, 10);
     }
 
-
-    async function validateLicenseOffline(licenseKey: string, machineId: string, expiryDate: string): Promise<boolean> {
-        try {
-            // Remove LIC prefix if present
-            if (licenseKey.startsWith('LIC-')) {
-                licenseKey = licenseKey.slice(4);
-            }
-
-            const blocks = licenseKey.split('-');
-            if (blocks.length !== 4) return false;
-
-            // Decode the last block to get expiry date from license
-            const decodedExpiry = decodeDateSegment(blocks[3]);
-            if (!decodedExpiry) return false;
-
-            // Compare decoded expiry with expected expiryDate
-            if (decodedExpiry !== expiryDate) return false;
-
-            // Recompute hash for first 3 blocks
-            const enc = new TextEncoder().encode(machineId);
-            const digest = await crypto.subtle.digest('SHA-256', enc);
-            const bytes = Array.from(new Uint8Array(digest));
-            const base32 = toBase32(bytes);
-            const first16 = base32.slice(0, 16).padEnd(16, 'A');
-            const expectedBlocks = first16.match(/.{1,4}/g) || ['AAAA', 'AAAA', 'AAAA', 'AAAA'];
-
-            // Replace last block with decodedExpiry to match license key structure
-            expectedBlocks[3] = blocks[3];
-
-            // Compare first 3 blocks + last block
-            return expectedBlocks.join('-') === licenseKey;
-        } catch (err) {
-            console.error('License validation error:', err);
-            return false;
-        }
-    }
-
     // --- UI (your existing code) ---
     return (
         <div className="flex-1 overflow-auto rounded-xl">
@@ -206,7 +208,7 @@ export default function License({ license_key, mustVerifyEmail }: LicenseProps) 
                 </section>
             )}
 
-            <section className="rounded-xl border border-indigo-100 bg-gradient-to-br from-indigo-50 to-white shadow-sm dark:border-slate-700 dark:from-slate-800 dark:to-slate-900">
+            <section className="rounded-xl border border-indigo-100 shadow-sm dark:border-slate-700 dark:from-slate-800 dark:to-slate-900">
                 <div className="p-6 md:p-8">
                     <div className="flex flex-col gap-6 md:flex-row md:items-start">
                         <div className="flex-1">
@@ -223,7 +225,7 @@ export default function License({ license_key, mustVerifyEmail }: LicenseProps) 
                                 <div>
                                     <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Machine Code</label>
                                     <div className="relative">
-                                        <Input
+                                        <Input className='border rounded dark:border-slate-700 dark:bg-slate-900'
                                             required
                                             value={machineId || ''}
                                             onChange={(e) => setLicenseData('machine_id', e.target.value)}
@@ -247,7 +249,7 @@ export default function License({ license_key, mustVerifyEmail }: LicenseProps) 
 
                                 <div>
                                     <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">License Key</label>
-                                    <Input
+                                    <Input className='border rounded dark:border-slate-700 dark:bg-slate-900'
                                         required
                                         value={licenseData.license_key}
                                         onChange={(e) => setLicenseData('license_key', e.target.value)}
