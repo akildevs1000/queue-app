@@ -2,7 +2,6 @@ import { useForm } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
 import { FormEventHandler, useEffect, useState } from 'react';
 
-import AppLogoIcon from '@/components/app-logo-icon';
 import InputError from '@/components/input-error';
 import { GradientButton } from '@/components/ui/GradientButton';
 import { Input } from '@/components/ui/input';
@@ -17,7 +16,7 @@ interface LoginProps {
 }
 
 export default function Login({ status, canResetPassword, subscriptionExpired }: LoginProps) {
-    const [trialExpired, setTrialExpired] = useState(subscriptionExpired || false);
+    const [trialExpired, setTrialExpired] = useState(subscriptionExpired || true);
     const [licenseError, setLicenseError] = useState<string | null>(null);
     const [subsriptionError, setSubsriptionError] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -175,9 +174,7 @@ export default function Login({ status, canResetPassword, subscriptionExpired }:
                                 <input type="hidden" name="expiry_date" value={data.expiry_date || ''} />
                                 <input type="hidden" name="license_key" value={data.license_key || ''} />
 
-                                {error && (
-                                    <div className="mb-2 text-center font-medium text-red-600 dark:text-red-400">{error}</div>
-                                )}
+                                {error && <div className="mb-2 text-center font-medium text-red-600 dark:text-red-400">{error}</div>}
 
                                 {subsriptionError && (
                                     <div className="mb-2 text-center font-medium text-red-600 dark:text-red-400">{subsriptionError}</div>
@@ -196,8 +193,8 @@ export default function Login({ status, canResetPassword, subscriptionExpired }:
                             onSubmit={submitLicense}
                         >
                             <div className="flex flex-col items-center gap-4">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-md">
-                                    <AppLogoIcon className="size-9 fill-current text-[var(--foreground)] dark:text-white" />
+                                <div className="w-[150px]">
+                                    <img src={logo} alt="Logo" className="object-contain" />
                                 </div>
                                 <h2 className="text-center text-2xl font-semibold text-gray-800 dark:text-gray-100">Activate License</h2>
                                 <p className="text-center text-sm text-gray-500 dark:text-gray-400">
