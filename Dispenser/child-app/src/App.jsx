@@ -335,8 +335,12 @@ function App() {
           <main className="flex-grow flex justify-center p-6 md:p-10 relative">
             <div className="w-full max-w-7xl flex flex-col justify-center min-h-[80vh]">
               <div className="text-center mb-12">
+                <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
+                  Welcome To {title || ""}
+                </h1>
+                <br />
                 <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">
-                  Select Service
+                  Select Your Service
                 </h2>
                 <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto text-lg">
                   Please choose a department to retrieve your queue ticket.
@@ -379,7 +383,9 @@ function App() {
                 }}
                 className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 text-white pl-1 pr-3 py-2.5 rounded-xl text-sm font-bold tracking-wide transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
               >
-                <span className="material-icons-round text-lg">chevron_left</span>
+                <span className="material-icons-round text-lg">
+                  chevron_left
+                </span>
                 Back
               </button>
             )}
