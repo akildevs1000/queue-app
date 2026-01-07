@@ -27,20 +27,29 @@ let iconAndColors = [
 
 const Services = ({ services, onSelect }) => {
   const [newServices, setNewServices] = useState([]);
+
+
   useEffect(() => {
-    let newArray = services.map((e, index) => ({
-      icon: iconAndColors[index]?.icon || "star",
-      color: iconAndColors[index]?.color || "teal",
-      ...e,
-    }));
+    let newArray = services.map((e, index) => {
+      // Added console log for the current index
+      console.log("Processing service at index:", index);
 
-    console.log(newArray);
+      return {
+        ...e,
+        icon: e.icon || iconAndColors[index]?.icon || "star",
+        color: e.color || iconAndColors[index]?.color || "teal",
+      };
+    });
 
+    console.log("Final Array:", newArray);
     setNewServices(newArray);
   }, [services]);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+    <div
+      className={`grid gap-8 ${newServices.length === 1 || newServices.length === 2 || newServices.length === 4 ? "grid-cols-2" : "grid-cols-3"
+        }`}
+    >
       {newServices.length > 0 &&
         newServices.map((service, index) => (
           <ServiceCard
@@ -48,9 +57,7 @@ const Services = ({ services, onSelect }) => {
             key={service.id}
             index={index}
             title={service.name}
-            description={
-              service.name || "General inquiries and cashier services"
-            }
+            description={service.name || "General inquiries and cashier services"}
             queueCount={service.waiting_count || 0}
             waitTime={service.estimated_time}
             icon={service.icon}
@@ -59,6 +66,7 @@ const Services = ({ services, onSelect }) => {
           />
         ))}
     </div>
+
   );
 };
 
