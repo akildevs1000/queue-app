@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import Header from "./components/Header";
 import LanguageCard from "./components/Language";
+import ServiceCard from "./components/ServiceCard";
+import SocketIndicator from "./components/SocketIndicator";
 import IpDialog from "./components/IpDialog";
 import BootScreen from "./components/BootScreen";
 import TicketPrintingIndicator from "./components/TicketPrintingIndicator";
@@ -283,6 +285,49 @@ function App() {
 
         <Header title={title} darkMode={darkMode} setDarkMode={setDarkMode} />
 
+        <header className="w-full px-8 py-5 flex items-center justify-between border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111a2f] shadow-sm z-20 relative">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-600 to-blue-700 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30 ring-2 ring-indigo-500/20">
+              <span className="material-icons-round text-3xl">
+                confirmation_number
+              </span>
+            </div>
+            <div>
+              <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
+                SmartQueue<span className="text-indigo-500">.</span>
+              </h1>
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-bold tracking-wider uppercase">
+                  System Online
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-8">
+            <div className="text-right hidden md:block">
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                Current Time
+              </p>
+              <div className="flex items-baseline justify-end gap-2">
+                <p className="text-2xl font-mono font-bold text-slate-800 dark:text-white tracking-widest leading-none mt-1">
+                  20:56
+                </p>
+                <span className="text-xs font-mono text-slate-400 font-bold">
+                  54
+                </span>
+              </div>
+            </div>
+            <div className="h-10 w-px bg-slate-200 dark:bg-slate-700 mx-2 hidden sm:block"></div>
+            <button
+              className="p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-slate-600 dark:text-slate-400"
+              id="theme-toggle"
+            >
+              <span className="material-icons-round">dark_mode</span>
+            </button>
+          </div>
+        </header>
+
         {/* ✅ Added Hidden QR Input — DOES NOT change layout */}
         <div className="absolute left-[-5000px]">
           <input
@@ -293,23 +338,20 @@ function App() {
             className="border-none outline-none"
           />
         </div>
-        {/* Global Background */}
-        <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
-          <div className="absolute -top-[20%] -left-[10%] w-[600px] h-[600px] bg-primary/10 rounded-full blur-[120px] opacity-40 dark:opacity-20 mix-blend-screen"></div>
-          <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[100px] opacity-40 dark:opacity-20 mix-blend-screen"></div>
-        </div>
-        {step === "language" && (
-          <main className="flex-grow flex justify-center p-6 md:p-10 relative">
-            {/* LANGUAGE STEP */}
 
+        <main className="flex-grow flex justify-center p-6 md:p-10 relative">
+          {/* Global Background */}
+          <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+            <div className="absolute -top-[20%] -left-[10%] w-[600px] h-[600px] bg-primary/10 rounded-full blur-[120px] opacity-40 dark:opacity-20 mix-blend-screen"></div>
+            <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[100px] opacity-40 dark:opacity-20 mix-blend-screen"></div>
+          </div>
+
+          {/* LANGUAGE STEP */}
+          {step === "language" && (
             <div className="w-full max-w-7xl flex flex-col justify-center min-h-[80vh]">
               <div className="text-center mb-10">
-                <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
-                  Welcome To Emirates Islamic Bank
-                </h1>
-                <br />
                 <h2 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
-                  Select Your Language
+                  Language Selection
                 </h2>
                 <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm max-w-xl mx-auto">
                   Please select your preferred language to continue
@@ -328,28 +370,43 @@ function App() {
                 ))}
               </div>
             </div>
-          </main>
-        )}
+          )}
+        </main>
+
         {/* SERVICE STEP */}
-        {step === "service" && (
-          <Services services={services} onSelect={handleServiceSelect} />
-        )}
+        {step === "service" && <Services services={services} />}
+        {/* {step === "service" && (
+            <div className="w-full max-w-7xl flex flex-col justify-center min-h-[80vh]">
+              <div className="mb-10">
+                <h2 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
+                  Service Selection
+                </h2>
+                <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm max-w-xl">
+                  Monitor real-time status and wait times across all service departments.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {services.map((service, index) => (
+                  <ServiceCard
+                    key={service.id}
+                    index={index}
+                    service={service}
+                    darkMode={darkMode}
+                    onSelect={handleServiceSelect}
+                  />
+                ))}
+              </div>
+            </div>
+          )} */}
 
         <footer className="w-full px-8 py-5 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111a2f] z-20">
           <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
               <span className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
-                Server: {retrying ? "Reconnecting..." : "Connected"}
+                Server: <SocketIndicator retrying={retrying} />
               </span>
-            </div>
-            <div class="hidden sm:flex justify-center md:justify-end mt-2">
-              <p class="text-[10px] text-slate-400 dark:text-slate-300 uppercase tracking-widest font-medium">
-                Powered by{" "}
-                <span class="text-slate-600 dark:text-slate-100 font-semibold hover:text-blue-500 transition-colors duration-300">
-                  xtremeguard.org
-                </span>
-              </p>
             </div>
             {step === "service" && (
               <button

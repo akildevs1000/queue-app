@@ -2,26 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: #0f172a;
 }
 ::-webkit-scrollbar-thumb {
-  background-color: #334155;
-  border-radius: 20px;
+  background: #334155;
+  border-radius: 3px;
 }
-
-/* Material Symbols Outlined default settings */
-.material-symbols-outlined {
-  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
 }
-
-/* Custom utilities */
-@layer utilities {
-  .icon-filled {
-    font-variation-settings: "FILL" 1;
+.animate-slow-pulse {
+  animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
   }
 }

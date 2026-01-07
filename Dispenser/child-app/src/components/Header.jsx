@@ -1,39 +1,10 @@
 import { useEffect, useState } from "react";
-import { SunIcon, MoonIcon } from "@heroicons/react/24/solid";
+
+import logo from "../assets/icon.png"; // adjust the path according to your project
 
 const Header = ({}) => {
   const [darkMode, setDarkMode] = useState(true);
-  const [currentDate, setCurrentDate] = useState("");
-  const [currentTime, setCurrentTime] = useState("");
 
-  // Clock
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      setCurrentDate(
-        now.toLocaleDateString("en-US", {
-          weekday: "short",
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        })
-      );
-      setCurrentTime(
-        now.toLocaleTimeString("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-          hour12: true,
-        })
-      );
-    };
-
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Dark mode persistence
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add("dark");
@@ -44,36 +15,54 @@ const Header = ({}) => {
     }
   }, [darkMode]);
 
+  const [time, setTime] = useState({
+    hhmm: "00:00",
+    ss: "00",
+  });
+
+  // Clock
+  useEffect(() => {
+    const tick = () => {
+      const now = new Date();
+      setTime({
+        hhmm: `${String(now.getHours()).padStart(2, "0")}:${String(
+          now.getMinutes()
+        ).padStart(2, "0")}`,
+        ss: String(now.getSeconds()).padStart(2, "0"),
+      });
+    };
+    tick();
+    const i = setInterval(tick, 1000);
+    return () => clearInterval(i);
+  }, []);
+
   return (
-    <header className="sticky top-0 z-50 bg-white/80 dark:bg-surface-dark/90 backdrop-blur-md border-b border-gray-200 dark:border-slate-800">
-      <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="bg-primary p-2 rounded-xl shadow-lg shadow-primary/20">
-            <span className="material-symbols-outlined text-white">dns</span>
-          </div>
-          <div>
-            <h1 className="text-lg font-bold">SmartQueue</h1>
-            <p className="text-[11px] uppercase tracking-wider text-slate-500">
-              Dashboard V3
+    <header className="w-full px-8 py-5 flex items-center justify-between border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111a2f] shadow-sm z-20 relative">
+      <div className="flex items-center gap-4">
+        <img src={logo} alt="Logo" className="w-[150px] object-contain" />
+      </div>
+      <div className="flex items-center gap-8">
+        <div className="text-right hidden md:block">
+          <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+            Current Time
+          </p>
+          <div className="flex items-baseline justify-end gap-2">
+            <p className="text-2xl font-mono font-bold text-slate-800 dark:text-white tracking-widest leading-none mt-1">
+              20:56
             </p>
+            <span className="text-xs font-mono text-slate-400 font-bold">
+              54
+            </span>
           </div>
         </div>
-
-        <div className="flex items-center gap-6">
-          <div className="hidden md:block text-right border-r pr-6">
-            <div className="text-xs uppercase tracking-wider text-slate-500">
-              {currentDate}
-            </div>
-            <div className="text-sm font-mono font-semibold">{currentTime}</div>
-          </div>
-
-          <button
-            onClick={() => setDarkMode(!darkMode)}
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800"
-          >
-            <span className="material-symbols-outlined">dark_mode</span>
-          </button>
-        </div>
+        <div className="h-10 w-px bg-slate-200 dark:bg-slate-700 mx-2 hidden sm:block"></div>
+        <button
+          onClick={() => setDarkMode(!darkMode)}
+          className="p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-slate-600 dark:text-slate-400"
+          id="theme-toggle"
+        >
+          <span className="material-icons-round">dark_mode</span>
+        </button>
       </div>
     </header>
   );
