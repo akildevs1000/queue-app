@@ -8,24 +8,20 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
-    public function up()
+    public function up(): void
     {
-        Schema::table('companies', function (Blueprint $table) {
+        Schema::table('users', function (Blueprint $table) {
             $table->text('license_key')->nullable()->change();
         });
     }
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
-    public function down()
+    public function down(): void
     {
-        Schema::table('companies', function (Blueprint $table) {
+        Schema::table('users', function (Blueprint $table) {
             $table->string('license_key', 255)->nullable()->change();
         });
     }
