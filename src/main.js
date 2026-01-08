@@ -10,7 +10,8 @@ app.setAppUserModelId('SmartQueue');
 let isQuitting = false;
 
 const isDev = !app.isPackaged;
-const appDir = isDev ? __dirname : process.resourcesPath;
+const appDir = isDev ? process.cwd() : process.resourcesPath;
+
 const srcDirectory = path.join(appDir, 'www');
 
 const nginxPath = path.join(appDir, 'nginx.exe');

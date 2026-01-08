@@ -2,11 +2,12 @@
   "name": "smart-queue-desktop-app",
   "version": "2.0.0",
   "description": "smart-queue-desktop-app",
-  "main": "main.js",
+  "main": "dist/main.js",
   "scripts": {
     "dev": "electron .",
     "dev:www": "cd www && npm run dev",
-    "build": "electron-builder"
+    "build": "electron-builder",
+    "obf": "javascript-obfuscator main.js --output dist/main.js --compact true --string-array true --string-array-encoding base64 --control-flow-flattening true && javascript-obfuscator helpers.js --output dist/helpers.js --compact true --string-array true --string-array-encoding base64 --control-flow-flattening true && javascript-obfuscator socket.js --output dist/socket.js --compact true --string-array true --string-array-encoding base64 --control-flow-flattening true"
   },
   "build": {
     "publish": {
@@ -16,10 +17,10 @@
     "appId": "desktop.smart-queue",
     "files": [
       "assets/**/*",
-      "helpers.js",
-      "socket.js",
+      "dist/main.js",
+      "dist/helpers.js",
+      "dist/socket.js",
       "index.html",
-      "main.js",
       "www/**/*",
       "!www/node_modules/**"
     ],
@@ -96,7 +97,8 @@
   "license": "ISC",
   "devDependencies": {
     "electron": "^30.0.0",
-    "electron-builder": "^24.13.3"
+    "electron-builder": "^24.13.3",
+    "javascript-obfuscator": "^5.1.0"
   },
   "dependencies": {
     "electron-updater": "^6.6.2",
