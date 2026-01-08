@@ -17,16 +17,21 @@ const subtitles = {
   es: "Seleccionar Español",
 };
 
-const LanguageCard = ({ lang, label, darkMode, handleLanguageSelect }) => {
+const LanguageCard = ({
+  lang,
+  label,
+  handleLanguageSelect,
+  className = "",
+}) => {
   return (
     <button
       onClick={() => handleLanguageSelect(lang)}
-      className="lang-card group relative bg-white dark:bg-surface-dark hover:dark:bg-surface-hover
+      className={`lang-card group relative bg-white dark:bg-surface-dark hover:dark:bg-surface-hover
         border border-white/10 hover:dark:border-primary/50
         rounded-2xl p-10 shadow-soft hover:shadow-card-hover
         transition-all duration-300 flex flex-col items-center justify-center
         text-center focus:outline-none focus:ring-4 focus:ring-primary/20
-        transform hover:-translate-y-1"
+        transform hover:-translate-y-1  ${className}`}
     >
       <div className="flag-icon">
         <img className="w-[150px]" src={flagMap[lang]} alt="" />

@@ -122,7 +122,7 @@ const ServiceCard = ({
   return (
     <button
       onClick={onClick}
-      className={`group relative bg-white dark:bg-[#1e293b] rounded-[2rem] p-8 border-[3px] ${c.border} ${c.hoverBorder}  shadow-xl shadow-slate-200/50 dark:shadow-none ${c.glow} transition-all duration-300 flex flex-col items-center text-center  ${className}`}
+      className={`group relative bg-white dark:bg-[#1e293b] rounded-[2rem] p-8 border-[3px] ${c.border} ${c.hoverBorder}  shadow-xl shadow-slate-200/50 dark:shadow-none ${c.glow} transition-all duration-300 flex flex-col items-center text-center ${className}`}
     >
       {/* Active Badge */}
       {isActive && (

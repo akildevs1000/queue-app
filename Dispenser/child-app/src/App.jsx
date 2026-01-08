@@ -79,6 +79,7 @@ function App() {
     if (!ip) return;
 
     const fetchAppDetails = async () => {
+      setTitle("");
       try {
         const res = await fetch(`http://${ip}:8000/api/app-details`);
         const json = await res.json();
@@ -308,25 +309,47 @@ function App() {
                   Welcome To {title || ""}
                 </h1>
                 <br />
-                <h2 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
+                <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">
                   Select Your Language
                 </h2>
-                <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm max-w-xl mx-auto">
+                <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto text-lg">
                   Please select your preferred language to continue
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {selectedLanguages.map((item) => (
-                  <LanguageCard
-                    key={item.lang}
-                    lang={item.lang}
-                    label={item.label}
-                    darkMode={darkMode}
-                    handleLanguageSelect={handleLanguageSelect}
-                  />
-                ))}
-              </div>
+              {selectedLanguages.length === 1 ? (
+                <div className="flex justify-center">
+                  {selectedLanguages.map((item) => (
+                    <LanguageCard
+                      key={item.lang}
+                      lang={item.lang}
+                      label={item.label}
+                      darkMode={darkMode}
+                      handleLanguageSelect={handleLanguageSelect}
+                      className="w-[460px] flex-shrink-0"
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div
+                  className={`grid gap-6 ${
+                    selectedLanguages.length === 2 ||
+                    selectedLanguages.length === 4
+                      ? "grid-cols-2"
+                      : "grid-cols-3"
+                  }`}
+                >
+                  {selectedLanguages.map((item) => (
+                    <LanguageCard
+                      key={item.lang}
+                      lang={item.lang}
+                      label={item.label}
+                      darkMode={darkMode}
+                      handleLanguageSelect={handleLanguageSelect}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </main>
         )}
