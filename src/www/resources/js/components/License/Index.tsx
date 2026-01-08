@@ -4,6 +4,7 @@ import { SharedData } from '@/types';
 import { useForm, usePage } from '@inertiajs/react';
 import { Check, Copy, LoaderCircle, LucideIcon, Unlock } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { decryptData } from '../../utils/encryption';
 
 // Detect Electron Node crypto
 let cryptoNode: any = undefined;
@@ -89,115 +90,39 @@ export default function License({ license_key, mustVerifyEmail }: LicenseProps) 
 
     // Offline license validation
     const submitLicense = async (e: React.FormEvent) => {
-
-
         e.preventDefault();
         setLicenseError(null);
         setLicenseSuccess(null);
 
-        if (!licenseData.license_key || !machineId) {
-            setLicenseError('License key or machine ID is missing.');
-            return;
-        }
-
         let licenseKey = licenseData.license_key;
 
-
-
         try {
-            if (!cryptoNode) throw new Error('Crypto unavailable');
-
-            if (licenseKey.startsWith('LIC-')) {
-                licenseKey = licenseKey.slice(4);
-            }
-
-            const LICENSE_REGEX = /^[A-Z0-9]{4}(-[A-Z0-9]{4}){3}$/;
-            if (!LICENSE_REGEX.test(licenseKey)) {
-                setLicenseError('Invalid license format');
+            if (!licenseKey || !machineId) {
+                setLicenseError('License key or machine ID is missing.');
                 return;
             }
 
-            const blocks = licenseKey.split('-');
+            const license = decryptData(licenseKey,machineId);
 
-            if (blocks.length !== 4) {
-                setLicenseError('Invalid license format');
+            if (!license) {
+                setLicenseError('Invalid License Key');
                 return;
             }
 
-            // Decode expiry block
-            const decodedExpiry = decodeDateSegment(blocks[3]);
-            if (!decodedExpiry) {
-                setLicenseError('Invalid expiry date');
-                return;
-            }
-
-            if (isExpired(decodedExpiry)) {
+            const expiryDate = new Date(license.expiry_date);
+            if (new Date() > expiryDate) {
                 setLicenseError('License expired');
                 return;
             }
 
-            // SHA256(machineId)
-            const hash = cryptoNode
-                .createHash('sha256')
-                .update(machineId)
-                .digest();
-
-            const bytes: any = Array.from(hash);
-            const base32 = toBase32(bytes);
-            const first16 = base32.slice(0, 16);
-
-            const expectedBlocks = first16.match(/.{1,4}/g);
-            if (!expectedBlocks) {
-                setLicenseError('Hash generation failed');
-                return;
-            }
-
-            const expectedPrefix = expectedBlocks.slice(0, 3).join('-');
-            const licensePrefix = blocks.slice(0, 3).join('-');
-
-            if (expectedPrefix === licensePrefix) {
-                setLicenseSuccess('License activated successfully!');
-                setLicenseError(null);
-            } else {
-                setLicenseError('License does not match this machine');
-            }
+            setLicenseSuccess('License activated successfully!');
+            setLicenseError(null);
         } catch (err) {
             console.error(err);
             setLicenseSuccess(null);
             setLicenseError('Invalid license or mismatched machine.');
         }
     };
-
-    // --- Offline License Validation Helpers ---
-    function toBase32(bytes: number[]): string {
-        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-        let bits = '';
-        let output = '';
-        for (const b of bytes) bits += b.toString(2).padStart(8, '0');
-        for (let i = 0; i + 5 <= bits.length; i += 5) {
-            output += alphabet[parseInt(bits.slice(i, i + 5), 2)];
-        }
-        return output;
-    }
-
-    function isExpired(expiry: string): boolean {
-        if (!expiry) return false;
-        return new Date() > new Date(expiry);
-    }
-
-    function decodeDateSegment(encoded: string): string | null {
-        const base = new Date('2020-01-01T00:00:00Z');
-
-        // Convert base36 back to number of days
-        const days = parseInt(encoded, 36);
-        if (!Number.isFinite(days) || days < 0) return null;
-
-        // Add days to base date
-        const decodedDate = new Date(base.getTime() + days * 86400000);
-
-        // Return YYYY-MM-DD
-        return decodedDate.toISOString().slice(0, 10);
-    }
 
     // --- UI (your existing code) ---
     return (
@@ -225,11 +150,12 @@ export default function License({ license_key, mustVerifyEmail }: LicenseProps) 
                                 <div>
                                     <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Machine Code</label>
                                     <div className="relative">
-                                        <Input className='border rounded dark:border-slate-700 dark:bg-slate-900'
+                                        <Input
+                                            className="rounded border dark:border-slate-700 dark:bg-slate-900"
                                             required
                                             value={machineId || ''}
                                             onChange={(e) => setLicenseData('machine_id', e.target.value)}
-                                            placeholder="XXXX-XXXX-XXXX-XXXX-XXXX"
+                                            placeholder=""
                                         />
                                         <button
                                             type="button"
@@ -249,7 +175,8 @@ export default function License({ license_key, mustVerifyEmail }: LicenseProps) 
 
                                 <div>
                                     <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">License Key</label>
-                                    <Input className='border rounded dark:border-slate-700 dark:bg-slate-900'
+                                    <Input
+                                        className="rounded border dark:border-slate-700 dark:bg-slate-900"
                                         required
                                         value={licenseData.license_key}
                                         onChange={(e) => setLicenseData('license_key', e.target.value)}
