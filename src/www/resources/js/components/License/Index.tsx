@@ -76,7 +76,7 @@ export default function License({ license_key, mustVerifyEmail }: LicenseProps) 
         setData: setLicenseData,
         processing,
     } = useForm({
-        license_key: 'LIC-EAVD-C52E-QYKU-01PQ',
+        license_key: '',
         machine_id: '',
         expiry_date: '', // optional if server provides expiry date
     });
