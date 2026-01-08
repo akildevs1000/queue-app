@@ -45,7 +45,6 @@ class AuthenticatedSessionController extends Controller
             ]);
         }
 
-        // Block login if machine ID doesn't match
         if ($request['is_electron']) {
             // Block login if machine ID doesn't match
             if ($user->machine_id && $user->machine_id != $request['machine_id']) {
@@ -71,16 +70,7 @@ class AuthenticatedSessionController extends Controller
                 'machine_id'  => $request['machine_id'],
             ]);
         } else {
-
-            if ($request['expiry_date']) {
-
-                $user->update([
-                    'expiry_date' => $request['expiry_date'],
-                    'license_key' => $request['license_key'],
-                ]);
-
-                $user->refresh();
-            }
+            
             // Check if trial expired
             $expiry = Carbon::parse($user->expiry_date)->startOfDay();
             $today  = now()->startOfDay();

@@ -2,15 +2,9 @@ import { GradientButton } from '@/components/ui/GradientButton';
 import { Input } from '@/components/ui/input';
 import { SharedData } from '@/types';
 import { useForm, usePage } from '@inertiajs/react';
-import { Check, Copy, LoaderCircle, LucideIcon, Unlock } from 'lucide-react';
+import { Check, Copy, LoaderCircle, Unlock } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { decryptData } from '../../utils/encryption';
-
-// Detect Electron Node crypto
-let cryptoNode: any = undefined;
-if (typeof window !== 'undefined' && window.process?.type === 'renderer') {
-    cryptoNode = window.require('crypto'); // Electron renderer
-}
 
 let electronClipboard: any = null;
 
@@ -19,89 +13,44 @@ if (typeof window !== 'undefined' && window.process?.type === 'renderer') {
     electronClipboard = clipboard;
 }
 
-interface LicenseProps {
-    mustVerifyEmail: boolean;
-    license_key: string;
-}
-
-interface LicenseInfo {
-    contact_person_name: string;
-    email: string;
-    expiry_date: string;
-    license_key: string;
-    location: string;
-    name: string;
-    number: string;
-    status: string;
-}
-
-interface IconBoxProps {
-    icon: LucideIcon;
-}
-
-const IconBox: React.FC<IconBoxProps> = ({ icon: Icon }) => (
-    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
-        <Icon className="h-4 w-4" />
-    </div>
-);
-
-interface InfoItemProps {
-    icon: LucideIcon;
-    label: string;
-    value?: string | null;
-}
-
-const InfoItem: React.FC<InfoItemProps> = ({ icon, label, value }) => (
-    <div className="flex items-start gap-4">
-        <IconBox icon={icon} />
-        <div>
-            <span className="text-xs text-slate-400 uppercase">{label}</span>
-            <p className="font-medium text-slate-800 dark:text-slate-200">{value || '-'}</p>
-        </div>
-    </div>
-);
-
-export default function License({ license_key, mustVerifyEmail }: LicenseProps) {
+export default function License() {
     const { auth } = usePage<SharedData>().props;
 
-    const [licenseInfo, setLicenseInfo] = useState<LicenseInfo | null>(null);
     const [licenseError, setLicenseError] = useState<string | null>(null);
     const [licenseSuccess, setLicenseSuccess] = useState<string | null>(null);
 
     const [machineId, setMachineId] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
 
-    const {
-        data: licenseData,
-        setData: setLicenseData,
-        processing,
-    } = useForm({
+    const { data, setData, patch, transform, processing } = useForm({
         license_key: '',
         machine_id: '',
-        expiry_date: '', // optional if server provides expiry date
+        expiry_date: '', // This will be filled during decryption
     });
 
     // Load machine ID from Electron
     useEffect(() => {
+        setData("license_key",auth?.user?.license_key);
+    }, []);
+
+     useEffect(() => {
         async function loadMachineId() {
             const isElectron = typeof window !== 'undefined' && window.process && window.process.type === 'renderer';
             if (isElectron) {
                 const { ipcRenderer } = window.require('electron');
                 const id = await ipcRenderer.invoke('get-machine-id');
                 setMachineId(id);
-                setLicenseData('machine_id', id);
+                setData('machine_id', id);
             }
         }
         loadMachineId();
     }, []);
 
-    // Offline license validation
-    const submitLicense = async (e: React.FormEvent) => {
+    const submitLicense = (e: React.FormEvent) => {
         e.preventDefault();
         setLicenseError(null);
         setLicenseSuccess(null);
-
-        let licenseKey = licenseData.license_key;
+        let licenseKey = data.license_key;
 
         try {
             if (!licenseKey || !machineId) {
@@ -116,30 +65,38 @@ export default function License({ license_key, mustVerifyEmail }: LicenseProps) 
                 return;
             }
 
-            const expiryDate = new Date(license.expiry_date);
-            if (new Date() > expiryDate) {
-                setLicenseError('License expired');
-                return;
-            }
+            // 2. The critical part: Transform the data right before sending
+            // This injects the expiry_date from the decryption process
+            // into the actual request payload.
+            transform((data) => ({
+                ...data,
+                expiry_date: license.expiry_date,
+            }));
 
-            setLicenseSuccess('License activated successfully!');
-            setLicenseError(null);
+            // 3. Fire the request
+            patch(route('license.update'), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    if (new Date() > new Date(license.expiry_date)) {
+                        setLicenseError('License expired');
+                        return;
+                    }
+                    setLicenseSuccess('License activated successfully!');
+                    setLicenseError(null);
+                },
+                onError: (err) => {
+                    setLicenseSuccess(null);
+                    setLicenseError('Activation failed on the server.');
+                },
+            });
         } catch (err) {
-            console.error(err);
+            setLicenseError('Invalid license.');
             setLicenseSuccess(null);
-            setLicenseError('Invalid license or mismatched machine.');
         }
     };
 
-    // --- UI (your existing code) ---
     return (
         <div className="flex-1 overflow-auto rounded-xl">
-            {licenseInfo && (
-                <section className="mb-8 overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
-                    {/* ... your existing license info UI ... */}
-                </section>
-            )}
-
             <section className="rounded-xl border border-indigo-100 shadow-sm dark:border-slate-700 dark:from-slate-800 dark:to-slate-900">
                 <div className="p-6 md:p-8">
                     <div className="flex flex-col gap-6 md:flex-row md:items-start">
@@ -161,7 +118,7 @@ export default function License({ license_key, mustVerifyEmail }: LicenseProps) 
                                             className="rounded border dark:border-slate-700 dark:bg-slate-900"
                                             required
                                             value={machineId || ''}
-                                            onChange={(e) => setLicenseData('machine_id', e.target.value)}
+                                            onChange={(e) => setData('machine_id', e.target.value)}
                                             placeholder=""
                                         />
                                         <button
@@ -187,8 +144,8 @@ export default function License({ license_key, mustVerifyEmail }: LicenseProps) 
                                     <Input
                                         className="rounded border dark:border-slate-700 dark:bg-slate-900"
                                         required
-                                        value={licenseData.license_key}
-                                        onChange={(e) => setLicenseData('license_key', e.target.value)}
+                                        value={data.license_key}
+                                        onChange={(e) => setData('license_key', e.target.value)}
                                         placeholder="XXXX-XXXX-XXXX-XXXX-XXXX"
                                     />
                                 </div>

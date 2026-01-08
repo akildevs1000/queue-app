@@ -28,7 +28,7 @@ const NavLink = ({ active = false, onClick, children }: NavLinkProps) => {
     );
 };
 
-export default function Setup({ counters, services, users, license_key }: any) {
+export default function Setup({ counters, services, users }: any) {
     const [activeSection, setActiveSection] = useState<ActiveSection>('service');
 
     const renderContent = () => {
@@ -40,7 +40,7 @@ export default function Setup({ counters, services, users, license_key }: any) {
             case 'user':
                 return <UserTable items={users} />;
             case 'license':
-                return <License license_key={license_key} items={users} />;
+                return <License />;
             default:
                 return null;
         }

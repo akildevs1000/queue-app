@@ -1,5 +1,5 @@
 import { useForm } from '@inertiajs/react';
-import { LoaderCircle } from 'lucide-react';
+import { Check, Copy, LoaderCircle } from 'lucide-react';
 import { FormEventHandler, useEffect, useState } from 'react';
 
 import InputError from '@/components/input-error';
@@ -8,6 +8,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 import logo from '@/assets/logo.png'; // or "../assets/logo.png"
+import { decryptData } from '@/utils/encryption';
+
+let electronClipboard: any = null;
+
+if (typeof window !== 'undefined' && window.process?.type === 'renderer') {
+    const { clipboard } = window.require('electron');
+    electronClipboard = clipboard;
+}
 
 interface LoginProps {
     status?: string;
@@ -18,8 +26,11 @@ interface LoginProps {
 export default function Login({ status, canResetPassword, subscriptionExpired }: LoginProps) {
     const [trialExpired, setTrialExpired] = useState(subscriptionExpired || false);
     const [licenseError, setLicenseError] = useState<string | null>(null);
+    const [licenseSuccess, setLicenseSuccess] = useState<string | null>(null);
     const [subsriptionError, setSubsriptionError] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
+
+    const [copied, setCopied] = useState(false);
 
     // Normal login form
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -30,7 +41,7 @@ export default function Login({ status, canResetPassword, subscriptionExpired }:
 
         license_key: '',
         machine_id: '',
-        is_electron:false
+        is_electron: false,
     });
 
     // License activation form
@@ -38,6 +49,8 @@ export default function Login({ status, canResetPassword, subscriptionExpired }:
         data: licenseData,
         setData: setLicenseData,
         processing: processingLicense,
+        transform,
+        patch,
         reset: resetLicense,
     } = useForm({
         license_key: '',
@@ -80,42 +93,52 @@ export default function Login({ status, canResetPassword, subscriptionExpired }:
         });
     };
 
-    // License activation submit (GET method)
-    const submitLicense: FormEventHandler = async (e) => {
-        setSubsriptionError(null);
+    const submitLicense = (e: React.FormEvent) => {
         e.preventDefault();
         setLicenseError(null);
+        setLicenseSuccess(null);
+
+        let licenseKey = licenseData.license_key;
 
         try {
-            const params = new URLSearchParams({ license_key: licenseData.license_key });
-            const response = await fetch(`https://debackend.myhotel2cloud.com/api/validate-license?${params.toString()}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
+            if (!licenseKey || !machineId) {
+                setLicenseError('License key or machine ID is missing.');
+                return;
+            }
+
+            const license = decryptData(licenseKey, machineId);
+
+            if (!license) {
+                setLicenseError('Invalid License Key');
+                return;
+            }
+
+            // 2. The critical part: Transform the data right before sending
+            // This injects the expiry_date from the decryption process
+            // into the actual request payload.
+            transform((data) => ({
+                ...data,
+                expiry_date: license.expiry_date,
+            }));
+
+            // 3. Fire the request
+            patch(route('license.update'), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    if (new Date() > new Date(license.expiry_date)) {
+                        setLicenseError('License expired');
+                        return;
+                    }
+                    window.location.reload();
+                },
+                onError: (err) => {
+                    setLicenseSuccess(null);
+                    setLicenseError('Activation failed on the server.');
                 },
             });
-
-            const result = await response.json();
-
-            if (response.status === 200 && result.success) {
-                // License activated successfully
-                const expiryDate = result?.data?.expiry_date || '';
-
-                // Set expiry_date in login form hidden field
-                setData('expiry_date', expiryDate);
-                setData('license_key', licenseData.license_key);
-
-                // Reset license form
-                resetLicense();
-
-                // Allow login form to show again
-                setTrialExpired(false);
-            } else {
-                setLicenseError(result.message || 'License activation failed');
-            }
         } catch (err) {
-            console.error(err);
-            setLicenseError('Network or server error');
+            setLicenseError('Invalid license.');
+            setLicenseSuccess(null);
         }
     };
 
@@ -205,6 +228,37 @@ export default function Login({ status, canResetPassword, subscriptionExpired }:
                             </div>
 
                             <div className="grid gap-6">
+                                <div className="relative grid gap-2">
+                                    <Label htmlFor="machine_id" className="text-gray-700 dark:text-gray-200">
+                                        Machine Code{' '}
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (!machineId) return;
+
+                                                if (electronClipboard) {
+                                                    electronClipboard.writeText(machineId);
+                                                    setCopied(true);
+                                                    setTimeout(() => setCopied(false), 1500);
+                                                }
+                                            }}
+                                            className="absolute inset-y-0 right-2 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                                        >
+                                            {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                                        </button>
+                                    </Label>
+                                </div>
+
+                                <Input
+                                    id="machine_id"
+                                    required
+                                    autoFocus
+                                    value={licenseData.machine_id}
+                                    onChange={(e) => setLicenseData('machine_id', e.target.value)}
+                                    placeholder="XXXX-XXXX-XXXX-XXXX"
+                                    className="rounded border dark:border-slate-700 dark:bg-slate-900"
+                                />
+
                                 <div className="grid gap-2">
                                     <Label htmlFor="license_key" className="text-gray-700 dark:text-gray-200">
                                         License Key

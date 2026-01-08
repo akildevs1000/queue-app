@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Settings\LicenseRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
 use App\Http\Requests\Settings\OperationalHoursUpdateRequest;
+use App\Models\User;
 use App\Traits\HandlesMedia;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
@@ -87,6 +89,27 @@ class ProfileController extends Controller
         $request->user()->save();
 
         return to_route('profile.edit');
+    }
+
+    public function updateLicenseInfo(LicenseRequest $request)
+    {
+        $data = $request->validated();
+
+        info($data);
+
+        User::where("type","master")->update($data);
+
+        // Redirect back to the form page with a success message
+        return back()->with('status', 'license-updated');
+
+        $request->user()->fill($data);
+
+        if ($request->user()->isDirty()) {
+            $request->user()->save();
+        }
+
+        // Redirect back to the form page with a success message
+        return back()->with('status', 'license-updated');
     }
 
     public function operationalHoursUpdate(OperationalHoursUpdateRequest $request): RedirectResponse

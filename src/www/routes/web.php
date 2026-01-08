@@ -8,6 +8,7 @@ use App\Http\Controllers\LoginLogController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Models\Counter;
 use App\Models\Service;
@@ -24,9 +25,12 @@ Route::get('/setup', function () {
         'services'  =>  Service::latest()->paginate(request("per_page", 10)),
         'counters'  =>  Counter::latest()->with('service')->paginate(request("per_page", 10)),
         'users'     =>  User::with("service", "counter")->latest()->where("type", "user")->paginate(request("per_page", 10)),
-        'license_key'     =>  User::where("type", "master")->value("license_key") ?? "",
     ]);
 })->name('setup');
+
+
+Route::patch('setup/license', [ProfileController::class, 'updateLicenseInfo'])->name('license.update');
+
 
 Route::get('/guest', function () {
     return Inertia::render('guest', [
