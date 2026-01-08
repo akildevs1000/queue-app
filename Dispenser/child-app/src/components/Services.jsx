@@ -28,7 +28,6 @@ let iconAndColors = [
 const Services = ({ services, onSelect }) => {
   const [newServices, setNewServices] = useState([]);
 
-
   useEffect(() => {
     let newArray = services.map((e, index) => {
       // Added console log for the current index
@@ -46,27 +45,51 @@ const Services = ({ services, onSelect }) => {
   }, [services]);
 
   return (
-    <div
-      className={`grid gap-8 ${newServices.length === 1 || newServices.length === 2 || newServices.length === 4 ? "grid-cols-2" : "grid-cols-3"
-        }`}
-    >
-      {newServices.length > 0 &&
-        newServices.map((service, index) => (
+    <>
+      {newServices.length === 1 ? (
+        <div className="flex justify-center">
           <ServiceCard
-            onClick={() => onSelect?.(service)}
-            key={service.id}
-            index={index}
-            title={service.name}
-            description={service.name || "General inquiries and cashier services"}
-            queueCount={service.waiting_count || 0}
-            waitTime={service.estimated_time}
-            icon={service.icon}
-            color={service.color}
-            status={service.status ? "Active" : "InActive"}
+            onClick={() => onSelect?.(newServices[0])}
+            index={0}
+            title={newServices[0].name}
+            description={
+              newServices[0].name || "General inquiries and cashier services"
+            }
+            queueCount={newServices[0].waiting_count || 0}
+            waitTime={newServices[0].estimated_time}
+            icon={newServices[0].icon}
+            color={newServices[0].color}
+            status={newServices[0].status ? "Active" : "InActive"}
+            className="w-[460px] flex-shrink-0"
           />
-        ))}
-    </div>
-
+        </div>
+      ) : (
+        <div
+          className={`grid gap-8 ${
+            newServices.length === 2 || newServices.length === 4
+              ? "grid-cols-2"
+              : "grid-cols-3"
+          }`}
+        >
+          {newServices.map((service, index) => (
+            <ServiceCard
+              key={service.id}
+              onClick={() => onSelect?.(service)}
+              index={index}
+              title={service.name}
+              description={
+                service.name || "General inquiries and cashier services"
+              }
+              queueCount={service.waiting_count || 0}
+              waitTime={service.estimated_time}
+              icon={service.icon}
+              color={service.color}
+              status={service.status ? "Active" : "InActive"}
+            />
+          ))}
+        </div>
+      )}
+    </>
   );
 };
 

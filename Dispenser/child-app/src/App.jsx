@@ -4,7 +4,7 @@ import LanguageCard from "./components/Language";
 import IpDialog from "./components/IpDialog";
 import BootScreen from "./components/BootScreen";
 import TicketPrintingIndicator from "./components/TicketPrintingIndicator";
-import Back from "./components/Back";
+import back from "./assets/back.png";
 import Services from "./components/Services";
 
 // Boot sequence duration
@@ -381,12 +381,8 @@ function App() {
                     vip_number: null,
                   });
                 }}
-                className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 text-white pl-1 pr-3 py-2.5 rounded-xl text-sm font-bold tracking-wide transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
               >
-                <span className="material-icons-round text-lg">
-                  chevron_left
-                </span>
-                Back
+                <img className="w-[120px] object-contain" src={back} alt="" />
               </button>
             )}
           </div>

@@ -10,3 +10,4 @@ src/www/database/database.sqlite
 src/www/database/database.sqlite-shm
 src/www/database/database.sqlite-wal
 src/www/public/build/manifest.json
+src/clock.json
