@@ -12,6 +12,13 @@ if (typeof window !== 'undefined' && window.process?.type === 'renderer') {
     cryptoNode = window.require('crypto'); // Electron renderer
 }
 
+let electronClipboard: any = null;
+
+if (typeof window !== 'undefined' && window.process?.type === 'renderer') {
+    const { clipboard } = window.require('electron');
+    electronClipboard = clipboard;
+}
+
 interface LicenseProps {
     mustVerifyEmail: boolean;
     license_key: string;
@@ -102,7 +109,7 @@ export default function License({ license_key, mustVerifyEmail }: LicenseProps) 
                 return;
             }
 
-            const license = decryptData(licenseKey,machineId);
+            const license = decryptData(licenseKey, machineId);
 
             if (!license) {
                 setLicenseError('Invalid License Key');
@@ -161,10 +168,12 @@ export default function License({ license_key, mustVerifyEmail }: LicenseProps) 
                                             type="button"
                                             onClick={() => {
                                                 if (!machineId) return;
-                                                navigator.clipboard.writeText(machineId).then(() => {
+
+                                                if (electronClipboard) {
+                                                    electronClipboard.writeText(machineId);
                                                     setCopied(true);
                                                     setTimeout(() => setCopied(false), 1500);
-                                                });
+                                                }
                                             }}
                                             className="absolute inset-y-0 right-2 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                                         >
