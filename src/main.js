@@ -84,7 +84,6 @@ function createNginxWindow() {
   nginxWindow = new BrowserWindow({
     width,
     height,
-    fullscreen: true,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false
