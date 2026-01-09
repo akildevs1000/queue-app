@@ -34,7 +34,7 @@
         }
     </style>
 
-    <title inertia>{{ config('app.name', 'Laravel') }}</title>
+    <title inertia>Smart Queue</title>
 
     <link
         href="https://fonts.googleapis.com/icon?family=Material+Icons+Round"
