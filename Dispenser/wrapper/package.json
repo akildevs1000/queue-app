@@ -32,7 +32,7 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "icon.ico"
+      "icon": "favicon.png"
     },
     "nsis": {
       "oneClick": false,
