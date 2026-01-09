@@ -1,4 +1,4 @@
-const { app, BrowserWindow, screen, ipcMain,dialog } = require('electron');
+const { app, BrowserWindow, screen, ipcMain, dialog } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
@@ -106,25 +106,34 @@ function createNginxWindow() {
 app.whenReady().then(async () => {
 
   if (isClockTampered()) {
-
     dialog.showErrorBox(
       'System Time Error',
       'System date/time appears to have been changed.\n\nPlease correct your system clock and restart the application.'
     );
-
     app.exit(1);
     return;
   }
 
-  // ✅ Continue normal startup
   MACHINE_ID = await getCachedMachineId();
   ipcMain.handle('get-machine-id', () => MACHINE_ID);
 
   setMenu();
-  createNginxWindow();
-  await runInstaller(path.join(appDir, 'vs_redist.exe'));
-});
 
+  // 🚀 Show UI immediately
+  const mainWindow = createNginxWindow();
+
+  // ⏳ Heavy tasks AFTER UI
+  setImmediate(() => {
+    runInstaller(path.join(appDir, 'vs_redist.exe'))
+      .then(() => {
+        startNginx();
+        mainWindow.webContents.send('nginx-ready');
+      })
+      .catch(err => {
+        mainWindow.webContents.send('nginx-error', err.message);
+      });
+  });
+});
 
 // Ensure app quits cleanly and stops services
 app.on('before-quit', async e => {

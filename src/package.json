@@ -4,9 +4,9 @@
   "description": "smart-queue-desktop-app",
   "main": "dist/main.js",
   "scripts": {
-    "dev": "electron .",
+    "dev": "npm run obf && electron .",
     "dev:www": "cd www && npm run dev",
-    "build": "electron-builder",
+    "build": "npm run obf && electron-builder",
     "obf": "javascript-obfuscator main.js --output dist/main.js --compact true --string-array true --string-array-encoding base64 --control-flow-flattening true && javascript-obfuscator helpers.js --output dist/helpers.js --compact true --string-array true --string-array-encoding base64 --control-flow-flattening true && javascript-obfuscator socket.js --output dist/socket.js --compact true --string-array true --string-array-encoding base64 --control-flow-flattening true"
   },
   "build": {
