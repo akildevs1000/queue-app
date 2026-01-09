@@ -25,11 +25,12 @@ const NowServingCard = ({ token }) => {
           <div className="flex w-full justify-center gap-16 md:gap-32 items-end shrink-0">
             <div className="text-center group/counter">
               <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 opacity-70">
-                Counter
+                {/* Counter */}
               </p>
               <div className="flex items-center justify-center gap-3">
                 <span className="text-3xl font-light text-gray-100 tracking-tight leading-none">
-                  {String(("" + token?.counter ?? 0).replace(/\D/g, '') || 0).padStart(2, '0')}
+                  {/* {String(("" + token?.counter ?? 0).replace(/\D/g, '') || 0).padStart(2, '0')} */}
+                  {token?.counter}
                 </span>
               </div>
             </div>
