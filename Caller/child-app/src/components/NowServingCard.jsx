@@ -32,7 +32,7 @@ const NowServingCard = React.memo(({ servingInfo }) => {
             {serving?.token || "---"}
           </h1>
           <p className="text-2xl text-slate-500 dark:text-slate-400 font-medium">
-            Counter: {serving?.counter || "---"}
+            {serving?.counter || "---"}
           </p>
         </div>
         <div className="pt-10 grid grid-cols-2 gap-8 border-t border-slate-100 dark:border-slate-800 w-full mx-auto">
