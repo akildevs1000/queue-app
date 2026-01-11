@@ -38,7 +38,7 @@
             id="secret-key" name="secret-key" placeholder="Enter secret key" required="" type="password" />
         </div>
       </div>
-      <button onclick="unlock()"
+      <button onclick="unlock(event)" type="submit"
         class="gradient-button w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
         type="submit">
         <span class="material-icons mr-2 text-lg">lock_open</span>
@@ -48,10 +48,40 @@
     <p id="msg"></p>
   </div>
   <script>
-    const unlock = async () => {
-      const key = document.getElementById('key').value;
-      const res = await window.electron.unlockApp(key);
-      document.getElementById('msg').innerText = res ? 'Unlocked!' : 'Invalid Key';
+    const { ipcRenderer } = require('electron');
+
+    const unlock = async (e) => {
+      e.preventDefault(); // stop form reload
+
+      const input = document.getElementById('secret-key');
+      const msg = document.getElementById('msg');
+      const secret = input.value.trim();
+
+      if (!secret) {
+        msg.textContent = 'Secret key required';
+        msg.className = 'text-red-500 text-sm mt-3 text-center';
+        return;
+      }
+
+      msg.textContent = 'Verifying...';
+      msg.className = 'text-gray-500 text-sm mt-3 text-center';
+
+      const res = await ipcRenderer.invoke('unlock-app', secret);
+
+      if (!res.success) {
+        msg.textContent = res.message || 'Invalid developer signature';
+        msg.className = 'text-red-500 text-sm mt-3 text-center';
+        input.value = '';
+        return;
+      }
+
+      msg.textContent = 'Unlocked successfully. Restarting...';
+      msg.className = 'text-green-500 text-sm mt-3 text-center';
+
+      // Restart app to remove lock
+      setTimeout(() => {
+        ipcRenderer.send('app-restart');
+      }, 500);
     };
   </script>
 </body>

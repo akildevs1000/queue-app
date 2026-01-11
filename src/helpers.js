@@ -406,9 +406,94 @@ function isClockTampered() {
     return false;
 }
 
+
+
+const VIOLATION_FILE = path.join(process.cwd(), 'integrity.json');
+const MAX_VIOLATIONS = 3; // change to 3 if needed
+
+function hashFile(file) {
+    return crypto
+        .createHash('sha256')
+        .update(fs.readFileSync(file))
+        .digest('hex');
+}
+
+function scanPhpFiles(dir, map = {}) {
+    const files = fs.readdirSync(dir, { withFileTypes: true });
+
+    for (const f of files) {
+        const full = path.join(dir, f.name);
+
+        if (f.isDirectory()) {
+            scanPhpFiles(full, map);
+        } else if (f.isFile() && f.name.endsWith('.php')) {
+            map[full] = hashFile(full);
+        }
+    }
+
+    return map;
+}
+
+function loadState() {
+    if (!fs.existsSync(VIOLATION_FILE)) {
+        return { hashes: {}, violations: 0 };
+    }
+    return JSON.parse(fs.readFileSync(VIOLATION_FILE, 'utf8'));
+}
+
+function saveState(state) {
+    fs.writeFileSync(VIOLATION_FILE, JSON.stringify(state));
+}
+
+function checkIntegrity(watchDir) {
+    const state = loadState();
+    const current = scanPhpFiles(watchDir);
+
+    let changed = false;
+
+    for (const file in current) {
+        if (!state.hashes[file]) {
+            changed = true;
+        } else if (state.hashes[file] !== current[file]) {
+            changed = true;
+        }
+    }
+
+    for (const file in state.hashes) {
+        if (!current[file]) {
+            changed = true;
+        }
+    }
+
+    // 🔐 FIRST RUN → create baseline
+    if (Object.keys(state.hashes).length === 0) {
+        state.hashes = current;
+        state.violations = 0;
+        saveState(state);
+        return false;
+    }
+
+    if (changed) {
+        state.violations += 1;
+    }
+
+    // ✅ ALWAYS update hashes
+    state.hashes = current;
+    saveState(state);
+
+    return state.violations >= MAX_VIOLATIONS;
+}
+
+function verifySignature(signature) {
+    const verify = crypto.createVerify('SHA256');
+    verify.update(`App_Unlock_Temp_Name`);
+    verify.end();
+    return verify.verify(fs.readFileSync('public_key.pem', 'utf8'), Buffer.from(signature, 'base64'));
+}
+
 module.exports = {
     logger, runInstaller, stopServices,
     spawnWrapper, spawnPhpCgiWorker,
     ipv4Address,
-    setMenu, getCachedMachineId,isClockTampered
+    setMenu, getCachedMachineId, isClockTampered, checkIntegrity, verifySignature
 }
