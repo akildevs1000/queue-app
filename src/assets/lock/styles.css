@@ -1,0 +1,17 @@
+  body {
+      font-family: 'Inter', sans-serif;
+  }
+
+  .gradient-button {
+      background: linear-gradient(90deg, #4f46e5 0%, #a855f7 100%);
+      transition: opacity 0.2s ease;
+  }
+
+  .gradient-button:hover {
+      opacity: 0.9;
+  }
+
+  .glass-effect {
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+  }

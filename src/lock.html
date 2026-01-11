@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Security Lock Screen - iQueue OS</title>
+  <link href="./assets/lock/icon.css" rel="stylesheet" />
+  <link href="./assets/lock/fonts.css" rel="stylesheet" />
+  <link href="./assets/lock/styles.css" rel="stylesheet" />
+  <script src="./assets/lock/tailwind.js"></script>
+  <script src="./assets/lock/script.js"></script>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark min-h-screen flex items-center justify-center p-4">
+  <div
+    class="w-full max-w-md bg-white dark:bg-card-dark p-10 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 transition-all duration-300">
+    <div class="flex flex-col items-center mb-8">
+      <div class="flex items-center justify-center bg-red-500/10 p-3 rounded-full mb-4">
+        <span class="material-icons text-red-500 text-3xl">lock</span>
+      </div>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">System Locked</h1>
+      <p class="text-gray-500 dark:text-gray-400 text-sm text-center">
+        For security reasons, your session has been paused. Please enter your secret key to continue.
+      </p>
+    </div>
+    <form action="#" class="space-y-6" method="POST">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" for="secret-key">
+          Secret Key
+        </label>
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <span class="material-icons text-gray-400 text-sm">vpn_key</span>
+          </div>
+          <input
+            class="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900/50 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all sm:text-sm"
+            id="secret-key" name="secret-key" placeholder="Enter secret key" required="" type="password" />
+        </div>
+      </div>
+      <button onclick="unlock()"
+        class="gradient-button w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+        type="submit">
+        <span class="material-icons mr-2 text-lg">lock_open</span>
+        Unlock System
+      </button>
+    </form>
+    <p id="msg"></p>
+  </div>
+  <script>
+    const unlock = async () => {
+      const key = document.getElementById('key').value;
+      const res = await window.electron.unlockApp(key);
+      document.getElementById('msg').innerText = res ? 'Unlocked!' : 'Invalid Key';
+    };
+  </script>
+</body>
+
+</html>
