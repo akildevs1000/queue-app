@@ -264,7 +264,7 @@ export default function Welcome() {
 
       <WebView
         ref={webviewRef}
-        source={{ uri: `http://${ip}:5173` }} // replace with your local IP
+        source={{ uri: `http://${ip}:5175` }} // replace with your local IP
         style={{ flex: 1 }}
         originWhitelist={['*']}
         javaScriptEnabled={true}
