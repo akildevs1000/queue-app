@@ -41,7 +41,7 @@ function App() {
     setShowIpPrompt(false);
   };
 
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(true);
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDark);
   }, [isDark]);
